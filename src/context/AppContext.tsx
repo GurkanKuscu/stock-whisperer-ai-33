@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import type { SnapshotData, PortfolioMap } from "@/types/stock";
 import { fetchSnapshot, fetchPortfolio, savePortfolioAPI } from "@/services/api";
+import { MOCK_DATA } from "@/data/mockData";
 
 interface AppContextType {
   data: SnapshotData;
