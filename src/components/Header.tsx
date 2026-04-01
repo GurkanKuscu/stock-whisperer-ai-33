@@ -71,7 +71,7 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           </nav>
 
           {/* Right */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 max-md:gap-1.5 shrink-0">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-t-bg3 rounded-lg"
               style={{ border: "1px solid var(--bdr)" }}>
               <div className="w-1.5 h-1.5 bg-t-green rounded-full animate-pulse-dot"
