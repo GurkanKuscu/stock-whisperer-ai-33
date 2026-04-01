@@ -72,13 +72,15 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
 
           {/* Right */}
           <div className="flex items-center gap-2 max-md:gap-1.5 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-t-bg3 rounded-lg"
+            <div className="flex items-center gap-1.5 px-2 py-1.5 bg-t-bg3 rounded-lg max-md:px-2"
               style={{ border: "1px solid var(--bdr)" }}>
               <div className="w-1.5 h-1.5 bg-t-green rounded-full animate-pulse-dot"
                 style={{ boxShadow: "0 0 6px var(--c-green)" }} />
               <span className="font-mono text-[11px] text-t-green-l font-semibold tracking-[.5px]">{timeStr}</span>
-              <div className="w-px h-3" style={{ background: "var(--bdr2)" }} />
-              <span className="text-[10px] text-t-txt3 hidden sm:inline">{dateStr}</span>
+              <span className="text-[10px] text-t-txt3 hidden sm:inline">
+                <span className="inline-block w-px h-3 mx-1.5" style={{ background: "var(--bdr2)" }} />
+                {dateStr}
+              </span>
             </div>
 
             <ThemeToggle />
