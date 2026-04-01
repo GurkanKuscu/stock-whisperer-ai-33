@@ -32,8 +32,8 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 h-[60px] border-b backdrop-blur-[20px]"
-        style={{ background: "rgba(8,12,20,.92)", borderColor: "var(--bdr)" }}>
-        <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-4">
+        style={{ background: "var(--bg)", borderColor: "var(--bdr)", opacity: 0.96 }}>
+        <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-4 max-md:px-3.5">
           {/* Brand */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[17px] relative"
