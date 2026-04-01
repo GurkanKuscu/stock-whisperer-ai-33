@@ -77,6 +77,8 @@ export default function SignalsTab() {
           onClose={() => setAddTicker(null)}
         />
       )}
+
+      <MarketSummaryPanel />
     </div>
   );
 }
