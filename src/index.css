@@ -147,6 +147,10 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(79,142,247,.08) 0%, transparent 60%);
+    transition: background .3s, color .3s;
+  }
+  .light-theme body {
+    background-image: none;
   }
 }
 

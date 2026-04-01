@@ -81,6 +81,8 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
               <span className="text-[10px] text-t-txt3 hidden sm:inline">{dateStr}</span>
             </div>
 
+            <ThemeToggle />
+
             <button onClick={() => window.location.reload()}
               className="hidden sm:inline-flex px-3.5 py-[7px] rounded-lg text-[11px] font-semibold cursor-pointer transition-all text-t-txt2 bg-t-bg3 hover:bg-t-bg4 hover:text-t-txt"
               style={{ border: "1px solid var(--bdr2)" }}>
