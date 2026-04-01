@@ -1,12 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fetchArsiv, getDownloadUrl } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
 import type { ArsivFile } from "@/types/stock";
+
+interface ManualFile {
+  name: string;
+  size: string;
+  date: string;
+  url: string;
+}
+
+const STORAGE_KEY = "bisthinker-manual-files";
+
+function loadManualFiles(): ManualFile[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch { return []; }
+}
 
 export default function ArchiveTab() {
   const { data } = useAppData();
   const [arsivFiles, setArsivFiles] = useState<ArsivFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [manualFiles, setManualFiles] = useState<ManualFile[]>(loadManualFiles);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchArsiv()
@@ -15,11 +32,40 @@ export default function ArchiveTab() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Signal history from confirmed signals
   const signalHistory = Object.entries(data)
     .filter(([, s]) => s.confirmed)
     .sort(([, a], [, b]) => b.score - a.score)
     .slice(0, 20);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newFiles: ManualFile[] = [];
+    Array.from(files).forEach(file => {
+      const url = URL.createObjectURL(file);
+      const sizeKB = (file.size / 1024).toFixed(0);
+      const size = file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${sizeKB} KB`;
+      newFiles.push({
+        name: file.name,
+        size,
+        date: new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" }),
+        url,
+      });
+    });
+    const updated = [...manualFiles, ...newFiles];
+    setManualFiles(updated);
+    // Save metadata (not blob URLs — they expire on reload, but names/dates persist)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeManualFile = (index: number) => {
+    const updated = manualFiles.filter((_, i) => i !== index);
+    setManualFiles(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
 
   return (
     <div>
@@ -71,8 +117,8 @@ export default function ArchiveTab() {
         </div>
       </div>
 
-      {/* Archive Files */}
-      <div className="bg-t-card rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
+      {/* Archive Files from API */}
+      <div className="bg-t-card rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--bdr)" }}>
         <div className="p-[13px_20px] bg-t-bg2" style={{ borderBottom: "1px solid var(--bdr)" }}>
           <h3 className="font-syne text-[13px] font-bold text-t-txt">Tarama Geçmişi — Excel Dosyaları</h3>
         </div>
@@ -94,6 +140,66 @@ export default function ArchiveTab() {
                   style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>
                   📥 İndir
                 </a>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Manual File Upload */}
+      <div className="bg-t-card rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
+        <div className="p-[13px_20px] bg-t-bg2 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bdr)" }}>
+          <h3 className="font-syne text-[13px] font-bold text-t-txt">📎 Manuel Dosya Ekleme</h3>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-[6px] rounded-lg text-[11px] font-bold cursor-pointer transition-all"
+            style={{
+              background: "linear-gradient(135deg, var(--c-accent), var(--accent-d))",
+              color: "#fff",
+              boxShadow: "0 4px 14px rgba(79,142,247,.3)",
+              border: "none",
+            }}>
+            + Dosya Yükle
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".xlsx,.xls,.csv,.pdf,.txt,.json"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </div>
+
+        {manualFiles.length === 0 ? (
+          <div className="p-8 text-center text-t-txt3">
+            <div className="text-[32px] mb-2 opacity-40">📂</div>
+            <div className="text-[12px] font-semibold text-t-txt2 mb-1">Henüz dosya eklenmedi</div>
+            <div className="text-[10px]">Excel, CSV, PDF veya diğer dosyaları buraya yükleyebilirsiniz</div>
+          </div>
+        ) : (
+          <div className="p-4 space-y-2">
+            {manualFiles.map((f, i) => (
+              <div key={i} className="flex items-center justify-between p-[12px_16px] bg-t-bg3 rounded-lg"
+                style={{ border: "1px solid var(--bdr)" }}>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12px] font-semibold text-t-txt truncate">{f.name}</div>
+                  <div className="text-[10px] text-t-txt3">{f.size} · {f.date}</div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  {f.url.startsWith("blob:") && (
+                    <a href={f.url} download={f.name}
+                      className="px-2.5 py-[4px] rounded-lg text-[10px] font-bold text-t-accent cursor-pointer no-underline transition-all hover:opacity-80"
+                      style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>
+                      📥
+                    </a>
+                  )}
+                  <button onClick={() => removeManualFile(i)}
+                    className="px-2.5 py-[4px] rounded-lg text-[10px] font-bold cursor-pointer transition-all"
+                    style={{ background: "var(--red-bg)", color: "var(--c-red)", border: "1px solid var(--red-bdr)" }}>
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>
