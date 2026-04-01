@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAppData } from "@/context/AppContext";
 import SignalCard from "@/components/SignalCard";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
+import MarketSummaryPanel from "@/components/MarketSummaryPanel";
 
 export default function SignalsTab() {
   const { data } = useAppData();
