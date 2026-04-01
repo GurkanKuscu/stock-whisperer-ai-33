@@ -33,7 +33,7 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 h-[60px] border-b backdrop-blur-[20px]"
         style={{ background: "var(--bg)", borderColor: "var(--bdr)", opacity: 0.96 }}>
-        <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-4 max-md:px-3.5">
+        <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-4 max-md:px-3 max-md:gap-2">
           {/* Brand */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[17px] relative"
@@ -71,14 +71,16 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           </nav>
 
           {/* Right */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-t-bg3 rounded-lg"
+          <div className="flex items-center gap-2 max-md:gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 px-2 py-1.5 bg-t-bg3 rounded-lg max-md:px-2"
               style={{ border: "1px solid var(--bdr)" }}>
               <div className="w-1.5 h-1.5 bg-t-green rounded-full animate-pulse-dot"
                 style={{ boxShadow: "0 0 6px var(--c-green)" }} />
               <span className="font-mono text-[11px] text-t-green-l font-semibold tracking-[.5px]">{timeStr}</span>
-              <div className="w-px h-3" style={{ background: "var(--bdr2)" }} />
-              <span className="text-[10px] text-t-txt3 hidden sm:inline">{dateStr}</span>
+              <span className="text-[10px] text-t-txt3 hidden sm:inline">
+                <span className="inline-block w-px h-3 mx-1.5" style={{ background: "var(--bdr2)" }} />
+                {dateStr}
+              </span>
             </div>
 
             <ThemeToggle />
