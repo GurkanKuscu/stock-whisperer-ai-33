@@ -10,6 +10,7 @@ import ArchiveTab from "@/components/tabs/ArchiveTab";
 import SectorsTab from "@/components/tabs/SectorsTab";
 import SearchTab from "@/components/tabs/SearchTab";
 import PortfolioTab from "@/components/tabs/PortfolioTab";
+import Footer from "@/components/Footer";
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState("sinyaller");
