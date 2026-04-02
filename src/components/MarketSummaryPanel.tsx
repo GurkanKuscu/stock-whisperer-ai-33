@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchMarket } from "@/services/api";
 
 const TABS = [
   { id: "endeks", icon: "📈", label: "Endeks & Döviz" },
@@ -6,7 +7,7 @@ const TABS = [
   { id: "matriks", icon: "📰", label: "Matriks Analiz" },
 ];
 
-const INDICES = [
+const INDICES_FALLBACK = [
   { name: "BIST100", value: "9,842.15", change: "+1.24%", pos: true },
   { name: "BIST30", value: "10,156.30", change: "+1.08%", pos: true },
   { name: "USD/TRY", value: "38.42", change: "+0.15%", pos: false },
@@ -33,6 +34,22 @@ const MATRIKS_NEWS = [
 
 export default function MarketSummaryPanel() {
   const [activeTab, setActiveTab] = useState("endeks");
+  const [indices, setIndices] = useState(INDICES_FALLBACK);
+
+  useEffect(() => {
+    fetchMarket()
+      .then(d => {
+        setIndices([
+          { name: "BIST100",    value: d.BIST100?.value?.toLocaleString("tr-TR") ?? "—", change: `${(d.BIST100?.change_pct ?? 0) >= 0 ? "+" : ""}${d.BIST100?.change_pct?.toFixed(2) ?? "0"}%`, pos: (d.BIST100?.change_pct ?? 0) >= 0 },
+          { name: "BIST30",     value: d.BIST30?.value?.toLocaleString("tr-TR") ?? "—",  change: `${(d.BIST30?.change_pct  ?? 0) >= 0 ? "+" : ""}${d.BIST30?.change_pct?.toFixed(2)  ?? "0"}%`, pos: (d.BIST30?.change_pct  ?? 0) >= 0 },
+          { name: "USD/TRY",    value: d.USDTRY?.value?.toFixed(2) ?? "—",               change: `${(d.USDTRY?.change_pct  ?? 0) >= 0 ? "+" : ""}${d.USDTRY?.change_pct?.toFixed(2)  ?? "0"}%`, pos: (d.USDTRY?.change_pct  ?? 0) >= 0 },
+          { name: "EUR/TRY",    value: d.EURTRY?.value?.toFixed(2) ?? "—",               change: `${(d.EURTRY?.change_pct  ?? 0) >= 0 ? "+" : ""}${d.EURTRY?.change_pct?.toFixed(2)  ?? "0"}%`, pos: (d.EURTRY?.change_pct  ?? 0) >= 0 },
+          { name: "Altın (gr)", value: d.ALTIN?.value?.toLocaleString("tr-TR") ?? "—",   change: `${(d.ALTIN?.change_pct   ?? 0) >= 0 ? "+" : ""}${d.ALTIN?.change_pct?.toFixed(2)   ?? "0"}%`, pos: (d.ALTIN?.change_pct   ?? 0) >= 0 },
+          { name: "Brent",      value: `$${d.BRENT?.value?.toFixed(2) ?? "—"}`,          change: `${(d.BRENT?.change_pct   ?? 0) >= 0 ? "+" : ""}${d.BRENT?.change_pct?.toFixed(2)   ?? "0"}%`, pos: (d.BRENT?.change_pct   ?? 0) >= 0 },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="mt-8 rounded-[22px] overflow-hidden"
@@ -63,7 +80,7 @@ export default function MarketSummaryPanel() {
       <div className="p-4 animate-fade-in">
         {activeTab === "endeks" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {INDICES.map(idx => (
+            {indices.map(idx => (
               <div key={idx.name} className="p-3.5 rounded-xl bg-t-bg3 border transition-colors hover:border-t-bg5"
                 style={{ borderColor: "var(--bdr)" }}>
                 <div className="text-[10px] text-t-txt3 font-semibold uppercase tracking-[.6px] mb-1.5">{idx.name}</div>

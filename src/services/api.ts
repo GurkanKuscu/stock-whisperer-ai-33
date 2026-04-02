@@ -32,8 +32,21 @@ export async function savePortfolioAPI(data: PortfolioMap): Promise<void> {
   });
 }
 
-export async function fetchStatus(): Promise<{ status: string }> {
+export async function fetchStatus(): Promise<{ last_tarama?: string; status?: string }> {
   const res = await fetch(`${API_BASE}/api/status`);
   if (!res.ok) throw new Error("Status fetch failed");
+  return res.json();
+}
+
+export async function fetchMarket(): Promise<Record<string, { value: number; change_pct: number }>> {
+  const res = await fetch(`${API_BASE}/api/market`);
+  if (!res.ok) throw new Error("Market fetch failed");
+  return res.json();
+}
+
+export async function fetchPrices(tickers: string[]): Promise<Record<string, number>> {
+  if (!tickers.length) return {};
+  const res = await fetch(`${API_BASE}/api/prices?tickers=${tickers.join(",")}`);
+  if (!res.ok) throw new Error("Prices fetch failed");
   return res.json();
 }

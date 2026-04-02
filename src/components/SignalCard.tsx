@@ -168,6 +168,47 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
             {stock.net_borc != null && <span>Net Borç: <strong className={stock.net_borc < 0 ? "text-t-green" : "text-t-red"}>{stock.net_borc > 0 ? "+" : ""}{(stock.net_borc / 1e9).toFixed(1)}B {stock.net_borc < 0 ? "✅" : "❌"}</strong></span>}
             {stock.fcf != null && <span>FCF: <strong className={stock.fcf > 0 ? "text-t-green" : "text-t-red"}>{stock.fcf > 0 ? "+" : ""}{(stock.fcf / 1e6).toFixed(0)}M {stock.fcf > 0 ? "✅" : "❌"}</strong></span>}
           </div>
+
+          {/* Skor Breakdown */}
+          {stock.breakdown && Object.keys(stock.breakdown).length > 0 && (
+            <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--bdr)" }}>
+              <div className="text-[9px] font-bold uppercase tracking-[.6px] text-t-txt3 mb-1.5">Skor Breakdown</div>
+              <div className="text-[10.5px] text-t-txt2 font-mono">
+                {Object.entries(stock.breakdown)
+                  .filter(([, v]) => v > 0)
+                  .map(([k, v]) => `${k}:+${v}`)
+                  .join(" · ")}
+              </div>
+            </div>
+          )}
+
+          {/* KAP Haberleri */}
+          {stock.kap_haberler && stock.kap_haberler.length > 0 && (
+            <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--bdr)" }}>
+              <div className="text-[9px] font-bold uppercase tracking-[.6px] text-t-txt3 mb-2">KAP Haberleri</div>
+              <div className="flex flex-col gap-1.5">
+                {stock.kap_haberler.map((h, i) => {
+                  const href = h.url ?? h.link;
+                  const content = (
+                    <div className="flex items-start gap-2 p-2 rounded-lg bg-t-bg4 hover:bg-t-bg5 transition-colors">
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5 text-t-blue-l"
+                        style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.2)" }}>
+                        {h.kaynak ?? "KAP"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] text-t-txt2 leading-relaxed">{h.baslik}</div>
+                        <div className="text-[9px] text-t-txt3 font-mono mt-0.5">{h.tarih}</div>
+                      </div>
+                      {href && <span className="text-[11px] text-t-blue-l shrink-0">↗</span>}
+                    </div>
+                  );
+                  return href
+                    ? <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="no-underline">{content}</a>
+                    : <div key={i}>{content}</div>;
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

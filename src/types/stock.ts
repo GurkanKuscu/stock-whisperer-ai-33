@@ -39,6 +39,9 @@ export interface StockData {
   kombine_karar?: string;
   // KAP
   kap_haberler?: KapHaber[];
+  breakdown?: Record<string, number>;
+  weekly_trend?: string;
+  kap_badge?: string;
   // Performance
   perf_1d?: number;
   perf_5d?: number;
@@ -51,6 +54,7 @@ export interface KapHaber {
   baslik: string;
   kaynak: string;
   tarih: string;
+  url?: string;
   link?: string;
 }
 

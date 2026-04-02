@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useAppData } from "@/context/AppContext";
+import { fetchStatus } from "@/services/api";
 import type { SnapshotData } from "@/types/stock";
 
 function getMarketStats(data: SnapshotData) {
@@ -20,7 +22,13 @@ function getMarketStats(data: SnapshotData) {
 }
 
 export default function MarketBar() {
-  const { data, loading } = useAppData();
+  const { data, loading, isMockMode } = useAppData();
+  const [lastTarama, setLastTarama] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchStatus().then(d => setLastTarama(d.last_tarama ?? null)).catch(() => {});
+  }, []);
+
   if (loading) return (
     <div className="bg-t-card rounded-2xl mb-5 overflow-hidden relative" style={{ border: "1px solid var(--bdr)", boxShadow: "0 1px 24px rgba(0,0,0,.3)" }}>
       <div className="p-6 text-center text-t-txt3">Veriler yükleniyor...</div>
@@ -45,6 +53,12 @@ export default function MarketBar() {
           style={{ background: sentBg, border: `1px solid ${sentBdr}`, color: sentColor }}>
           {stats.sentimentLabel}
         </span>
+        {isMockMode && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-[.8px]"
+            style={{ background: "var(--warn-bg)", border: "1px solid var(--warn-bdr)", color: "var(--c-warn)" }}>
+            ⚠️ Demo Mod
+          </span>
+        )}
         <span className="font-mono text-[12px] font-semibold text-t-txt2">{stats.sentimentSub}</span>
         <div className="flex items-center gap-4 text-[11px] text-t-txt3">
           <span>Taranan: <strong className="text-t-txt2">{stats.total}</strong></span>
@@ -80,7 +94,11 @@ export default function MarketBar() {
         <div className="grid grid-cols-2 gap-px" style={{ background: "var(--bdr)" }}>
           <StatBox value={stats.confirmed.toString()} label="✅ Onaylı" cls={stats.confirmed > 0 ? "text-t-green" : ""} />
           <StatBox value={stats.pending.toString()} label="⏳ Bekleyen" cls={stats.pending > 0 ? "text-t-warn" : ""} />
-          <StatBox value={`${stats.total} hisse tarandı`} label="Son güncelleme" small />
+          <StatBox
+            value={lastTarama ? `🕐 ${lastTarama}` : `${stats.total} hisse`}
+            label="Son Tarama"
+            small
+          />
         </div>
       </div>
     </div>
