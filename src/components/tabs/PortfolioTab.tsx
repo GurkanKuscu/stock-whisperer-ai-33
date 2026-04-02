@@ -1,13 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
+import { fetchPrices } from "@/services/api";
 
 export default function PortfolioTab() {
   const { data, portfolios, setPortfolios } = useAppData();
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
 
   const pIds = Object.keys(portfolios);
+
+  useEffect(() => {
+    const allTickers = Object.values(portfolios).flatMap(p => p.stocks.map(s => s.ticker));
+    const unique = [...new Set(allTickers)];
+    if (!unique.length) return;
+    const fetchLive = () => {
+      fetchPrices(unique).then(setLivePrices).catch(() => {});
+    };
+    fetchLive();
+    const interval = setInterval(fetchLive, 15 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [portfolios]);
 
   const createPortfolio = () => {
     if (!newName.trim()) return;
@@ -35,19 +49,22 @@ export default function PortfolioTab() {
   };
 
   const getStockPnl = (ticker: string, entryPrice: number) => {
-    const current = data[ticker]?.close;
-    if (!current) return { pnl: 0, pnlPct: 0, currentPrice: entryPrice };
+    const current = livePrices[ticker] ?? data[ticker]?.close ?? entryPrice;
     const pnl = current - entryPrice;
-    const pnlPct = (pnl / entryPrice) * 100;
+    const pnlPct = entryPrice > 0 ? (pnl / entryPrice) * 100 : 0;
     return { pnl, pnlPct, currentPrice: current };
   };
 
   const getPortfolioPnl = (pId: string) => {
     const stocks = portfolios[pId].stocks;
     if (!stocks.length) return 0;
-    let totalPnl = 0;
-    stocks.forEach(s => { totalPnl += getStockPnl(s.ticker, s.price).pnlPct; });
-    return totalPnl / stocks.length;
+    let totalCost = 0, totalCurrent = 0;
+    stocks.forEach(s => {
+      const { currentPrice } = getStockPnl(s.ticker, s.price);
+      totalCost += s.price;
+      totalCurrent += currentPrice;
+    });
+    return totalCost > 0 ? ((totalCurrent - totalCost) / totalCost) * 100 : 0;
   };
 
   return (

@@ -4,7 +4,7 @@ export default function FundamentalTab() {
   const { data } = useAppData();
   const tickers = Object.keys(data)
     .filter(t => data[t].temel_puan != null)
-    .sort((a, b) => (data[b].temel_puan ?? 0) - (data[a].temel_puan ?? 0));
+    .sort((a, b) => data[b].score - data[a].score);
 
   return (
     <div>
@@ -16,53 +16,58 @@ export default function FundamentalTab() {
           <div className="text-[14px] font-bold text-t-txt2">Temel analiz verisi yok</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {tickers.slice(0, 30).map(ticker => {
-            const s = data[ticker];
-            return (
-              <div key={ticker} className="bg-t-card rounded-2xl overflow-hidden transition-all hover:shadow-t-sm"
-                style={{ border: "1px solid var(--bdr)" }}>
-                <div className="flex justify-between items-center p-[16px_20px] bg-t-bg2" style={{ borderBottom: "1px solid var(--bdr)" }}>
-                  <div>
-                    <div className="font-syne text-[18px] font-extrabold text-t-txt">{ticker}</div>
-                    <div className="text-[10px] text-t-txt3 mt-[2px]">{s.sector_name}</div>
-                  </div>
-                  <div className="font-mono text-[16px] font-bold text-t-txt">{s.close?.toFixed(2)} ₺</div>
-                </div>
-                <div className="p-[16px_20px]">
-                  {s.fk != null && <FundRow k="F/K" v={s.fk.toFixed(1)} cls={s.fk < 15 ? "text-t-green" : s.fk > 25 ? "text-t-red" : "text-t-warn"} />}
-                  {s.pddd != null && <FundRow k="PD/DD" v={s.pddd.toFixed(2)} cls={s.pddd < 1 ? "text-t-green" : "text-t-red"} />}
-                  {s.fd_favok != null && <FundRow k="FD/FAVÖK" v={s.fd_favok.toFixed(1)} cls={s.fd_favok > 0 && s.fd_favok < 10 ? "text-t-green" : "text-t-red"} />}
-                  {s.roe != null && <FundRow k="ROE" v={`%${s.roe.toFixed(1)}`} cls={s.roe > 10 ? "text-t-green" : s.roe > 0 ? "text-t-warn" : "text-t-red"} />}
-                  {s.net_borc != null && <FundRow k="Net Borç" v={`${(s.net_borc / 1e9).toFixed(1)}B`} cls={s.net_borc < 0 ? "text-t-green" : "text-t-red"} />}
-                  {s.fcf != null && <FundRow k="FCF" v={`${(s.fcf / 1e6).toFixed(0)}M`} cls={s.fcf > 0 ? "text-t-green" : "text-t-red"} />}
-                  {s.temel_puan != null && (
-                    <div className="mt-3">
-                      <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px] mb-[7px]">Temel Puan</div>
-                      <div className="h-[4px] bg-t-bg4 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{
-                          width: `${s.temel_puan}%`,
-                          background: s.temel_puan > 60 ? "var(--c-green)" : s.temel_puan > 30 ? "var(--c-warn)" : "var(--c-red)"
-                        }} />
-                      </div>
-                      <div className="font-mono text-[13px] font-bold text-t-txt mt-1">{s.temel_puan}/100</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid var(--bdr)" }}>
+          <table className="w-full text-[12px] border-collapse min-w-[700px]">
+            <thead>
+              <tr className="bg-t-bg3">
+                {["Hisse", "Skor", "T.Puan", "F/K", "PD/DD", "FD/FAVÖK", "ROE", "Karar"].map((h, i) => (
+                  <th key={i} className="p-[10px_14px] text-left text-[10px] text-t-txt3 font-semibold uppercase tracking-[.6px]"
+                    style={{ borderBottom: "1px solid var(--bdr)" }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tickers.map((ticker, i) => {
+                const s = data[ticker];
+                return (
+                  <tr key={ticker} className="hover:bg-t-bg3 transition-colors"
+                    style={{ borderBottom: i < tickers.length - 1 ? "1px solid var(--bdr)" : "none" }}>
+                    <td className="p-[10px_14px]">
+                      <div className="font-syne font-extrabold text-[13px] text-t-txt">{ticker}</div>
+                      <div className="text-[9px] text-t-txt3 mt-0.5">{s.sector_name}</div>
+                    </td>
+                    <td className="p-[10px_14px] font-mono font-bold text-t-txt">{s.score}</td>
+                    <td className="p-[10px_14px]">
+                      <span className={`font-mono font-bold ${(s.temel_puan ?? 0) >= 60 ? "text-t-green" : (s.temel_puan ?? 0) >= 30 ? "text-t-warn" : "text-t-red"}`}>
+                        {s.temel_puan ?? "—"}
+                      </span>
+                    </td>
+                    <td className="p-[10px_14px]">
+                      <span className={`font-mono ${s.fk != null ? (s.fk < 15 ? "text-t-green" : s.fk > 25 ? "text-t-red" : "text-t-warn") : "text-t-txt3"}`}>
+                        {s.fk?.toFixed(1) ?? "—"}
+                      </span>
+                    </td>
+                    <td className="p-[10px_14px]">
+                      <span className="font-mono text-t-txt2">
+                        {s.pddd?.toFixed(2) ?? "—"}
+                      </span>
+                    </td>
+                    <td className="p-[10px_14px] font-mono text-t-txt2">{s.fd_favok?.toFixed(1) ?? "—"}</td>
+                    <td className="p-[10px_14px]">
+                      <span className={`font-mono font-bold ${(s.roe ?? 0) > 10 ? "text-t-green" : (s.roe ?? 0) > 0 ? "text-t-warn" : "text-t-red"}`}>
+                        {s.roe != null ? `%${s.roe.toFixed(1)}` : "—"}
+                      </span>
+                    </td>
+                    <td className="p-[10px_14px] text-[11px] font-semibold text-t-txt2">{s.kombine_karar ?? "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
-    </div>
-  );
-}
-
-function FundRow({ k, v, cls }: { k: string; v: string; cls: string }) {
-  return (
-    <div className="flex justify-between py-1.5" style={{ borderBottom: "1px solid var(--bdr)" }}>
-      <span className="text-[11.5px] text-t-txt3">{k}</span>
-      <span className={`text-[11.5px] font-bold font-mono ${cls}`}>{v}</span>
     </div>
   );
 }
