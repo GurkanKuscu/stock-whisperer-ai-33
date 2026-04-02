@@ -54,6 +54,7 @@ export interface KapHaber {
   baslik: string;
   kaynak: string;
   tarih: string;
+  url?: string;
   link?: string;
 }
 

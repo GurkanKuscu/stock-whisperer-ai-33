@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 import type { SnapshotData, PortfolioMap } from "@/types/stock";
-import { fetchSnapshot, fetchPortfolio, savePortfolioAPI } from "@/services/api";
+import { fetchSnapshot, fetchPortfolio, savePortfolioAPI, fetchStatus, fetchPrices } from "@/services/api";
 import { MOCK_DATA } from "@/data/mockData";
 
 interface AppContextType {
@@ -10,6 +10,7 @@ interface AppContextType {
   portfolios: PortfolioMap;
   setPortfolios: (p: PortfolioMap) => void;
   refresh: () => void;
+  isMockMode: boolean;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -19,6 +20,7 @@ const AppContext = createContext<AppContextType>({
   portfolios: {},
   setPortfolios: () => {},
   refresh: () => {},
+  isMockMode: false,
 });
 
 export const useAppData = () => useContext(AppContext);
@@ -37,23 +39,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [portfolios, setPortfoliosState] = useState<PortfolioMap>(loadLocalPortfolios);
+  const [isMockMode, setIsMockMode] = useState(false);
+  const lastTaramaRef = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const snap = await fetchSnapshot();
+      try {
+        const tickers = Object.keys(snap);
+        if (tickers.length > 0) {
+          const prices = await fetchPrices(tickers);
+          tickers.forEach(t => {
+            if (prices[t] && prices[t] > 0) snap[t].close = prices[t];
+          });
+        }
+      } catch {}
       setData(snap);
+      setIsMockMode(false);
     } catch (e: any) {
-      // Fallback to mock data when API is unavailable
       console.warn("API unavailable, using mock data:", e.message);
       setData(MOCK_DATA);
+      setIsMockMode(true);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+    const dataInterval = setInterval(loadData, 5 * 60 * 1000);
+    const statusInterval = setInterval(async () => {
+      try {
+        const status = await fetchStatus();
+        const newTarama = status.last_tarama ?? null;
+        if (newTarama && newTarama !== lastTaramaRef.current) {
+          lastTaramaRef.current = newTarama;
+          loadData();
+        }
+      } catch {}
+    }, 60 * 1000);
+    return () => {
+      clearInterval(dataInterval);
+      clearInterval(statusInterval);
+    };
+  }, [loadData]);
 
   // Load portfolios from API, fallback to localStorage
   useEffect(() => {
@@ -69,7 +100,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AppContext.Provider value={{ data, loading, error, portfolios, setPortfolios, refresh: loadData }}>
+    <AppContext.Provider value={{ data, loading, error, portfolios, setPortfolios, refresh: loadData, isMockMode }}>
       {children}
     </AppContext.Provider>
   );
