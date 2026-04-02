@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { StockData, PortfolioMap } from "@/types/stock";
 import { useAppData } from "@/context/AppContext";
+import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
 
 interface SignalCardProps {
   ticker: string;
@@ -71,7 +72,7 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
           <div className="font-syne text-[24px] font-extrabold tracking-[-0.5px] leading-none text-t-txt">{ticker}</div>
           <div className="flex items-center gap-[7px] text-[11px]">
             <span className="text-t-txt2 font-medium">{stock.sector_name}</span>
-            <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{stock.signal}</span>
+            <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{tr(SIGNAL_TR, stock.signal)}</span>
           </div>
           {badges.length > 0 && (
             <div className="flex gap-[5px] mt-1 flex-wrap">
@@ -121,7 +122,7 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
       <div className="grid grid-cols-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
         <div className="p-[12px_16px]" style={{ borderRight: "1px solid var(--bdr)" }}>
           <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px] mb-2">Smart$ & Teknik</div>
-          <MetricRow k="Smart Money" v={stock.smart_money} />
+          <MetricRow k="Smart Money" v={tr(SMART_MONEY_TR, stock.smart_money)} />
           <MetricRow k="Squeeze" v={stock.squeeze} />
           <MetricRow k="Pump%" v={stock.pump} />
         </div>
