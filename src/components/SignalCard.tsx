@@ -122,7 +122,7 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
       <div className="grid grid-cols-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
         <div className="p-[12px_16px]" style={{ borderRight: "1px solid var(--bdr)" }}>
           <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px] mb-2">Smart$ & Teknik</div>
-          <MetricRow k="Smart Money" v={stock.smart_money} />
+          <MetricRow k="Smart Money" v={tr(SMART_MONEY_TR, stock.smart_money)} />
           <MetricRow k="Squeeze" v={stock.squeeze} />
           <MetricRow k="Pump%" v={stock.pump} />
         </div>
