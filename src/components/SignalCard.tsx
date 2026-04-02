@@ -72,7 +72,7 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
           <div className="font-syne text-[24px] font-extrabold tracking-[-0.5px] leading-none text-t-txt">{ticker}</div>
           <div className="flex items-center gap-[7px] text-[11px]">
             <span className="text-t-txt2 font-medium">{stock.sector_name}</span>
-            <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{stock.signal}</span>
+            <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{tr(SIGNAL_TR, stock.signal)}</span>
           </div>
           {badges.length > 0 && (
             <div className="flex gap-[5px] mt-1 flex-wrap">
