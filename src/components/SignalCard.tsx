@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { StockData, PortfolioMap } from "@/types/stock";
 import { useAppData } from "@/context/AppContext";
+import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
 
 interface SignalCardProps {
   ticker: string;
