@@ -3,7 +3,7 @@ import { useAppData } from "@/context/AppContext";
 export default function FundamentalTab() {
   const { data } = useAppData();
   const tickers = Object.keys(data)
-    .filter(t => data[t].temel_puan != null)
+    .filter(t => data[t].fk != null || data[t].pddd != null || data[t].roe != null)
     .sort((a, b) => data[b].score - data[a].score);
 
   return (
@@ -13,7 +13,7 @@ export default function FundamentalTab() {
       {tickers.length === 0 ? (
         <div className="p-[60px_20px] text-center text-t-txt3">
           <div className="text-[44px] mb-3 opacity-50">📊</div>
-          <div className="text-[14px] font-bold text-t-txt2">Temel analiz verisi yok</div>
+          <div className="text-[14px] font-bold text-t-txt2">Temel analiz verisi olan hisse bulunamadı</div>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid var(--bdr)" }}>

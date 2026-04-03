@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAppData } from "@/context/AppContext";
+import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
 
 export default function SearchTab() {
   const { data } = useAppData();
@@ -81,7 +82,7 @@ export default function SearchTab() {
           <div className="p-[20px_24px] flex justify-between items-center flex-wrap gap-3" style={{ borderBottom: "1px solid var(--bdr)" }}>
             <div>
               <div className="font-syne text-[26px] font-extrabold tracking-[-0.5px] text-t-txt">{result.ticker}</div>
-              <div className="text-[12px] text-t-txt2 mt-1">{result.stock.sector_name} · {result.stock.signal}</div>
+              <div className="text-[12px] text-t-txt2 mt-1">{result.stock.sector_name} · {tr(SIGNAL_TR, result.stock.signal)}</div>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
@@ -99,20 +100,27 @@ export default function SearchTab() {
             <div className="p-[18px]" style={{ borderRight: "1px solid var(--bdr)" }}>
               <div className="text-[9px] font-bold uppercase tracking-[.7px] text-t-txt3 mb-3.5">Teknik Göstergeler</div>
               <SRRow k="RSI" v={result.stock.rsi.toString()} cls={result.stock.rsi < 45 ? "text-t-green" : result.stock.rsi < 65 ? "text-t-warn" : "text-t-red"} />
-              <SRRow k="Smart Money" v={result.stock.smart_money} />
+              <SRRow k="Smart Money" v={tr(SMART_MONEY_TR, result.stock.smart_money)} />
               <SRRow k="Squeeze" v={result.stock.squeeze} />
-              <SRRow k="Trend" v={result.stock.trend} cls="text-t-green" />
+              <SRRow k="Trend" v={tr(TREND_TR, result.stock.trend)} cls="text-t-green" />
               <SRRow k="Stop Loss" v={`${result.stock.stop_loss.toFixed(2)} ₺`} cls="text-t-red" />
               <SRRow k="Hedef" v={`${result.stock.target.toFixed(2)} ₺`} cls="text-t-green" />
             </div>
             <div className="p-[18px]">
               <div className="text-[9px] font-bold uppercase tracking-[.7px] text-t-txt3 mb-3.5">Temel Göstergeler</div>
-              {result.stock.fk != null && <SRRow k="F/K" v={result.stock.fk.toFixed(1)} cls={result.stock.fk < 15 ? "text-t-green" : "text-t-red"} />}
-              {result.stock.pddd != null && <SRRow k="PD/DD" v={result.stock.pddd.toFixed(2)} cls={result.stock.pddd < 1 ? "text-t-green" : "text-t-red"} />}
-              {result.stock.fd_favok != null && <SRRow k="FD/FAVÖK" v={result.stock.fd_favok.toFixed(1)} />}
-              {result.stock.roe != null && <SRRow k="ROE" v={`%${result.stock.roe.toFixed(1)}`} />}
-              {result.stock.net_borc != null && <SRRow k="Net Borç" v={`${(result.stock.net_borc / 1e9).toFixed(1)}B`} cls={result.stock.net_borc < 0 ? "text-t-green" : "text-t-red"} />}
-              {result.stock.fcf != null && <SRRow k="FCF" v={`${(result.stock.fcf / 1e6).toFixed(0)}M`} cls={result.stock.fcf > 0 ? "text-t-green" : "text-t-red"} />}
+              {(result.stock.fk != null || result.stock.pddd != null || result.stock.roe != null || result.stock.fd_favok != null || result.stock.net_borc != null || result.stock.temel_puan != null) ? (
+                <>
+                  <SRRow k="F/K" v={result.stock.fk?.toFixed(1) ?? "—"} cls={result.stock.fk != null ? (result.stock.fk < 15 ? "text-t-green" : "text-t-red") : ""} />
+                  <SRRow k="PD/DD" v={result.stock.pddd?.toFixed(2) ?? "—"} cls={result.stock.pddd != null ? (result.stock.pddd < 1 ? "text-t-green" : "text-t-red") : ""} />
+                  <SRRow k="FD/FAVÖK" v={result.stock.fd_favok?.toFixed(1) ?? "—"} />
+                  <SRRow k="ROE" v={result.stock.roe != null ? `%${result.stock.roe.toFixed(1)}` : "—"} />
+                  <SRRow k="Net Borç" v={result.stock.net_borc != null ? `${(result.stock.net_borc / 1e9).toFixed(1)}B` : "—"} cls={result.stock.net_borc != null ? (result.stock.net_borc < 0 ? "text-t-green" : "text-t-red") : ""} />
+                  <SRRow k="Temel Puan" v={result.stock.temel_puan?.toString() ?? "—"} cls={result.stock.temel_puan != null ? ((result.stock.temel_puan ?? 0) >= 60 ? "text-t-green" : (result.stock.temel_puan ?? 0) >= 30 ? "text-t-warn" : "text-t-red") : ""} />
+                  <SRRow k="Kombine Karar" v={result.stock.kombine_karar ?? "—"} />
+                </>
+              ) : (
+                <div className="text-[11px] text-t-txt3 py-4 text-center">Bu hisse için temel veri bulunamadı</div>
+              )}
             </div>
           </div>
 

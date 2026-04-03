@@ -9,7 +9,9 @@ export const SIGNAL_TR: Record<string, string> = {
   "REVERSAL":                  "GERİ DÖNÜŞ",
   "SQUEEZE SETUP":             "SIKIŞTIRMA HAZIRLIĞI",
   "WATCHLIST":                 "İZLEME",
+  "WATCHLIST CANDIDATE":       "İZLEME ADAYI",
   "TREND FOLLOWING":           "TREND TAKİBİ",
+  "WEAK SETUP":                "ZAYIF KURULUM",
 };
 
 export const SMART_MONEY_TR: Record<string, string> = {
@@ -30,6 +32,7 @@ export const TREND_TR: Record<string, string> = {
   "Strong Bear": "Güçlü Ayı",
   "Weak Bull":   "Zayıf Boğa",
   "Weak Bear":   "Zayıf Ayı",
+  "Moderate":    "Orta",
 };
 
 export function tr(map: Record<string, string>, key: string): string {

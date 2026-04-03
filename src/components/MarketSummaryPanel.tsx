@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { fetchMarket } from "@/services/api";
+import { useAppData } from "@/context/AppContext";
 
 const TABS = [
   { id: "endeks", icon: "📈", label: "Endeks & Döviz" },
   { id: "kap", icon: "📋", label: "KAP Duyuruları" },
-  { id: "matriks", icon: "📰", label: "Matriks Analiz" },
 ];
 
 const INDICES_FALLBACK = [
@@ -16,23 +16,8 @@ const INDICES_FALLBACK = [
   { name: "Brent", value: "$74.20", change: "-0.32%", pos: false },
 ];
 
-const KAP_NEWS = [
-  { ticker: "THYAO", title: "Yönetim Kurulu Kararı — 2026 Yılı Kar Dağıtım Teklifi", date: "31 Mar 2026", src: "KAP" },
-  { ticker: "ASELS", title: "Yeni savunma ihracat sözleşmesi imzalandı — 1.2B USD", date: "30 Mar 2026", src: "KAP" },
-  { ticker: "EREGL", title: "2025/12 Dönem Finansal Tabloları Açıklandı", date: "29 Mar 2026", src: "KAP" },
-  { ticker: "SISE", title: "Bağlı Ortaklık Pay Satış İşlemi Tamamlandı", date: "29 Mar 2026", src: "KAP" },
-  { ticker: "BIMAS", title: "Genel Kurul Toplantı Sonucu — Temettü Onayı", date: "28 Mar 2026", src: "KAP" },
-];
-
-const MATRIKS_NEWS = [
-  { title: "BIST100 teknik görünüm: 10.000 direnci test ediliyor", src: "Matriks", date: "31 Mar 2026" },
-  { title: "Bankacılık sektöründe bilanço dönemine giriş analizi", src: "Matriks", date: "30 Mar 2026" },
-  { title: "Altın rallisi devam eder mi? — Teknik ve makro analiz", src: "Matriks", date: "30 Mar 2026" },
-  { title: "Savunma sektörü: İhracat odaklı büyüme hikayesi", src: "Matriks", date: "29 Mar 2026" },
-  { title: "Döviz kurlarında beklentiler ve TCMB faiz kararı etkisi", src: "Matriks", date: "28 Mar 2026" },
-];
-
 export default function MarketSummaryPanel() {
+  const { data } = useAppData();
   const [activeTab, setActiveTab] = useState("endeks");
   const [indices, setIndices] = useState(INDICES_FALLBACK);
 
@@ -50,6 +35,13 @@ export default function MarketSummaryPanel() {
       })
       .catch(() => {});
   }, []);
+
+  const kapNews = Object.entries(data)
+    .flatMap(([ticker, stock]) =>
+      (stock.kap_haberler ?? []).map(h => ({ ...h, ticker }))
+    )
+    .sort((a, b) => b.tarih.localeCompare(a.tarih))
+    .slice(0, 20);
 
   return (
     <div className="mt-8 rounded-[22px] overflow-hidden"
@@ -93,37 +85,34 @@ export default function MarketSummaryPanel() {
 
         {activeTab === "kap" && (
           <div className="flex flex-col gap-2">
-            {KAP_NEWS.map((n, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-t-bg3 border"
-                style={{ borderColor: "var(--bdr)" }}>
-                <span className="font-mono text-[11.5px] font-bold px-2 py-0.5 rounded bg-t-bg4 text-t-gold-l shrink-0 mt-0.5"
-                  style={{ border: "1px solid var(--bdr2)" }}>{n.ticker}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] text-t-txt2 leading-relaxed">{n.title}</div>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-t-blue-l"
-                      style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.2)" }}>{n.src}</span>
-                    <span className="text-[10px] text-t-txt3 font-mono">{n.date}</span>
+            {kapNews.length === 0 ? (
+              <div className="p-8 text-center text-t-txt3 text-[12px]">KAP haberi bulunamadı</div>
+            ) : (
+              kapNews.map((n, i) => {
+                const href = n.url ?? n.link;
+                return (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-t-bg3 border"
+                    style={{ borderColor: "var(--bdr)" }}>
+                    <span className="font-mono text-[11.5px] font-bold px-2 py-0.5 rounded bg-t-bg4 text-t-gold-l shrink-0 mt-0.5"
+                      style={{ border: "1px solid var(--bdr2)" }}>{n.ticker}</span>
+                    <div className="flex-1 min-w-0">
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-[12px] text-t-txt2 leading-relaxed hover:text-t-txt transition-colors no-underline">
+                          {n.baslik} ↗
+                        </a>
+                      ) : (
+                        <div className="text-[12px] text-t-txt2 leading-relaxed">{n.baslik}</div>
+                      )}
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-t-blue-l"
+                          style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.2)" }}>{n.kaynak}</span>
+                        <span className="text-[10px] text-t-txt3 font-mono">{n.tarih}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === "matriks" && (
-          <div className="flex flex-col gap-2">
-            {MATRIKS_NEWS.map((n, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-t-bg3 border"
-                style={{ borderColor: "var(--bdr)" }}>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5"
-                  style={{ background: "var(--purple-bg)", color: "#C4A8FF", border: "1px solid rgba(139,103,229,.2)" }}>{n.src}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] text-t-txt2 leading-relaxed">{n.title}</div>
-                  <span className="text-[10px] text-t-txt3 font-mono mt-1 inline-block">{n.date}</span>
-                </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchArsiv, getDownloadUrl } from "@/services/api";
+import { fetchArsiv, getDownloadUrl, fetchSinyalArsiv, deleteSinyalArsiv } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
 import type { ArsivFile } from "@/types/stock";
 
@@ -8,6 +8,21 @@ interface ManualFile {
   size: string;
   date: string;
   url: string;
+}
+
+interface SinyalRecord {
+  hisse: string;
+  tarih: string;
+  saat: string;
+  skor: number;
+  giris: number;
+  hedef: number;
+  stop: number;
+  sektor: string;
+  fk?: number;
+  temel_puan?: number;
+  kombine_karar?: string;
+  durum: string;
 }
 
 const STORAGE_KEY = "bisthinker-manual-files";
@@ -24,39 +39,37 @@ export default function ArchiveTab() {
   const [loading, setLoading] = useState(true);
   const [manualFiles, setManualFiles] = useState<ManualFile[]>(loadManualFiles);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sinyalArsiv, setSinyalArsiv] = useState<Record<string, SinyalRecord>>({});
+  const [sinyalLoading, setSinyalLoading] = useState(true);
 
   useEffect(() => {
     fetchArsiv()
       .then(setArsivFiles)
       .catch(() => {})
       .finally(() => setLoading(false));
+    fetchSinyalArsiv()
+      .then(setSinyalArsiv)
+      .catch(() => {})
+      .finally(() => setSinyalLoading(false));
   }, []);
-
-  const signalHistory = Object.entries(data)
-    .filter(([, s]) => s.confirmed)
-    .sort(([, a], [, b]) => b.score - a.score)
-    .slice(0, 20);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     const newFiles: ManualFile[] = [];
     Array.from(files).forEach(file => {
-      const url = URL.createObjectURL(file);
-      const sizeKB = (file.size / 1024).toFixed(0);
       const size = file.size > 1024 * 1024
         ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-        : `${sizeKB} KB`;
+        : `${(file.size / 1024).toFixed(0)} KB`;
       newFiles.push({
         name: file.name,
         size,
         date: new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" }),
-        url,
+        url: URL.createObjectURL(file),
       });
     });
     const updated = [...manualFiles, ...newFiles];
     setManualFiles(updated);
-    // Save metadata (not blob URLs — they expire on reload, but names/dates persist)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -67,6 +80,21 @@ export default function ArchiveTab() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
+  const handleDeleteSinyal = async (key: string) => {
+    try {
+      await deleteSinyalArsiv(key);
+      const copy = { ...sinyalArsiv };
+      delete copy[key];
+      setSinyalArsiv(copy);
+    } catch {}
+  };
+
+  const sinyalEntries = Object.entries(sinyalArsiv).sort(([, a], [, b]) => {
+    const dateA = a.tarih.split('.').reverse().join('-') + 'T' + (a.saat || '00:00');
+    const dateB = b.tarih.split('.').reverse().join('-') + 'T' + (b.saat || '00:00');
+    return dateB.localeCompare(dateA);
+  });
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-[18px] mt-8">
@@ -74,47 +102,114 @@ export default function ArchiveTab() {
           style={{ border: "1px solid var(--bdr)" }}>📋</div>
         <div>
           <h2 className="font-syne text-[15px] font-bold text-t-txt">Arşiv</h2>
-          <p className="text-[11px] text-t-txt3 mt-[1px]">Sinyal geçmişi ve tarama dosyaları</p>
+          <p className="text-[11px] text-t-txt3 mt-[1px]">Sinyal arşivi ve tarama dosyaları</p>
         </div>
       </div>
 
-      {/* Signal History */}
+      {/* Sinyal Arşivi */}
       <div className="bg-t-card rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--bdr)" }}>
         <div className="p-[13px_20px] bg-t-bg2" style={{ borderBottom: "1px solid var(--bdr)" }}>
-          <h3 className="font-syne text-[13px] font-bold text-t-txt">Sinyal Geçmişi</h3>
+          <h3 className="font-syne text-[13px] font-bold text-t-txt">⚡ Sinyal Arşivi</h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-t-bg2">
-                <th className="p-[9px_14px] text-[9.5px] font-bold uppercase tracking-[.6px] text-t-txt3 text-left" style={{ borderBottom: "1px solid var(--bdr)" }}>Hisse</th>
-                <th className="p-[9px_14px] text-[9.5px] font-bold uppercase tracking-[.6px] text-t-txt3 text-left" style={{ borderBottom: "1px solid var(--bdr)" }}>Skor</th>
-                <th className="p-[9px_14px] text-[9.5px] font-bold uppercase tracking-[.6px] text-t-txt3 text-left" style={{ borderBottom: "1px solid var(--bdr)" }}>Giriş</th>
-                <th className="p-[9px_14px] text-[9.5px] font-bold uppercase tracking-[.6px] text-t-txt3 text-left" style={{ borderBottom: "1px solid var(--bdr)" }}>Hedef</th>
-                <th className="p-[9px_14px] text-[9.5px] font-bold uppercase tracking-[.6px] text-t-txt3 text-left" style={{ borderBottom: "1px solid var(--bdr)" }}>Sektör</th>
-                <th className="p-[9px_14px] text-[9.5px] font-bold uppercase tracking-[.6px] text-t-txt3 text-left" style={{ borderBottom: "1px solid var(--bdr)" }}>Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {signalHistory.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-t-txt3 text-[12px]">Geçmiş sinyal yok</td></tr>
-              ) : (
-                signalHistory.map(([ticker, s]) => (
-                  <tr key={ticker} className="hover:bg-t-bg3 transition-colors">
-                    <td className="p-[10px_14px] text-[12px] text-t-txt font-bold font-mono" style={{ borderBottom: "1px solid var(--bdr)" }}>{ticker}</td>
-                    <td className="p-[10px_14px] text-[12px] font-mono font-bold text-t-txt" style={{ borderBottom: "1px solid var(--bdr)" }}>{s.score}</td>
-                    <td className="p-[10px_14px] text-[12px] text-t-txt2 font-mono" style={{ borderBottom: "1px solid var(--bdr)" }}>{s.close.toFixed(2)} ₺</td>
-                    <td className="p-[10px_14px] text-[12px] text-t-green font-mono font-bold" style={{ borderBottom: "1px solid var(--bdr)" }}>{s.target.toFixed(2)} ₺</td>
-                    <td className="p-[10px_14px] text-[12px] text-t-txt2" style={{ borderBottom: "1px solid var(--bdr)" }}>{s.sector_name}</td>
-                    <td className="p-[10px_14px] text-[12px]" style={{ borderBottom: "1px solid var(--bdr)" }}>
-                      <span className="text-t-green font-bold">✅ Onaylı</span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {sinyalLoading ? (
+          <div className="p-8 text-center text-t-txt3 text-[12px]">Yükleniyor...</div>
+        ) : sinyalEntries.length === 0 ? (
+          <div className="p-8 text-center text-t-txt3">
+            <div className="text-[32px] mb-2 opacity-40">📋</div>
+            <div className="text-[12px] font-semibold text-t-txt2 mb-1">Henüz onaylı sinyal arşivi yok</div>
+            <div className="text-[10px]">Taramalar sonrası otomatik dolacak.</div>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {sinyalEntries.map(([key, rec]) => {
+              const currentPrice = data[rec.hisse]?.close ?? rec.giris;
+              const pnlPct = ((currentPrice - rec.giris) / rec.giris) * 100;
+              const pnlTL = currentPrice - rec.giris;
+              const gunFarki = Math.floor((Date.now() - new Date(rec.tarih.split('.').reverse().join('-')).getTime()) / 86400000);
+
+              let durum = "AÇIK 🔄";
+              if (currentPrice >= rec.hedef) durum = "HEDEF TUTTU ✅";
+              if (currentPrice <= rec.stop) durum = "STOP OLDU ❌";
+
+              const sureMetni = durum === "AÇIK 🔄"
+                ? gunFarki + " gündür aktif"
+                : durum === "HEDEF TUTTU ✅"
+                ? gunFarki + " günde başarıldı"
+                : gunFarki + " günde stop oldu";
+
+              const range = rec.hedef - rec.stop;
+              const currentPos = range > 0 ? Math.max(0, Math.min(100, ((currentPrice - rec.stop) / range) * 100)) : 50;
+              const entryPos = range > 0 ? Math.max(0, Math.min(100, ((rec.giris - rec.stop) / range) * 100)) : 50;
+
+              return (
+                <div key={key} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
+                  {/* Top */}
+                  <div className="p-[12px_16px] flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-syne text-[16px] font-extrabold text-t-txt">{rec.hisse}</span>
+                      <span className="text-[10px] text-t-txt3">{rec.sektor}</span>
+                      <span className="text-[10px] text-t-txt3 font-mono">{rec.tarih} {rec.saat}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[14px] font-bold text-t-txt bg-t-bg4 px-2 py-0.5 rounded"
+                        style={{ border: "1px solid var(--bdr2)" }}>{rec.skor}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        durum.includes("HEDEF") ? "bg-[var(--green-bg)] text-t-green border border-[var(--green-bdr)]" :
+                        durum.includes("STOP") ? "bg-[var(--red-bg)] text-t-red border border-[var(--red-bdr)]" :
+                        "bg-[var(--blue-bg)] text-t-blue-l border border-[rgba(59,130,246,.2)]"
+                      }`}>{durum}</span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="p-[12px_16px]">
+                    <div className="flex items-center gap-2 text-[10px] text-t-txt3 mb-1.5">
+                      <span className="font-mono text-t-red">{rec.stop.toFixed(2)}</span>
+                      <span className="flex-1 text-center text-[9px]">STOP → GİRİŞ → HEDEF</span>
+                      <span className="font-mono text-t-green">{rec.hedef.toFixed(2)}</span>
+                    </div>
+                    <div className="relative h-[6px] bg-t-bg4 rounded-full overflow-visible">
+                      {/* Entry marker */}
+                      <div className="absolute top-[-2px] w-[2px] h-[10px] bg-t-txt3 rounded-full z-10" style={{ left: `${entryPos}%` }} />
+                      {/* Fill */}
+                      <div className="absolute top-0 left-0 h-full rounded-full" style={{
+                        width: `${currentPos}%`,
+                        background: currentPos >= entryPos ? "var(--c-green)" : "var(--c-red)",
+                      }} />
+                      {/* Current marker */}
+                      <div className="absolute top-[-4px] w-[10px] h-[14px] rounded-sm z-20 flex items-center justify-center"
+                        style={{ left: `calc(${currentPos}% - 5px)`, background: currentPos >= entryPos ? "var(--c-green)" : "var(--c-red)" }}>
+                        <span className="text-[6px] font-bold text-white">●</span>
+                      </div>
+                    </div>
+                    <div className="text-[9px] text-t-txt3 text-center mt-1 font-mono">
+                      Giriş: {rec.giris.toFixed(2)} · Güncel: {currentPrice.toFixed(2)}
+                    </div>
+                  </div>
+
+                  {/* Bottom stats */}
+                  <div className="p-[10px_16px] flex items-center justify-between flex-wrap gap-2 text-[11px]" style={{ borderTop: "1px solid var(--bdr)" }}>
+                    <div className="flex items-center gap-3">
+                      <span className={`font-mono font-bold ${pnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
+                        {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%
+                      </span>
+                      <span className={`font-mono font-bold ${pnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
+                        {pnlTL >= 0 ? "+" : ""}{pnlTL.toFixed(2)} ₺
+                      </span>
+                      <span className="text-t-txt3">{sureMetni}</span>
+                      {rec.fk != null && <span className="text-t-txt3">F/K: {rec.fk.toFixed(1)}</span>}
+                    </div>
+                    <button onClick={() => handleDeleteSinyal(key)}
+                      className="text-[10px] font-bold cursor-pointer px-2 py-1 rounded transition-all bg-transparent border-none"
+                      style={{ color: "var(--c-red)" }}>
+                      🗑️ Sil
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Archive Files from API */}
