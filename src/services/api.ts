@@ -50,3 +50,14 @@ export async function fetchPrices(tickers: string[]): Promise<Record<string, num
   if (!res.ok) throw new Error("Prices fetch failed");
   return res.json();
 }
+
+export async function fetchSinyalArsiv(): Promise<Record<string, any>> {
+  const res = await fetch(`${API_BASE}/api/sinyal-arsiv`);
+  if (!res.ok) throw new Error("Sinyal arsiv fetch failed");
+  return res.json();
+}
+
+export async function deleteSinyalArsiv(key: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/sinyal-arsiv/${key}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Delete failed");
+}

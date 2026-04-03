@@ -55,18 +55,6 @@ export default function PortfolioTab() {
     return { pnl, pnlPct, currentPrice: current };
   };
 
-  const getPortfolioPnl = (pId: string) => {
-    const stocks = portfolios[pId].stocks;
-    if (!stocks.length) return 0;
-    let totalCost = 0, totalCurrent = 0;
-    stocks.forEach(s => {
-      const { currentPrice } = getStockPnl(s.ticker, s.price);
-      totalCost += s.price;
-      totalCurrent += currentPrice;
-    });
-    return totalCost > 0 ? ((totalCurrent - totalCost) / totalCost) * 100 : 0;
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-[18px] mt-8 flex-wrap gap-3">
@@ -104,13 +92,19 @@ export default function PortfolioTab() {
         <div className="space-y-4">
           {pIds.map(pId => {
             const p = portfolios[pId];
-            const pPnl = getPortfolioPnl(pId);
             const isEditing = editingId === pId;
+            const stocks = p.stocks;
+
+            // Total PnL
+            const totalCost = stocks.reduce((s, x) => s + x.price, 0);
+            const totalCurrent = stocks.reduce((s, x) => s + (livePrices[x.ticker] ?? data[x.ticker]?.close ?? x.price), 0);
+            const totalPnlPct = totalCost > 0 ? ((totalCurrent - totalCost) / totalCost) * 100 : 0;
+            const totalPnlTL = totalCurrent - totalCost;
 
             return (
               <div key={pId} className="bg-t-card2 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
                 {/* Portfolio header */}
-                <div className="p-[14px_18px] bg-t-bg3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bdr)" }}>
+                <div className="p-[14px_18px] bg-t-bg3 flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
                   {isEditing ? (
                     <div className="flex gap-2 items-center">
                       <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
@@ -124,9 +118,16 @@ export default function PortfolioTab() {
                     <span className="text-[15px] font-bold font-syne text-t-txt">{p.name}</span>
                   )}
                   <div className="flex items-center gap-3">
-                    <span className={`text-[13px] font-bold font-mono ${pPnl >= 0 ? "text-t-green" : "text-t-red"}`}>
-                      {pPnl >= 0 ? "+" : ""}{pPnl.toFixed(1)}%
-                    </span>
+                    {stocks.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[13px] font-bold font-mono ${totalPnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
+                          {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(1)}%
+                        </span>
+                        <span className={`text-[11px] font-mono ${totalPnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
+                          ({totalPnlTL >= 0 ? "+" : ""}{totalPnlTL.toFixed(2)} ₺)
+                        </span>
+                      </div>
+                    )}
                     <div className="flex gap-1.5">
                       <button onClick={() => { setEditingId(pId); setEditName(p.name); }}
                         className="text-[11px] text-t-txt3 cursor-pointer bg-transparent border-none hover:text-t-txt">✏️</button>
@@ -136,39 +137,93 @@ export default function PortfolioTab() {
                   </div>
                 </div>
 
-                {/* Table header */}
-                {p.stocks.length > 0 && (
-                  <div className="grid grid-cols-[80px_70px_70px_70px_1fr_60px] gap-2 items-center p-[10px_18px] bg-t-bg3 text-[10px] text-t-txt3 font-semibold uppercase tracking-[.5px]"
-                    style={{ borderBottom: "1px solid var(--bdr)" }}>
-                    <span>Hisse</span><span>Giriş</span><span>Güncel</span><span>K/Z</span><span>Not</span><span></span>
-                  </div>
-                )}
-
                 {/* Stocks */}
-                {p.stocks.length === 0 ? (
+                {stocks.length === 0 ? (
                   <div className="p-6 text-center text-[11px] text-t-txt3">
                     Portföyde hisse yok · Sinyal kartlarından "Portföye Ekle" ile ekleyin
                   </div>
                 ) : (
-                  p.stocks.map((s, i) => {
-                    const { pnlPct, currentPrice } = getStockPnl(s.ticker, s.price);
-                    return (
-                      <div key={i} className="grid grid-cols-[80px_70px_70px_70px_1fr_60px] gap-2 items-center p-[10px_18px] text-[12px] hover:bg-t-bg3 transition-colors"
-                        style={{ borderBottom: i < p.stocks.length - 1 ? "1px solid var(--bdr)" : "none" }}>
-                        <span className="font-extrabold font-mono text-[13px] text-t-txt">{s.ticker}</span>
-                        <span className="text-t-txt2 font-mono">{s.price.toFixed(2)}</span>
-                        <span className="text-t-txt font-mono font-bold">{currentPrice.toFixed(2)}</span>
-                        <span className={`font-bold font-mono ${pnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
-                          {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%
-                        </span>
-                        <span className="text-t-txt3 text-[11px] truncate">{s.note || s.date}</span>
-                        <button onClick={() => removeStock(pId, s.ticker)}
-                          className="text-[10px] text-t-red font-bold cursor-pointer bg-transparent border-none hover:opacity-80 text-right">
-                          Çıkar
-                        </button>
-                      </div>
-                    );
-                  })
+                  <div className="p-3 space-y-2">
+                    {stocks.map((s, i) => {
+                      const { pnlPct, currentPrice, pnl: pnlTL } = getStockPnl(s.ticker, s.price);
+                      const range = s.target - s.stop;
+                      const entryPos = range > 0 ? Math.max(0, Math.min(100, ((s.price - s.stop) / range) * 100)) : 50;
+                      const currentPos = range > 0 ? Math.max(0, Math.min(100, ((currentPrice - s.stop) / range) * 100)) : 50;
+                      const gunFarki = Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000);
+
+                      let durum = "AÇIK 🔄";
+                      if (currentPrice >= s.target) durum = "HEDEF TUTTU ✅";
+                      if (currentPrice <= s.stop) durum = "STOP OLDU ❌";
+
+                      const sureMetni = durum === "AÇIK 🔄"
+                        ? gunFarki + " gündür aktif"
+                        : durum === "HEDEF TUTTU ✅"
+                        ? gunFarki + " günde başarıldı"
+                        : gunFarki + " günde stop oldu";
+
+                      return (
+                        <div key={i} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
+                          {/* Stock header */}
+                          <div className="p-[10px_14px] flex items-center justify-between" style={{ borderBottom: "1px solid var(--bdr)" }}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold font-mono text-[14px] text-t-txt">{s.ticker}</span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                durum.includes("HEDEF") ? "bg-[var(--green-bg)] text-t-green" :
+                                durum.includes("STOP") ? "bg-[var(--red-bg)] text-t-red" :
+                                "bg-[var(--blue-bg)] text-t-blue-l"
+                              }`}>{durum}</span>
+                            </div>
+                            <button onClick={() => removeStock(pId, s.ticker)}
+                              className="text-[10px] text-t-red font-bold cursor-pointer bg-transparent border-none hover:opacity-80">
+                              Çıkar
+                            </button>
+                          </div>
+
+                          {/* Progress bar */}
+                          <div className="p-[10px_14px]">
+                            <div className="flex items-center gap-2 text-[9px] text-t-txt3 mb-1">
+                              <span className="font-mono text-t-red">{s.stop.toFixed(2)}</span>
+                              <span className="flex-1" />
+                              <span className="font-mono text-t-green">{s.target.toFixed(2)}</span>
+                            </div>
+                            <div className="relative h-[5px] bg-t-bg4 rounded-full overflow-visible">
+                              {/* Entry marker */}
+                              <div className="absolute top-[-2px] w-[2px] h-[9px] bg-t-txt3 rounded-full z-10" style={{ left: `${entryPos}%` }} />
+                              {/* Fill */}
+                              <div className="absolute top-0 left-0 h-full rounded-full" style={{
+                                width: `${currentPos}%`,
+                                background: currentPos >= entryPos ? "var(--c-green)" : "var(--c-red)",
+                              }} />
+                              {/* Current dot */}
+                              <div className="absolute top-[-3px] w-[8px] h-[11px] rounded-sm z-20"
+                                style={{ left: `calc(${currentPos}% - 4px)`, background: currentPos >= entryPos ? "var(--c-green)" : "var(--c-red)" }} />
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="p-[8px_14px] flex items-center justify-between flex-wrap gap-1 text-[10px]" style={{ borderTop: "1px solid var(--bdr)" }}>
+                            <div className="flex items-center gap-2.5">
+                              <span className={`font-mono font-bold ${pnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
+                                {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%
+                              </span>
+                              <span className={`font-mono ${pnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
+                                {pnlTL >= 0 ? "+" : ""}{pnlTL.toFixed(2)} ₺
+                              </span>
+                              <span className="text-t-txt3">{sureMetni}</span>
+                            </div>
+                            <span className="font-mono text-t-txt2">
+                              Güncel: {currentPrice.toFixed(2)} ₺
+                            </span>
+                          </div>
+
+                          {/* Note */}
+                          {s.note && (
+                            <div className="px-[14px] pb-2 text-[10px] text-t-txt3 truncate">💬 {s.note}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             );
