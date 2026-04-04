@@ -25,6 +25,7 @@ export interface StockData {
   tavan_kapat: boolean;
   tavan_seri: boolean;
   high_atr_risk: boolean;
+  dikkatli?: boolean;
   // Fundamental
   fk?: number | null;
   pddd?: number | null;
