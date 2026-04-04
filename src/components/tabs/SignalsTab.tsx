@@ -7,33 +7,34 @@ import MarketSummaryPanel from "@/components/MarketSummaryPanel";
 export default function SignalsTab() {
   const { data } = useAppData();
   const [addTicker, setAddTicker] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"top10" | "confirmed" | "pending" | "watchlist">("top10");
+  const [filter, setFilter] = useState<"top10" | "confirmed" | "dikkatli" | "pending" | "watchlist">("top10");
 
   const tickers = Object.keys(data);
   const top10 = [...tickers].sort((a, b) => data[b].score - data[a].score).slice(0, 10);
   const confirmed = tickers.filter(t => data[t].confirmed && data[t].score >= 70).sort((a, b) => data[b].score - data[a].score);
+  const dikkatli = tickers.filter(t => (data[t] as any).dikkatli === true).sort((a, b) => data[b].score - data[a].score);
   const pending = tickers.filter(t => data[t].pending && !data[t].confirmed && data[t].score >= 60).sort((a, b) => data[b].score - data[a].score);
   const watchlist = tickers.filter(t => !data[t].confirmed && !data[t].pending && data[t].score >= 55).sort((a, b) => data[b].score - data[a].score);
 
-  const lists = { top10, confirmed, pending, watchlist };
+  const lists = { top10, confirmed, dikkatli, pending, watchlist };
   const current = lists[filter];
 
   const tabs = [
     { id: "top10" as const, icon: "🏆", label: "Top 10", count: top10.length, sub: "En yüksek skorlu 10 hisse" },
-    { id: "confirmed" as const, icon: "✅", label: "Onaylı Sinyaller", count: confirmed.length, sub: "Giriş değerlendirilebilir · Teknik ve temel onaylı" },
-    { id: "pending" as const, icon: "⏳", label: "Bekleyen Sinyaller", count: pending.length, sub: "Onay bekliyor · İzlemeye alın" },
-    { id: "watchlist" as const, icon: "👁️", label: "İzleme Listesi", count: watchlist.length, sub: "Potansiyel fırsatlar" },
+    { id: "confirmed" as const, icon: "✅", label: "Onaylı", count: confirmed.length, sub: "Giriş değerlendirilebilir · Teknik ve temel onaylı" },
+    { id: "dikkatli" as const, icon: "🔍", label: "Dikkatli", count: dikkatli.length, sub: "Dikkatli değerlendirme gerektiren sinyaller" },
+    { id: "pending" as const, icon: "⏳", label: "Bekleyen", count: pending.length, sub: "Onay bekliyor · İzlemeye alın" },
+    { id: "watchlist" as const, icon: "👁️", label: "İzlenen", count: watchlist.length, sub: "Potansiyel fırsatlar" },
   ];
 
   const activeTab = tabs.find(t => t.id === filter)!;
 
   return (
     <div>
-      {/* Section Header with filter tabs */}
       <div className="flex items-center justify-between mb-[18px] mt-8 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-[34px] h-[34px] rounded-md flex items-center justify-center text-[15px]"
-            style={{ background: "var(--green-bg)", border: "1px solid var(--green-bdr)" }}>
+            style={{ background: filter === "dikkatli" ? "rgba(245,158,11,.08)" : "var(--green-bg)", border: filter === "dikkatli" ? "1px solid rgba(245,158,11,.25)" : "1px solid var(--green-bdr)" }}>
             {activeTab.icon}
           </div>
           <div>
@@ -49,7 +50,10 @@ export default function SignalsTab() {
                   ? "text-t-txt bg-t-bg4"
                   : "text-t-txt2 bg-t-bg3 hover:bg-t-bg4 hover:text-t-txt"
               }`}
-              style={{ border: `1px solid ${filter === t.id ? "var(--bdr2)" : "var(--bdr)"}` }}>
+              style={{
+                border: `1px solid ${filter === t.id ? (t.id === "dikkatli" ? "rgba(245,158,11,.3)" : "var(--bdr2)") : "var(--bdr)"}`,
+                ...(filter === t.id && t.id === "dikkatli" ? { background: "rgba(245,158,11,.08)" } : {})
+              }}>
               {t.icon} {t.label} ({t.count})
             </button>
           ))}
@@ -58,8 +62,10 @@ export default function SignalsTab() {
 
       {current.length === 0 ? (
         <div className="p-[60px_20px] text-center text-t-txt3">
-          <div className="text-[44px] mb-3 opacity-50">📊</div>
-          <div className="text-[14px] font-bold text-t-txt2 mb-[5px]">Bu kategoride sinyal yok</div>
+          <div className="text-[44px] mb-3 opacity-50">{filter === "dikkatli" ? "🔍" : "📊"}</div>
+          <div className="text-[14px] font-bold text-t-txt2 mb-[5px]">
+            {filter === "dikkatli" ? "Şu an dikkatli sinyal yok." : "Bu kategoride sinyal yok"}
+          </div>
           <div className="text-[11px]">Diğer kategorileri kontrol edin</div>
         </div>
       ) : (
@@ -70,6 +76,16 @@ export default function SignalsTab() {
                   <div className="absolute -top-2 -left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold font-mono text-t-txt"
                     style={{ background: "linear-gradient(135deg, var(--gold), var(--gold-d))", boxShadow: "0 2px 8px rgba(201,148,58,.4)" }}>
                     {index + 1}
+                  </div>
+                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} />
+                </div>
+              ))
+            : filter === "dikkatli"
+            ? current.map(ticker => (
+                <div key={ticker} className="relative">
+                  <div className="absolute top-3 right-3 z-10 px-2 py-0.5 rounded text-[10px] font-bold"
+                    style={{ background: "rgba(245,158,11,.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,.25)" }}>
+                    🔍 DİKKATLİ
                   </div>
                   <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} />
                 </div>
