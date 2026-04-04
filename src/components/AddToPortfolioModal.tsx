@@ -33,7 +33,7 @@ export default function AddToPortfolioModal({ ticker, price, stop, target, onClo
     portfolios[pId].stocks.push({
       ticker,
       price: parseFloat(entryPrice) || price,
-      date: new Date().toLocaleString("tr-TR"),
+      date: new Date().toISOString(),
       note,
       stop,
       target,

@@ -1,13 +1,109 @@
 import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchPrices } from "@/services/api";
+import PriceProgressBar from "@/components/PriceProgressBar";
+
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4" onClick={onCancel}>
+      <div className="absolute inset-0 bg-[rgba(0,0,0,.7)]" />
+      <div className="relative bg-t-bg2 rounded-2xl w-full max-w-[380px] p-6 animate-fade-in" style={{ border: "1px solid var(--bdr2)" }} onClick={e => e.stopPropagation()}>
+        <p className="text-[14px] text-t-txt mb-5">{message}</p>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg text-[12px] font-semibold text-t-txt2 bg-t-bg3 cursor-pointer" style={{ border: "1px solid var(--bdr2)" }}>İptal</button>
+          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-lg text-[12px] font-bold cursor-pointer" style={{ background: "var(--c-red)", color: "#fff" }}>Sil</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddStockModal({ onAdd, onClose, data }: { onAdd: (s: any) => void; onClose: () => void; data: any }) {
+  const [ticker, setTicker] = useState("");
+  const [giris, setGiris] = useState("");
+  const [stop, setStop] = useState("");
+  const [hedef, setHedef] = useState("");
+  const [note, setNote] = useState("");
+
+  const onTickerChange = (val: string) => {
+    const upper = val.toUpperCase();
+    setTicker(upper);
+    const stock = data[upper];
+    if (stock) {
+      setGiris(stock.close?.toFixed(2) ?? "");
+      setStop(stock.stop_loss?.toFixed(2) ?? "");
+      setHedef(stock.target?.toFixed(2) ?? "");
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!ticker.trim()) return;
+    onAdd({
+      ticker: ticker.toUpperCase(),
+      price: parseFloat(giris) || 0,
+      stop: parseFloat(stop) || 0,
+      target: parseFloat(hedef) || 0,
+      date: new Date().toISOString(),
+      note,
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-[rgba(0,0,0,.7)]" />
+      <div className="relative bg-t-bg2 rounded-2xl w-full max-w-[420px] animate-fade-in" style={{ border: "1px solid var(--bdr2)" }} onClick={e => e.stopPropagation()}>
+        <div className="p-[18px_20px] flex justify-between items-center" style={{ borderBottom: "1px solid var(--bdr)" }}>
+          <h3 className="font-syne text-[16px] font-bold text-t-txt">Hisse Ekle</h3>
+          <button onClick={onClose} className="text-t-txt3 hover:text-t-txt text-[18px] cursor-pointer bg-transparent border-none">✕</button>
+        </div>
+        <div className="p-5 space-y-3">
+          <div>
+            <label className="text-[11px] text-t-txt2 font-semibold block mb-1.5">Hisse Kodu</label>
+            <input type="text" value={ticker} onChange={e => onTickerChange(e.target.value)} placeholder="Örn: AKSEN"
+              className="w-full p-[8px_12px] bg-t-bg3 text-t-txt rounded-lg text-[13px] font-bold font-mono uppercase outline-none" style={{ border: "1px solid var(--bdr2)" }} />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-[11px] text-t-txt2 font-semibold block mb-1.5">Giriş (₺)</label>
+              <input type="number" step="0.01" value={giris} onChange={e => setGiris(e.target.value)}
+                className="w-full p-[8px_12px] bg-t-bg3 text-t-txt rounded-lg text-[12px] font-mono outline-none" style={{ border: "1px solid var(--bdr2)" }} />
+            </div>
+            <div>
+              <label className="text-[11px] text-t-txt2 font-semibold block mb-1.5">Stop (₺)</label>
+              <input type="number" step="0.01" value={stop} onChange={e => setStop(e.target.value)}
+                className="w-full p-[8px_12px] bg-t-bg3 text-t-txt rounded-lg text-[12px] font-mono outline-none" style={{ border: "1px solid var(--bdr2)" }} />
+            </div>
+            <div>
+              <label className="text-[11px] text-t-txt2 font-semibold block mb-1.5">Hedef (₺)</label>
+              <input type="number" step="0.01" value={hedef} onChange={e => setHedef(e.target.value)}
+                className="w-full p-[8px_12px] bg-t-bg3 text-t-txt rounded-lg text-[12px] font-mono outline-none" style={{ border: "1px solid var(--bdr2)" }} />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-t-txt2 font-semibold block mb-1.5">Not (opsiyonel)</label>
+            <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="Breakout beklentisi..."
+              className="w-full p-[8px_12px] bg-t-bg3 text-t-txt rounded-lg text-[12px] outline-none placeholder:text-t-txt3" style={{ border: "1px solid var(--bdr2)" }} />
+          </div>
+        </div>
+        <div className="p-[16px_20px] flex gap-3" style={{ borderTop: "1px solid var(--bdr)" }}>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-[12px] font-semibold text-t-txt2 bg-t-bg3 cursor-pointer" style={{ border: "1px solid var(--bdr2)" }}>İptal</button>
+          <button onClick={handleSubmit} className="flex-1 py-2.5 rounded-lg text-[12px] font-bold cursor-pointer"
+            style={{ background: "linear-gradient(135deg, var(--c-accent), var(--accent-d))", color: "#fff" }}>Ekle</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PortfolioTab() {
   const { data, portfolios, setPortfolios } = useAppData();
   const [newName, setNewName] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  const [openPorts, setOpenPorts] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<Record<string, "kart" | "tablo">>({});
+  const [confirmDelete, setConfirmDelete] = useState<{ type: "port" | "stock"; pId: string; ticker?: string } | null>(null);
+  const [addStockTo, setAddStockTo] = useState<string | null>(null);
 
   const pIds = Object.keys(portfolios);
 
@@ -15,9 +111,7 @@ export default function PortfolioTab() {
     const allTickers = Object.values(portfolios).flatMap(p => p.stocks.map(s => s.ticker));
     const unique = [...new Set(allTickers)];
     if (!unique.length) return;
-    const fetchLive = () => {
-      fetchPrices(unique).then(setLivePrices).catch(() => {});
-    };
+    const fetchLive = () => { fetchPrices(unique).then(setLivePrices).catch(() => {}); };
     fetchLive();
     const interval = setInterval(fetchLive, 15 * 60 * 1000);
     return () => clearInterval(interval);
@@ -28,31 +122,41 @@ export default function PortfolioTab() {
     const id = `p_${Date.now()}`;
     setPortfolios({ ...portfolios, [id]: { name: newName.trim(), stocks: [] } });
     setNewName("");
+    setOpenPorts(prev => new Set(prev).add(id));
   };
 
-  const deletePortfolio = (id: string) => {
-    const copy = { ...portfolios };
-    delete copy[id];
-    setPortfolios(copy);
+  const deletePortfolio = (id: string) => { const copy = { ...portfolios }; delete copy[id]; setPortfolios(copy); };
+  const removeStock = (pId: string, ticker: string) => { portfolios[pId].stocks = portfolios[pId].stocks.filter(s => s.ticker !== ticker); setPortfolios({ ...portfolios }); };
+
+  const togglePort = (id: string) => {
+    setOpenPorts(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  const renamePortfolio = (id: string) => {
-    if (!editName.trim()) return;
-    portfolios[id].name = editName.trim();
+  const getCalc = (s: any) => {
+    const currentPrice = livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price;
+    const pnlPct = s.price > 0 ? ((currentPrice - s.price) / s.price) * 100 : 0;
+    const pnlTL = currentPrice - s.price;
+    const range = s.target - s.stop;
+    const entryPos = range > 0 ? Math.max(0, Math.min(100, ((s.price - s.stop) / range) * 100)) : 50;
+    const currentPos = range > 0 ? Math.max(0, Math.min(100, ((currentPrice - s.stop) / range) * 100)) : 50;
+    const gunFarki = (() => {
+      try {
+        const d = new Date(s.date ?? s.tarih ?? s.entry_date);
+        if (isNaN(d.getTime())) return 0;
+        return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+      } catch { return 0; }
+    })();
+    let durum = "AÇIK";
+    if (currentPrice >= s.target) durum = "HEDEF TUTTU";
+    if (currentPrice <= s.stop) durum = "STOP LOSS";
+    return { currentPrice, pnlPct, pnlTL, entryPos, currentPos, gunFarki, durum };
+  };
+
+  const addStockHandler = (pId: string, stockData: any) => {
+    const exists = portfolios[pId].stocks.some(s => s.ticker === stockData.ticker);
+    if (exists) return;
+    portfolios[pId].stocks.push(stockData);
     setPortfolios({ ...portfolios });
-    setEditingId(null);
-  };
-
-  const removeStock = (pId: string, ticker: string) => {
-    portfolios[pId].stocks = portfolios[pId].stocks.filter(s => s.ticker !== ticker);
-    setPortfolios({ ...portfolios });
-  };
-
-  const getStockPnl = (ticker: string, entryPrice: number) => {
-    const current = livePrices[ticker] ?? data[ticker]?.close ?? entryPrice;
-    const pnl = current - entryPrice;
-    const pnlPct = entryPrice > 0 ? (pnl / entryPrice) * 100 : 0;
-    return { pnl, pnlPct, currentPrice: current };
   };
 
   return (
@@ -68,12 +172,12 @@ export default function PortfolioTab() {
         </div>
       </div>
 
-      {/* Create new portfolio */}
+      {/* Create */}
       <div className="flex gap-2 mb-5">
         <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
           onKeyDown={e => e.key === "Enter" && createPortfolio()}
           placeholder="Yeni portföy adı..."
-          className="flex-1 max-w-[300px] p-[10px_14px] bg-t-card text-t-txt rounded-lg text-[13px] font-semibold font-body outline-none placeholder:text-t-txt3 focus:shadow-[0_0_0_3px_rgba(79,142,247,.08)]"
+          className="flex-1 max-w-[300px] p-[10px_14px] bg-t-card text-t-txt rounded-lg text-[13px] font-semibold font-body outline-none placeholder:text-t-txt3"
           style={{ border: "1px solid var(--bdr)" }} />
         <button onClick={createPortfolio}
           className="px-4 py-2.5 rounded-lg text-[12px] font-bold cursor-pointer transition-all hover:opacity-90 font-body"
@@ -92,10 +196,10 @@ export default function PortfolioTab() {
         <div className="space-y-4">
           {pIds.map(pId => {
             const p = portfolios[pId];
-            const isEditing = editingId === pId;
             const stocks = p.stocks;
+            const isOpen = openPorts.has(pId);
+            const mode = viewMode[pId] ?? "kart";
 
-            // Total PnL
             const totalCost = stocks.reduce((s, x) => s + x.price, 0);
             const totalCurrent = stocks.reduce((s, x) => s + (livePrices[x.ticker] ?? data[x.ticker]?.close ?? x.price), 0);
             const totalPnlPct = totalCost > 0 ? ((totalCurrent - totalCost) / totalCost) * 100 : 0;
@@ -103,132 +207,199 @@ export default function PortfolioTab() {
 
             return (
               <div key={pId} className="bg-t-card2 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
-                {/* Portfolio header */}
-                <div className="p-[14px_18px] bg-t-bg3 flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
-                  {isEditing ? (
-                    <div className="flex gap-2 items-center">
-                      <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && renamePortfolio(pId)}
-                        className="p-[4px_8px] bg-t-bg4 text-t-txt rounded text-[13px] font-bold font-syne outline-none"
-                        style={{ border: "1px solid var(--bdr2)" }} autoFocus />
-                      <button onClick={() => renamePortfolio(pId)} className="text-[11px] text-t-green font-bold cursor-pointer bg-transparent border-none">✓</button>
-                      <button onClick={() => setEditingId(null)} className="text-[11px] text-t-txt3 font-bold cursor-pointer bg-transparent border-none">✕</button>
+                {/* Collapsed header */}
+                <div className="p-[14px_18px] flex items-center justify-between flex-wrap gap-2 cursor-pointer" onClick={() => togglePort(pId)}
+                  style={{ borderBottom: isOpen ? "1px solid var(--bdr)" : "none" }}>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-[14px]">{isOpen ? "▼" : "▶️"}</span>
+                    <div className="min-w-0">
+                      <span className="text-[15px] font-bold font-syne text-t-txt">{p.name}</span>
+                      <div className="text-[10px] text-t-txt3 mt-0.5">
+                        {stocks.length} hisse
+                        {stocks.length > 0 && (
+                          <span className="ml-2">
+                            {stocks.map(s => s.ticker).join(" · ")}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <span className="text-[15px] font-bold font-syne text-t-txt">{p.name}</span>
-                  )}
-                  <div className="flex items-center gap-3">
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-t-bg4 text-t-txt3" style={{ border: "1px solid var(--bdr)" }}>PORTFÖY</span>
                     {stocks.length > 0 && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <span className={`text-[13px] font-bold font-mono ${totalPnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
-                          {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(1)}%
+                          {totalPnlPct >= 0 ? "↑" : "↓"} {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(1)}%
                         </span>
                         <span className={`text-[11px] font-mono ${totalPnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
-                          ({totalPnlTL >= 0 ? "+" : ""}{totalPnlTL.toFixed(2)} ₺)
+                          {totalPnlTL >= 0 ? "+" : ""}{totalPnlTL.toFixed(2)} ₺
                         </span>
                       </div>
                     )}
-                    <div className="flex gap-1.5">
-                      <button onClick={() => { setEditingId(pId); setEditName(p.name); }}
-                        className="text-[11px] text-t-txt3 cursor-pointer bg-transparent border-none hover:text-t-txt">✏️</button>
-                      <button onClick={() => deletePortfolio(pId)}
-                        className="text-[11px] text-t-txt3 cursor-pointer bg-transparent border-none hover:text-t-red">🗑️</button>
-                    </div>
                   </div>
                 </div>
 
-                {/* Stocks */}
-                {stocks.length === 0 ? (
-                  <div className="p-6 text-center text-[11px] text-t-txt3">
-                    Portföyde hisse yok · Sinyal kartlarından "Portföye Ekle" ile ekleyin
-                  </div>
-                ) : (
-                  <div className="p-3 space-y-2">
-                    {stocks.map((s, i) => {
-                      const { pnlPct, currentPrice, pnl: pnlTL } = getStockPnl(s.ticker, s.price);
-                      const range = s.target - s.stop;
-                      const entryPos = range > 0 ? Math.max(0, Math.min(100, ((s.price - s.stop) / range) * 100)) : 50;
-                      const currentPos = range > 0 ? Math.max(0, Math.min(100, ((currentPrice - s.stop) / range) * 100)) : 50;
-                      const gunFarki = Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000);
+                {/* Open body */}
+                {isOpen && (
+                  <div className="p-4">
+                    {/* View toggle + delete */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex gap-1">
+                        <button onClick={() => setViewMode({ ...viewMode, [pId]: "kart" })}
+                          className={`px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer ${mode === "kart" ? "bg-t-bg4 text-t-txt" : "text-t-txt3 bg-t-bg3"}`}
+                          style={{ border: "1px solid var(--bdr)" }}>Kart</button>
+                        <button onClick={() => setViewMode({ ...viewMode, [pId]: "tablo" })}
+                          className={`px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer ${mode === "tablo" ? "bg-t-bg4 text-t-txt" : "text-t-txt3 bg-t-bg3"}`}
+                          style={{ border: "1px solid var(--bdr)" }}>Tablo</button>
+                      </div>
+                      <button onClick={() => setConfirmDelete({ type: "port", pId })}
+                        className="text-[11px] text-t-txt3 cursor-pointer bg-transparent border-none hover:text-t-red flex items-center gap-1">
+                        🗑️ Portföyü Sil
+                      </button>
+                    </div>
 
-                      let durum = "AÇIK 🔄";
-                      if (currentPrice >= s.target) durum = "HEDEF TUTTU ✅";
-                      if (currentPrice <= s.stop) durum = "STOP OLDU ❌";
-
-                      const sureMetni = durum === "AÇIK 🔄"
-                        ? gunFarki + " gündür aktif"
-                        : durum === "HEDEF TUTTU ✅"
-                        ? gunFarki + " günde başarıldı"
-                        : gunFarki + " günde stop oldu";
-
-                      return (
-                        <div key={i} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
-                          {/* Stock header */}
-                          <div className="p-[10px_14px] flex items-center justify-between" style={{ borderBottom: "1px solid var(--bdr)" }}>
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold font-mono text-[14px] text-t-txt">{s.ticker}</span>
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                durum.includes("HEDEF") ? "bg-[var(--green-bg)] text-t-green" :
-                                durum.includes("STOP") ? "bg-[var(--red-bg)] text-t-red" :
+                    {stocks.length === 0 ? (
+                      <div className="p-6 text-center text-[11px] text-t-txt3">
+                        Portföyde hisse yok
+                      </div>
+                    ) : mode === "kart" ? (
+                      /* Card view */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {stocks.map((s, i) => {
+                          const c = getCalc(s);
+                          return (
+                            <div key={i} className="rounded-xl p-3" style={{ background: "var(--bg3)", border: "0.5px solid var(--bdr2)" }}>
+                              <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
+                                <button onClick={() => setConfirmDelete({ type: "stock", pId, ticker: s.ticker })}
+                                  className="text-t-txt3 hover:text-t-red cursor-pointer bg-transparent border-none text-[14px]">🗑️</button>
+                              </div>
+                              <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded mb-2 ${
+                                c.durum === "HEDEF TUTTU" ? "bg-[var(--green-bg)] text-t-green" :
+                                c.durum === "STOP LOSS" ? "bg-[var(--red-bg)] text-t-red" :
                                 "bg-[var(--blue-bg)] text-t-blue-l"
-                              }`}>{durum}</span>
+                              }`}>{c.durum}</span>
+                              <div className="text-[10px] text-t-txt3 mb-0.5">Güncel Fiyat</div>
+                              <div className="text-[18px] font-medium font-mono mb-1" style={{ color: c.pnlTL >= 0 ? "#2CC98A" : "#E05252", whiteSpace: "nowrap" }}>
+                                {c.currentPrice.toFixed(2)} ₺ {c.pnlTL >= 0 ? "↑" : "↓"}
+                              </div>
+                              <div className="flex gap-1.5 text-[12px] font-mono mb-2" style={{ whiteSpace: "nowrap" }}>
+                                <span style={{ color: c.pnlPct >= 0 ? "#2CC98A" : "#E05252" }}>{c.pnlPct >= 0 ? "+" : ""}{c.pnlPct.toFixed(1)}%</span>
+                                <span style={{ color: c.pnlTL >= 0 ? "#2CC98A" : "#E05252" }}>{c.pnlTL >= 0 ? "+" : ""}{c.pnlTL.toFixed(2)} ₺</span>
+                              </div>
+                              {/* Progress */}
+                              <div className="mb-2">
+                                <div className="h-[4px] rounded-sm overflow-hidden" style={{ background: "var(--bg4)" }}>
+                                  <div className="h-full rounded-sm" style={{
+                                    width: `${Math.min(100, Math.max(0, c.currentPos))}%`,
+                                    background: c.currentPos >= c.entryPos ? "#2CC98A" : "#E05252"
+                                  }} />
+                                </div>
+                              </div>
+                              {/* STOP / GİRİŞ / HEDEF boxes */}
+                              <div className="grid grid-cols-3 gap-1">
+                                <div className="rounded-md p-1" style={{ background: "var(--bg)" }}>
+                                  <div className="text-[9px] text-t-txt3">STOP</div>
+                                  <div className="text-[11px] font-medium font-mono" style={{ color: "#E05252", whiteSpace: "nowrap" }}>{s.stop.toFixed(2)} ₺</div>
+                                </div>
+                                <div className="rounded-md p-1" style={{ background: "var(--bg)" }}>
+                                  <div className="text-[9px] text-t-txt3">GİRİŞ</div>
+                                  <div className="text-[11px] font-medium font-mono text-t-txt2" style={{ whiteSpace: "nowrap" }}>{s.price.toFixed(2)} ₺</div>
+                                </div>
+                                <div className="rounded-md p-1" style={{ background: "var(--bg)" }}>
+                                  <div className="text-[9px] text-t-txt3">HEDEF</div>
+                                  <div className="text-[11px] font-medium font-mono" style={{ color: "#2CC98A", whiteSpace: "nowrap" }}>{s.target.toFixed(2)} ₺</div>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-t-txt3 mt-1.5">{c.gunFarki} gün · {c.durum === "AÇIK" ? "aktif" : c.durum === "HEDEF TUTTU" ? "başarılı" : "stop"}</div>
+                              {s.note && <div className="text-[10px] text-t-txt3 mt-1 truncate">💬 {s.note}</div>}
                             </div>
-                            <button onClick={() => removeStock(pId, s.ticker)}
-                              className="text-[10px] text-t-red font-bold cursor-pointer bg-transparent border-none hover:opacity-80">
-                              Çıkar
-                            </button>
-                          </div>
-
-                          {/* Progress bar */}
-                          <div className="p-[10px_14px]">
-                            <div className="flex items-center gap-2 text-[9px] text-t-txt3 mb-1">
-                              <span className="font-mono text-t-red">{s.stop.toFixed(2)}</span>
-                              <span className="flex-1" />
-                              <span className="font-mono text-t-green">{s.target.toFixed(2)}</span>
-                            </div>
-                            <div className="relative h-[5px] bg-t-bg4 rounded-full overflow-visible">
-                              {/* Entry marker */}
-                              <div className="absolute top-[-2px] w-[2px] h-[9px] bg-t-txt3 rounded-full z-10" style={{ left: `${entryPos}%` }} />
-                              {/* Fill */}
-                              <div className="absolute top-0 left-0 h-full rounded-full" style={{
-                                width: `${currentPos}%`,
-                                background: currentPos >= entryPos ? "var(--c-green)" : "var(--c-red)",
-                              }} />
-                              {/* Current dot */}
-                              <div className="absolute top-[-3px] w-[8px] h-[11px] rounded-sm z-20"
-                                style={{ left: `calc(${currentPos}% - 4px)`, background: currentPos >= entryPos ? "var(--c-green)" : "var(--c-red)" }} />
-                            </div>
-                          </div>
-
-                          {/* Stats */}
-                          <div className="p-[8px_14px] flex items-center justify-between flex-wrap gap-1 text-[10px]" style={{ borderTop: "1px solid var(--bdr)" }}>
-                            <div className="flex items-center gap-2.5">
-                              <span className={`font-mono font-bold ${pnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
-                                {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%
-                              </span>
-                              <span className={`font-mono ${pnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
-                                {pnlTL >= 0 ? "+" : ""}{pnlTL.toFixed(2)} ₺
-                              </span>
-                              <span className="text-t-txt3">{sureMetni}</span>
-                            </div>
-                            <span className="font-mono text-t-txt2">
-                              Güncel: {currentPrice.toFixed(2)} ₺
-                            </span>
-                          </div>
-
-                          {/* Note */}
-                          {s.note && (
-                            <div className="px-[14px] pb-2 text-[10px] text-t-txt3 truncate">💬 {s.note}</div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                        {/* Add stock button */}
+                        <button onClick={() => setAddStockTo(pId)}
+                          className="rounded-xl p-5 cursor-pointer transition-all hover:bg-t-bg4 flex items-center justify-center text-[14px] text-t-txt3"
+                          style={{ border: "0.5px dashed var(--bdr2)", background: "transparent" }}>
+                          + Hisse Ekle
+                        </button>
+                      </div>
+                    ) : (
+                      /* Table view */
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[11px]">
+                          <thead>
+                            <tr className="text-t-txt3 text-left">
+                              {["Hisse","Durum","Giriş","Stop","Hedef","Güncel","%","Gün",""].map(h => (
+                                <th key={h} className="p-2 font-semibold text-[10px] uppercase tracking-[.5px]" style={{ borderBottom: "1px solid var(--bdr)" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stocks.map((s, i) => {
+                              const c = getCalc(s);
+                              return (
+                                <tr key={i} style={{ borderBottom: "1px solid var(--bdr)" }}>
+                                  <td className="p-2 font-bold font-mono text-t-txt" style={{ whiteSpace: "nowrap" }}>{s.ticker}</td>
+                                  <td className="p-2" style={{ whiteSpace: "nowrap" }}>
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                      c.durum === "HEDEF TUTTU" ? "bg-[var(--green-bg)] text-t-green" :
+                                      c.durum === "STOP LOSS" ? "bg-[var(--red-bg)] text-t-red" :
+                                      "bg-[var(--blue-bg)] text-t-blue-l"
+                                    }`}>{c.durum}</span>
+                                  </td>
+                                  <td className="p-2 font-mono text-t-txt2" style={{ whiteSpace: "nowrap" }}>{s.price.toFixed(2)}</td>
+                                  <td className="p-2 font-mono text-t-red" style={{ whiteSpace: "nowrap" }}>{s.stop.toFixed(2)}</td>
+                                  <td className="p-2 font-mono text-t-green" style={{ whiteSpace: "nowrap" }}>{s.target.toFixed(2)}</td>
+                                  <td className="p-2 font-mono text-t-txt" style={{ whiteSpace: "nowrap" }}>{c.currentPrice.toFixed(2)}</td>
+                                  <td className={`p-2 font-mono font-bold ${c.pnlPct >= 0 ? "text-t-green" : "text-t-red"}`} style={{ whiteSpace: "nowrap" }}>
+                                    {c.pnlPct >= 0 ? "+" : ""}{c.pnlPct.toFixed(1)}%
+                                  </td>
+                                  <td className="p-2 text-t-txt3" style={{ whiteSpace: "nowrap" }}>{c.gunFarki}</td>
+                                  <td className="p-2">
+                                    <button onClick={() => setConfirmDelete({ type: "stock", pId, ticker: s.ticker })}
+                                      className="text-t-txt3 hover:text-t-red cursor-pointer bg-transparent border-none text-[12px]">🗑️</button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        <button onClick={() => setAddStockTo(pId)}
+                          className="mt-3 text-[11px] text-t-accent font-semibold cursor-pointer bg-transparent border-none hover:opacity-80">
+                          + Hisse Ekle
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Confirm delete modal */}
+      {confirmDelete && (
+        <ConfirmModal
+          message={confirmDelete.type === "port"
+            ? `"${portfolios[confirmDelete.pId]?.name}" portföyü silinsin mi? Tüm hisseler silinecek.`
+            : `${confirmDelete.ticker} portföyden çıkarılsın mı?`}
+          onConfirm={() => {
+            if (confirmDelete.type === "port") deletePortfolio(confirmDelete.pId);
+            else if (confirmDelete.ticker) removeStock(confirmDelete.pId, confirmDelete.ticker);
+            setConfirmDelete(null);
+          }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {/* Add stock modal */}
+      {addStockTo && (
+        <AddStockModal
+          data={data}
+          onAdd={(s) => addStockHandler(addStockTo, s)}
+          onClose={() => setAddStockTo(null)}
+        />
       )}
     </div>
   );
