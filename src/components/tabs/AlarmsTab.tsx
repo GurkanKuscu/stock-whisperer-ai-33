@@ -38,19 +38,19 @@ export default function AlarmsTab() {
           <div className="text-[14px] font-bold text-t-txt2">Aktif alarm yok</div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {alarms.slice(0, 20).map((a, i) => (
-            <div key={i} className={`bg-t-card rounded-xl p-[13px_18px] flex items-center gap-3.5 transition-all hover:border-[var(--bdr2)]`}
+            <div key={i} className="bg-t-card rounded-[10px] p-[10px_12px] transition-all hover:border-[var(--bdr2)]"
               style={{
                 border: "1px solid var(--bdr)",
-                borderLeft: `2px solid ${a.type === "new" ? "var(--c-green)" : a.type === "tavan" ? "var(--c-warn)" : a.type === "seri" ? "var(--c-red)" : "var(--c-blue)"}`
+                borderTop: `2px solid ${a.type === "new" ? "var(--c-green)" : a.type === "tavan" ? "var(--c-warn)" : a.type === "seri" ? "var(--c-red)" : "var(--c-blue)"}`
               }}>
-              <span className="text-[18px] shrink-0 w-[30px] text-center">{a.icon}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[12.5px] font-semibold text-t-txt">{a.title}</div>
-                <div className="text-[11px] text-t-txt2 mt-[2px]">{a.sub}</div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[14px]">{a.icon}</span>
+                <span className="text-[13px] font-medium text-t-txt truncate">{a.title.split(' — ')[0]}</span>
               </div>
-              <span className="text-[10px] text-t-txt3 whitespace-nowrap font-mono">{a.time}</span>
+              <div className="text-[11px] text-t-txt2 truncate">{a.title.split(' — ')[1]}</div>
+              <div className="text-[10px] text-t-txt3 mt-1">{a.sub} · {a.time}</div>
             </div>
           ))}
         </div>
