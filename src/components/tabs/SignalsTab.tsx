@@ -69,7 +69,7 @@ export default function SignalsTab() {
           <div className="text-[11px]">Diğer kategorileri kontrol edin</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-2 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-2 animate-fade-in">
           {filter === "top10"
             ? current.map((ticker, index) => (
                 <div key={ticker} className="relative">
