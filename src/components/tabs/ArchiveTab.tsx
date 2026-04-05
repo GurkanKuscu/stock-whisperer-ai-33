@@ -46,7 +46,10 @@ const GUNLER = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
 
 const SABIT_TATILLER = ['01-01','04-23','05-01','05-19','07-15','08-30','10-29'];
 const DEGISKEN_TATILLER_2026 = [
-  '2026-06-05','2026-06-06','2026-06-07','2026-06-08','2026-06-09',
+  // Ramazan Bayramı (Arefe yarım gün + 3 gün)
+  '2026-03-19','2026-03-20',
+  // Kurban Bayramı (Arefe yarım gün + 4 gün)
+  '2026-05-25','2026-05-26','2026-05-27','2026-05-28','2026-05-29',
 ];
 
 function isTatil(tarih: string): boolean {
