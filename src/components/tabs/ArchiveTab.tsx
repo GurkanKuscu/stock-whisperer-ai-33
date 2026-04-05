@@ -35,10 +35,74 @@ function loadManualFiles(): ManualFile[] {
 }
 
 function parseDateFromName(name: string): string {
-  const m = name.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})/);
+  const m = name.match(/(\d{4})-(\d{2})-(\d{2})[_-](\d{2})-(\d{2})/);
   if (!m) return name;
   const months = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
-  return `${m[3]} ${months[parseInt(m[2])-1]} ${m[4]}:${m[5]}`;
+  return `${parseInt(m[3])} ${months[parseInt(m[2])-1]} · ${m[4]}:${m[5]}`;
+}
+
+const SLOTLAR = ['10:30', '12:00', '15:00', '18:30'];
+const GUNLER = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
+
+const SABIT_TATILLER = ['01-01','04-23','05-01','05-19','07-15','08-30','10-29'];
+const DEGISKEN_TATILLER_2026 = [
+  '2026-03-30','2026-03-31','2026-04-01',
+  '2026-06-05','2026-06-06','2026-06-07','2026-06-08','2026-06-09',
+];
+
+function isTatil(tarih: string): boolean {
+  const ayGun = tarih.slice(5);
+  if (SABIT_TATILLER.includes(ayGun)) return true;
+  if (DEGISKEN_TATILLER_2026.includes(tarih)) return true;
+  return false;
+}
+
+function getWeeks(files: ArsivFile[]): { label: string; gunler: { tarih: string; gunAdi: string; gun: string }[] }[] {
+  // Collect all dates from files
+  const dates = new Set<string>();
+  files.forEach(f => {
+    const m = f.ad.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) dates.add(`${m[1]}-${m[2]}-${m[3]}`);
+  });
+  // Add current week dates
+  const now = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    dates.add(d.toISOString().slice(0, 10));
+  }
+  // Group by ISO week
+  const weekMap = new Map<string, { tarih: string; gunAdi: string; gun: string }[]>();
+  const allDates = [...dates].sort().reverse();
+  allDates.forEach(dateStr => {
+    const d = new Date(dateStr);
+    const day = d.getDay();
+    if (day === 0 || day === 6) return; // skip weekends
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - ((day + 6) % 7));
+    const weekKey = monday.toISOString().slice(0, 10);
+    if (!weekMap.has(weekKey)) weekMap.set(weekKey, []);
+    const gunAdi = GUNLER[(day + 6) % 7];
+    const months = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
+    weekMap.get(weekKey)!.push({ tarih: dateStr, gunAdi, gun: `${d.getDate()}` });
+  });
+  // Build week objects with full 5 days
+  const weeks: { label: string; gunler: { tarih: string; gunAdi: string; gun: string }[] }[] = [];
+  const sortedKeys = [...weekMap.keys()].sort().reverse();
+  const months = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
+  sortedKeys.slice(0, 4).forEach(mondayStr => {
+    const mon = new Date(mondayStr);
+    const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+    const label = `${mon.getDate()} ${months[mon.getMonth()]} – ${fri.getDate()} ${months[fri.getMonth()]} ${fri.getFullYear()}`;
+    const gunler: { tarih: string; gunAdi: string; gun: string }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      const ds = d.toISOString().slice(0, 10);
+      gunler.push({ tarih: ds, gunAdi: GUNLER[i], gun: `${d.getDate()}` });
+    }
+    weeks.push({ label, gunler });
+  });
+  return weeks;
 }
 
 export default function ArchiveTab() {
