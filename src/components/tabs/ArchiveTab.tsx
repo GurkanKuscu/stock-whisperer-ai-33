@@ -260,10 +260,10 @@ export default function ArchiveTab() {
         )}
       </div>
 
-      {/* Archive Files from API */}
+      {/* Tarama Geçmişi — Takvim Görünümü */}
       <div className="bg-t-card rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--bdr)" }}>
         <div className="p-[13px_20px] bg-t-bg2 flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
-          <h3 className="font-syne text-[13px] font-bold text-t-txt">Tarama Geçmişi — Excel Dosyaları</h3>
+          <h3 className="font-syne text-[13px] font-bold text-t-txt">📅 Tarama Geçmişi</h3>
           <div className="flex items-center gap-2">
             <button onClick={() => window.open(`${API_BASE}/api/arsiv/tumu`)}
               className="px-3 py-[5px] rounded-lg text-[11px] font-bold cursor-pointer transition-all text-t-accent"
@@ -274,62 +274,115 @@ export default function ArchiveTab() {
         </div>
         {loading ? (
           <div className="p-8 text-center text-t-txt3">Yükleniyor...</div>
-        ) : arsivFiles.length === 0 ? (
-          <div className="p-8 text-center text-t-txt3">Arşiv dosyası bulunamadı</div>
-        ) : (
-          <div className="p-4">
-            {/* Toolbar */}
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <button onClick={toggleAll}
-                className="px-2.5 py-[4px] rounded text-[10px] font-bold cursor-pointer text-t-txt2 bg-t-bg4 transition-all hover:bg-t-bg5"
-                style={{ border: "1px solid var(--bdr)" }}>
-                {selected.size === arsivFiles.length ? "Seçimi Kaldır" : "Tümünü Seç"}
-              </button>
-              {selected.size > 0 && (
+        ) : (() => {
+          const taramaDosyalar = arsivFiles.filter(f => !f.ad.includes('backtest'));
+          const backtestDosyalar = arsivFiles.filter(f => f.ad.includes('backtest'));
+
+          // Build file map: "2026-04-03_10:30" => file
+          const dosyaMap: Record<string, ArsivFile> = {};
+          taramaDosyalar.forEach(d => {
+            const m = d.ad.match(/(\d{4})-(\d{2})-(\d{2})[_-](\d{2})-(\d{2})/);
+            if (!m) return;
+            dosyaMap[`${m[1]}-${m[2]}-${m[3]}_${m[4]}:${m[5]}`] = d;
+          });
+
+          const haftalar = getWeeks(taramaDosyalar);
+
+          return (
+            <div className="p-4">
+              {haftalar.length === 0 ? (
+                <div className="p-8 text-center text-t-txt3">Arşiv dosyası bulunamadı</div>
+              ) : (
                 <>
-                  <button onClick={() => { selected.forEach(name => { const a = document.createElement('a'); a.href = getDownloadUrl(name); a.download = name; a.click(); }); }}
-                    className="px-2.5 py-[4px] rounded text-[10px] font-bold cursor-pointer text-t-accent bg-t-bg4 transition-all hover:bg-t-bg5"
-                    style={{ border: "1px solid rgba(59,130,246,.25)" }}>
-                    ⬇ Seçilenleri İndir ({selected.size})
-                  </button>
-                  <button onClick={() => { selected.forEach(name => handleDeleteFile(name)); setSelected(new Set()); }}
-                    className="px-2.5 py-[4px] rounded text-[10px] font-bold cursor-pointer transition-all"
-                    style={{ background: "var(--red-bg)", color: "var(--c-red)", border: "1px solid var(--red-bdr)" }}>
-                    🗑 Seçilenleri Sil ({selected.size})
-                  </button>
+                  {haftalar.map((hafta, hi) => (
+                    <div key={hi} className="mb-6">
+                      <div className="text-[11px] text-t-txt3 font-medium mb-2">{hafta.label}</div>
+                      <div className="grid grid-cols-5 gap-1.5 max-md:grid-cols-2">
+                        {hafta.gunler.map(gun => {
+                          const tatil = isTatil(gun.tarih);
+                          return (
+                            <div key={gun.tarih}>
+                              <div className="text-[11px] font-medium text-center mb-1"
+                                style={{ color: tatil ? "#92400e" : "var(--txt3)" }}>
+                                {gun.gunAdi} {gun.gun}
+                                {tatil && <span className="block text-[9px]" style={{ color: "#fbbf24" }}>Tatil</span>}
+                              </div>
+                              {tatil ? (
+                                <div className="rounded-md p-2.5 text-center" style={{ background: "#1a0f00", border: "0.5px solid #451a03" }}>
+                                  <div className="text-[10px]" style={{ color: "#92400e" }}>🔴 Borsa</div>
+                                  <div className="text-[9px]" style={{ color: "#78350f" }}>Kapalı</div>
+                                </div>
+                              ) : (
+                                SLOTLAR.map(saat => {
+                                  const key = `${gun.tarih}_${saat}`;
+                                  const dosya = dosyaMap[key];
+                                  return (
+                                    <div key={saat} className="rounded-md p-[6px_8px] mb-1 transition-all"
+                                      style={{
+                                        background: dosya ? "var(--card)" : "var(--bg3)",
+                                        border: `0.5px solid ${dosya ? "rgba(59,130,246,.2)" : "var(--bdr)"}`,
+                                        opacity: dosya ? 1 : 0.4
+                                      }}>
+                                      <div className="text-[10px] font-medium" style={{ color: "var(--c-accent)" }}>{saat}</div>
+                                      {dosya ? (
+                                        <>
+                                          <div className="text-[9px] text-t-txt3">{typeof dosya.boyut === 'string' ? dosya.boyut : `${(Number(dosya.boyut)/1024).toFixed(0)} KB`}</div>
+                                          <div className="flex gap-1 mt-1">
+                                            <a href={getDownloadUrl(dosya.ad)} download
+                                              className="text-[9px] px-1.5 py-[2px] rounded text-t-accent no-underline cursor-pointer"
+                                              style={{ background: "var(--blue-bg)" }}>⬇</a>
+                                            <button onClick={() => handleDeleteFile(dosya.ad)}
+                                              className="text-[9px] px-1.5 py-[2px] rounded cursor-pointer border-none"
+                                              style={{ background: "var(--red-bg)", color: "var(--c-red)" }}>🗑</button>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div className="text-[9px] text-t-txt3 mt-0.5">—</div>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Backtest Geçmişi */}
+                  {backtestDosyalar.length > 0 && (
+                    <div className="mt-8">
+                      <div className="text-[13px] font-medium pb-2 mb-4" style={{ color: "#fbbf24", borderBottom: "0.5px solid #92400e" }}>
+                        📊 Backtest Geçmişi
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {backtestDosyalar.map((d, i) => (
+                          <div key={i} className="rounded-[10px] p-3" style={{ background: "var(--card)", border: "0.5px solid #92400e" }}>
+                            <span className="inline-block text-[9px] font-semibold px-[7px] py-[2px] rounded mb-1.5"
+                              style={{ background: "#451a03", color: "#fbbf24", border: "0.5px solid #92400e" }}>
+                              📊 Haftalık Backtest
+                            </span>
+                            <div className="font-mono text-[13px] font-medium text-t-txt">{parseDateFromName(d.ad)}</div>
+                            <div className="text-[11px] text-t-txt3 mb-2">{d.boyut}</div>
+                            <div className="flex gap-1.5">
+                              <a href={getDownloadUrl(d.ad)} download
+                                className="px-2 py-[3px] rounded text-[10px] font-bold text-t-accent cursor-pointer no-underline"
+                                style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>⬇ İndir</a>
+                              <button onClick={() => handleDeleteFile(d.ad)}
+                                className="px-2 py-[3px] rounded text-[10px] font-bold cursor-pointer border-none"
+                                style={{ background: "var(--red-bg)", color: "var(--c-red)" }}>🗑 Sil</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
-            {/* Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-              {arsivFiles.map((f, i) => (
-                <div key={i} className={`bg-t-bg3 rounded-lg p-3 transition-all ${selected.has(f.ad) ? "ring-1 ring-[var(--c-accent)]" : ""}`}
-                  style={{ border: "1px solid var(--bdr)" }}>
-                  <div className="flex items-start justify-between gap-1 mb-1">
-                    <input type="checkbox" checked={selected.has(f.ad)} onChange={() => toggleSelect(f.ad)}
-                      className="mt-0.5 cursor-pointer accent-[var(--c-accent)]" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-mono text-[11px] font-semibold text-t-txt truncate">{parseDateFromName(f.ad)}</div>
-                      <div className="text-[10px] text-t-txt3 mt-0.5">{f.boyut}</div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <a href={getDownloadUrl(f.ad)} download
-                      className="px-2 py-[3px] rounded text-[10px] font-bold text-t-accent cursor-pointer no-underline transition-all hover:opacity-80"
-                      style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>
-                      ⬇ İndir
-                    </a>
-                    <button onClick={() => handleDeleteFile(f.ad)}
-                      className="px-2 py-[3px] rounded text-[10px] font-bold cursor-pointer transition-all"
-                      style={{ background: "var(--red-bg)", color: "var(--c-red)", border: "1px solid var(--red-bdr)" }}>
-                      🗑 Sil
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Manual File Upload */}
