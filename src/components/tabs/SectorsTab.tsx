@@ -68,10 +68,20 @@ export default function SectorsTab() {
               <div className="text-[10.5px] text-t-txt3 mb-2.5">{sec.tickers.length} hisse · Ort. skor: {sec.avgScore} · Max: {sec.maxScore}</div>
 
               <div className="flex gap-[5px] flex-wrap">
-                {topTickers.map(t => (
-                  <span key={t} className="text-[10px] font-bold px-2 py-[3px] bg-t-bg3 rounded text-t-txt2 font-mono cursor-pointer transition-all hover:bg-t-bg5 hover:text-t-txt tracking-[.3px]"
-                    style={{ border: "1px solid var(--bdr2)" }}>{t}</span>
-                ))}
+                {topTickers.map(t => {
+                  const stock = data[t];
+                  const degisim = (stock as any).perf_1d ?? 0;
+                  return (
+                    <div key={t} className="flex items-center gap-1.5 text-[10px] px-2 py-[3px] bg-t-bg3 rounded font-mono cursor-pointer transition-all hover:bg-t-bg5"
+                      style={{ border: "1px solid var(--bdr2)" }}>
+                      <span className="font-bold text-t-txt">{t}</span>
+                      <span className="text-t-txt3">{stock.close?.toFixed(2)}₺</span>
+                      <span style={{ color: degisim >= 0 ? "#2CC98A" : "#E05252" }}>
+                        {degisim >= 0 ? "+" : ""}{degisim?.toFixed(1)}%
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
