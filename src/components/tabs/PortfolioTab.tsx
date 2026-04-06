@@ -120,7 +120,7 @@ export default function PortfolioTab() {
   const createPortfolio = () => {
     if (!newName.trim()) return;
     const id = `p_${Date.now()}`;
-    setPortfolios({ ...portfolios, [id]: { name: newName.trim(), stocks: [] } });
+    setPortfolios({ ...portfolios, [id]: { name: newName.trim(), stocks: [], createdAt: new Date().toISOString() } });
     setNewName("");
     setOpenPorts(prev => new Set(prev).add(id));
   };
@@ -218,7 +218,7 @@ export default function PortfolioTab() {
                       <div className="text-[10px] text-t-txt3 mt-0.5 flex items-center gap-1.5 flex-wrap">
                         <span>{(() => {
                           try {
-                            const d = new Date((p as any).createdAt);
+const d = new Date(p.createdAt ?? '');
                             if (isNaN(d.getTime())) return '—';
                             const aylar = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
                             return `${d.getDate()} ${aylar[d.getMonth()]} ${d.getFullYear()}`;
@@ -229,7 +229,7 @@ export default function PortfolioTab() {
                         <span style={{ color: "var(--bdr2)" }}>·</span>
                         <span>Aktif Gün: {(() => {
                           try {
-                            const d = new Date((p as any).createdAt);
+                            const d = new Date(p.createdAt ?? '');
                             if (isNaN(d.getTime())) return 0;
                             return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
                           } catch { return 0; }
