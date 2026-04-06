@@ -78,6 +78,7 @@ export interface PortfolioStock {
 export interface Portfolio {
   name: string;
   stocks: PortfolioStock[];
+  createdAt?: string;
 }
 
 export type PortfolioMap = Record<string, Portfolio>;
