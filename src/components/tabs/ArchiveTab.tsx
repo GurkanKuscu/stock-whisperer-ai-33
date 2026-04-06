@@ -3,6 +3,7 @@ import { fetchArsiv, getDownloadUrl, fetchSinyalArsiv, deleteSinyalArsiv } from 
 import { useAppData } from "@/context/AppContext";
 import PriceProgressBar from "@/components/PriceProgressBar";
 import type { ArsivFile } from "@/types/stock";
+import JSZip from "jszip";
 
 const API_BASE = "http://207.154.212.100:8080";
 
@@ -29,27 +30,26 @@ interface SinyalRecord {
 }
 
 const STORAGE_KEY = "bisthinker-manual-files";
-
 function loadManualFiles(): ManualFile[] {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
 }
 
-function parseDateFromName(name: string): string {
-  const m = name.match(/(\d{4})-(\d{2})-(\d{2})[_-](\d{2})-(\d{2})/);
-  if (!m) return name;
-  const months = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
-  return `${parseInt(m[3])} ${months[parseInt(m[2])-1]} · ${m[4]}:${m[5]}`;
-}
-
+const AYLAR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const GUN_ADLARI = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
 const SLOTLAR = ['10:30', '12:00', '15:00', '18:30'];
-const GUNLER = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum'];
+// Arefe slotları (yarım gün — sadece sabah)
+const AREFE_SLOTLARI = ['10:30', '12:00'];
 
 const SABIT_TATILLER = ['01-01','04-23','05-01','05-19','07-15','08-30','10-29'];
 const DEGISKEN_TATILLER_2026 = [
-  // Ramazan Bayramı (Arefe yarım gün + 3 gün)
-  '2026-03-19','2026-03-20',
-  // Kurban Bayramı (Arefe yarım gün + 4 gün)
-  '2026-05-25','2026-05-26','2026-05-27','2026-05-28','2026-05-29',
+  '2026-03-20', // Ramazan Bayramı 1. gün (Cuma)
+  // Ramazan Bayramı 2-3. gün hafta sonu
+  '2026-05-26','2026-05-27','2026-05-28','2026-05-29', // Kurban Bayramı
+];
+// Arefe günleri — yarım gün (sadece sabah seansı)
+const AREFE_GUNLERI = [
+  '2026-03-19', // Ramazan Bayramı Arefesi
+  '2026-05-25', // Kurban Bayramı Arefesi
 ];
 
 function isTatil(tarih: string): boolean {
@@ -59,52 +59,25 @@ function isTatil(tarih: string): boolean {
   return false;
 }
 
-function getWeeks(files: ArsivFile[]): { label: string; gunler: { tarih: string; gunAdi: string; gun: string }[] }[] {
-  // Collect all dates from files
-  const dates = new Set<string>();
-  files.forEach(f => {
-    const m = f.ad.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (m) dates.add(`${m[1]}-${m[2]}-${m[3]}`);
-  });
-  // Add current week dates
-  const now = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    dates.add(d.toISOString().slice(0, 10));
-  }
-  // Group by ISO week
-  const weekMap = new Map<string, { tarih: string; gunAdi: string; gun: string }[]>();
-  const allDates = [...dates].sort().reverse();
-  allDates.forEach(dateStr => {
-    const d = new Date(dateStr);
-    const day = d.getDay();
-    if (day === 0 || day === 6) return; // skip weekends
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - ((day + 6) % 7));
-    const weekKey = monday.toISOString().slice(0, 10);
-    if (!weekMap.has(weekKey)) weekMap.set(weekKey, []);
-    const gunAdi = GUNLER[(day + 6) % 7];
-    const months = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
-    weekMap.get(weekKey)!.push({ tarih: dateStr, gunAdi, gun: `${d.getDate()}` });
-  });
-  // Build week objects with full 5 days
-  const weeks: { label: string; gunler: { tarih: string; gunAdi: string; gun: string }[] }[] = [];
-  const sortedKeys = [...weekMap.keys()].sort().reverse();
-  const months = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
-  sortedKeys.slice(0, 4).forEach(mondayStr => {
-    const mon = new Date(mondayStr);
-    const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
-    const label = `${mon.getDate()} ${months[mon.getMonth()]} – ${fri.getDate()} ${months[fri.getMonth()]} ${fri.getFullYear()}`;
-    const gunler: { tarih: string; gunAdi: string; gun: string }[] = [];
-    for (let i = 0; i < 5; i++) {
-      const d = new Date(mon); d.setDate(mon.getDate() + i);
-      const ds = d.toISOString().slice(0, 10);
-      gunler.push({ tarih: ds, gunAdi: GUNLER[i], gun: `${d.getDate()}` });
-    }
-    weeks.push({ label, gunler });
-  });
-  return weeks;
+function isArefe(tarih: string): boolean {
+  return AREFE_GUNLERI.includes(tarih);
+}
+
+function getTarihGunAdi(yil: number, ay: number, gun: number) {
+  const d = new Date(yil, ay - 1, gun);
+  return GUN_ADLARI[d.getDay()];
+}
+
+function parseArsivTarih(ad: string) {
+  const m = ad.match(/(\d{4})-(\d{2})-(\d{2})[_-](\d{2})-(\d{2})/);
+  if (!m) return { yil: 0, ay: 0, gun: 0, saat: '', tarihLabel: ad };
+  return {
+    yil: parseInt(m[1]),
+    ay: parseInt(m[2]),
+    gun: parseInt(m[3]),
+    saat: `${m[4]}:${m[5]}`,
+    tarihLabel: `${parseInt(m[3])} ${AYLAR[parseInt(m[2])-1]} ${m[1]}`
+  };
 }
 
 export default function ArchiveTab() {
@@ -115,7 +88,15 @@ export default function ArchiveTab() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [sinyalArsiv, setSinyalArsiv] = useState<Record<string, SinyalRecord>>({});
   const [sinyalLoading, setSinyalLoading] = useState(true);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Accordion state
+  const [acikAylar, setAcikAylar] = useState<Record<string, boolean>>({});
+  const [acikGunler, setAcikGunler] = useState<Record<string, boolean>>({});
+  const [acikBacktest, setAcikBacktest] = useState<Record<string, boolean>>({});
+
+  const toggleAy = (key: string) => setAcikAylar(p => ({ ...p, [key]: !p[key] }));
+  const toggleGun = (key: string) => setAcikGunler(p => ({ ...p, [key]: !p[key] }));
+  const toggleBacktest = (key: string) => setAcikBacktest(p => ({ ...p, [key]: !p[key] }));
 
   useEffect(() => {
     fetchArsiv().then(setArsivFiles).catch(() => {}).finally(() => setLoading(false));
@@ -153,18 +134,86 @@ export default function ArchiveTab() {
     } catch {}
   };
 
-  const toggleSelect = (name: string) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
-      return next;
-    });
+  // ZIP helpers
+  const indirGunZip = async (gunDosyalar: any[]) => {
+    const zip = new JSZip();
+    for (const d of gunDosyalar) {
+      const res = await fetch(`${API_BASE}/api/indir/${d.ad}`);
+      const blob = await res.blob();
+      zip.file(d.ad, blob);
+    }
+    const content = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bisthinker-${gunDosyalar[0]?.ad?.slice(0, 10)}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const toggleAll = () => {
-    if (selected.size === arsivFiles.length) setSelected(new Set());
-    else setSelected(new Set(arsivFiles.map(f => f.ad)));
+  const indirAyZip = async (ayKey: string) => {
+    const zip = new JSZip();
+    const gunler = taramaGruplari[ayKey] || {};
+    for (const gunKey of Object.keys(gunler)) {
+      for (const saat of Object.keys(gunler[gunKey])) {
+        const d = gunler[gunKey][saat];
+        const res = await fetch(`${API_BASE}/api/indir/${d.ad}`);
+        const blob = await res.blob();
+        zip.file(d.ad, blob);
+      }
+    }
+    const content = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bisthinker-${ayKey}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
+
+  const indirBacktestAyZip = async (ayKey: string) => {
+    const zip = new JSZip();
+    const listesi = backtestGruplari[ayKey] || [];
+    for (const d of listesi) {
+      const res = await fetch(`${API_BASE}/api/indir/${d.ad}`);
+      const blob = await res.blob();
+      zip.file(d.ad, blob);
+    }
+    const content = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bisthinker-backtest-${ayKey}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Data grouping
+  const taramaDosyalar = arsivFiles.filter(d => !d.ad.includes('backtest'));
+  const backtestDosyalar = arsivFiles.filter(d => d.ad.includes('backtest'));
+
+  const taramaGruplari: Record<string, Record<string, Record<string, any>>> = {};
+  taramaDosyalar.forEach(d => {
+    const p = parseArsivTarih(d.ad);
+    const ayKey = `${p.yil}-${String(p.ay).padStart(2, '0')}`;
+    const gunKey = `${p.yil}-${String(p.ay).padStart(2, '0')}-${String(p.gun).padStart(2, '0')}`;
+    if (!taramaGruplari[ayKey]) taramaGruplari[ayKey] = {};
+    if (!taramaGruplari[ayKey][gunKey]) taramaGruplari[ayKey][gunKey] = {};
+    taramaGruplari[ayKey][gunKey][p.saat] = d;
+  });
+
+  const backtestGruplari: Record<string, any[]> = {};
+  backtestDosyalar.forEach(d => {
+    const p = parseArsivTarih(d.ad);
+    const ayKey = `${p.yil}-${String(p.ay).padStart(2, '0')}`;
+    if (!backtestGruplari[ayKey]) backtestGruplari[ayKey] = [];
+    backtestGruplari[ayKey].push({ ...d, ...p });
+  });
+
+  const tumAylar = [...new Set([
+    ...Object.keys(taramaGruplari),
+    ...Object.keys(backtestGruplari)
+  ])].sort().reverse();
 
   const sinyalEntries = Object.entries(sinyalArsiv).sort(([, a], [, b]) => {
     const dateA = a.tarih.split('.').reverse().join('-') + 'T' + (a.saat || '00:00');
@@ -215,7 +264,6 @@ export default function ArchiveTab() {
 
               return (
                 <div key={key} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
-                  {/* Top */}
                   <div className="p-[12px_16px] flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
                     <div className="flex items-center gap-2">
                       <span className="font-syne text-[15px] font-extrabold text-t-txt">{rec.hisse}</span>
@@ -231,13 +279,9 @@ export default function ArchiveTab() {
                       }`}>{durum}</span>
                     </div>
                   </div>
-
-                  {/* Progress bar */}
                   <div className="p-[12px_16px]">
                     <PriceProgressBar stop={rec.stop} giris={rec.giris} hedef={rec.hedef} currentPrice={currentPrice} durum={durum} />
                   </div>
-
-                  {/* Bottom stats */}
                   <div className="p-[10px_16px] flex items-center justify-between flex-wrap gap-2 text-[11px]" style={{ borderTop: "1px solid var(--bdr)" }}>
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className={`font-mono font-bold ${pnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
@@ -262,132 +306,150 @@ export default function ArchiveTab() {
         )}
       </div>
 
-      {/* Tarama Geçmişi — Takvim Görünümü */}
+      {/* Accordion Tarama + Backtest Geçmişi */}
       <div className="bg-t-card rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--bdr)" }}>
         <div className="p-[13px_20px] bg-t-bg2 flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
-          <h3 className="font-syne text-[13px] font-bold text-t-txt">📅 Tarama Geçmişi</h3>
-          <div className="flex items-center gap-2">
-            <button onClick={() => window.open(`${API_BASE}/api/arsiv/tumu`)}
-              className="px-3 py-[5px] rounded-lg text-[11px] font-bold cursor-pointer transition-all text-t-accent"
-              style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>
-              ⬇ Tümünü İndir (ZIP)
-            </button>
-          </div>
+          <h3 className="font-syne text-[13px] font-bold text-t-txt">📅 Tarama & Backtest Geçmişi</h3>
+          <button onClick={() => window.open(`${API_BASE}/api/arsiv/tumu`)}
+            className="px-3 py-[5px] rounded-lg text-[11px] font-bold cursor-pointer transition-all text-t-accent"
+            style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>
+            ⬇ Tümünü İndir (ZIP)
+          </button>
         </div>
+
         {loading ? (
           <div className="p-8 text-center text-t-txt3">Yükleniyor...</div>
-        ) : (() => {
-          const taramaDosyalar = arsivFiles.filter(f => !f.ad.includes('backtest'));
-          const backtestDosyalar = arsivFiles.filter(f => f.ad.includes('backtest'));
+        ) : tumAylar.length === 0 ? (
+          <div className="p-8 text-center text-t-txt3">Arşiv dosyası bulunamadı</div>
+        ) : (
+          <div className="p-4 flex flex-col gap-2.5">
+            {tumAylar.map(ayKey => {
+              const [yil, ay] = ayKey.split('-').map(Number);
+              const ayLabel = `${AYLAR[ay - 1]} ${yil}`;
+              const ayGunler = taramaGruplari[ayKey] || {};
+              const ayBacktest = backtestGruplari[ayKey] || [];
 
-          // Build file map: "2026-04-03_10:30" => file
-          const dosyaMap: Record<string, ArsivFile> = {};
-          taramaDosyalar.forEach(d => {
-            const m = d.ad.match(/(\d{4})-(\d{2})-(\d{2})[_-](\d{2})-(\d{2})/);
-            if (!m) return;
-            dosyaMap[`${m[1]}-${m[2]}-${m[3]}_${m[4]}:${m[5]}`] = d;
-          });
+              return (
+                <div key={ayKey} className="flex flex-col gap-2">
+                  {/* AYLIK TARAMA BÖLÜMÜ */}
+                  {Object.keys(ayGunler).length > 0 && (
+                    <div className="rounded-[10px] overflow-hidden" style={{ border: "0.5px solid var(--bdr2)" }}>
+                      <div onClick={() => toggleAy(ayKey)}
+                        className="flex items-center gap-2.5 p-[10px_14px] cursor-pointer bg-t-bg2 hover:bg-t-bg3 transition-all">
+                        <span className="text-[10px] text-t-txt3">{acikAylar[ayKey] ? '▼' : '▶'}</span>
+                        <span className="text-[13px] font-medium text-t-txt flex-1">{ayLabel} Günlük Tarama Geçmişi</span>
+                        <span className="text-[10px] px-2 py-[2px] rounded bg-[var(--blue-bg)] text-t-accent font-semibold" style={{ border: "0.5px solid rgba(59,130,246,.2)" }}>Günlük</span>
+                        <button onClick={e => { e.stopPropagation(); indirAyZip(ayKey); }}
+                          className="text-[10px] px-2.5 py-[3px] rounded text-t-accent cursor-pointer bg-transparent transition-all hover:opacity-80"
+                          style={{ border: "0.5px solid rgba(59,130,246,.2)" }}>
+                          ⬇ {ayLabel} İndir
+                        </button>
+                      </div>
 
-          const haftalar = getWeeks(taramaDosyalar);
+                      {acikAylar[ayKey] && (
+                        <div className="bg-t-bg3" style={{ borderTop: "0.5px solid var(--bdr)" }}>
+                          {Object.keys(ayGunler).sort().reverse().map(gunKey => {
+                            const [gy, gm, gg] = gunKey.split('-').map(Number);
+                            const gunAdi = getTarihGunAdi(gy, gm, gg);
+                            const gunLabel = `${gg} ${AYLAR[gm - 1]} ${gy} ${gunAdi}`;
+                            const saatler = ayGunler[gunKey];
+                            const gunDosyalar = Object.values(saatler);
+                            const tatil = isTatil(gunKey);
+                            const arefe = isArefe(gunKey);
+                            const slotlar = arefe ? AREFE_SLOTLARI : SLOTLAR;
 
-          return (
-            <div className="p-4">
-              {haftalar.length === 0 ? (
-                <div className="p-8 text-center text-t-txt3">Arşiv dosyası bulunamadı</div>
-              ) : (
-                <>
-                  {haftalar.map((hafta, hi) => (
-                    <div key={hi} className="mb-6">
-                      <div className="text-[11px] text-t-txt3 font-medium mb-2">{hafta.label}</div>
-                      <div className="grid grid-cols-5 gap-1.5 max-md:grid-cols-2">
-                        {hafta.gunler.map(gun => {
-                          const tatil = isTatil(gun.tarih);
-                          return (
-                            <div key={gun.tarih}>
-                              <div className="text-[11px] font-medium text-center mb-1"
-                                style={{ color: tatil ? "#92400e" : "var(--txt3)" }}>
-                                {gun.gunAdi} {gun.gun}
-                                {tatil && <span className="block text-[9px]" style={{ color: "#fbbf24" }}>Tatil</span>}
-                              </div>
-                              {tatil ? (
-                                <div className="rounded-md p-2.5 text-center" style={{ background: "#1a0f00", border: "0.5px solid #451a03" }}>
-                                  <div className="text-[10px]" style={{ color: "#92400e" }}>🔴 Borsa</div>
-                                  <div className="text-[9px]" style={{ color: "#78350f" }}>Kapalı</div>
+                            return (
+                              <div key={gunKey} style={{ borderBottom: "0.5px solid var(--bdr)" }}>
+                                <div onClick={() => !tatil && toggleGun(gunKey)}
+                                  className={`flex items-center gap-2 p-[8px_14px_8px_24px] ${tatil ? '' : 'cursor-pointer hover:bg-t-bg4'} transition-all`}>
+                                  {!tatil && <span className="text-[9px] text-t-txt3">{acikGunler[gunKey] ? '▼' : '▶'}</span>}
+                                  <span className={`text-[12px] flex-1 ${tatil ? 'text-[#92400e]' : arefe ? 'text-[#d97706]' : 'text-t-txt2'}`}>
+                                    {gunLabel}
+                                    {tatil && <span className="ml-2 text-[9px] text-[#fbbf24]">🔴 Borsa Kapalı</span>}
+                                    {arefe && <span className="ml-2 text-[9px] text-[#d97706]">⏰ Yarım Gün (Arefe)</span>}
+                                  </span>
+                                  {!tatil && (
+                                    <button onClick={e => { e.stopPropagation(); indirGunZip(gunDosyalar); }}
+                                      className="text-[10px] px-2 py-[2px] rounded text-t-txt3 cursor-pointer bg-transparent transition-all hover:text-t-accent"
+                                      style={{ border: "0.5px solid var(--bdr)" }}>
+                                      ⬇ Günü İndir
+                                    </button>
+                                  )}
                                 </div>
-                              ) : (
-                                SLOTLAR.map(saat => {
-                                  const key = `${gun.tarih}_${saat}`;
-                                  const dosya = dosyaMap[key];
-                                  return (
-                                    <div key={saat} className="rounded-md p-[6px_8px] mb-1 transition-all"
-                                      style={{
-                                        background: dosya ? "var(--card)" : "var(--bg3)",
-                                        border: `0.5px solid ${dosya ? "rgba(59,130,246,.2)" : "var(--bdr)"}`,
-                                        opacity: dosya ? 1 : 0.4
-                                      }}>
-                                      <div className="text-[10px] font-medium" style={{ color: "var(--c-accent)" }}>{saat}</div>
-                                      {dosya ? (
-                                        <>
-                                          <div className="text-[9px] text-t-txt3">{typeof dosya.boyut === 'string' ? dosya.boyut : `${(Number(dosya.boyut)/1024).toFixed(0)} KB`}</div>
-                                          <div className="flex gap-1 mt-1">
-                                            <a href={getDownloadUrl(dosya.ad)} download
-                                              className="text-[9px] px-1.5 py-[2px] rounded text-t-accent no-underline cursor-pointer"
-                                              style={{ background: "var(--blue-bg)" }}>⬇</a>
-                                            <button onClick={() => handleDeleteFile(dosya.ad)}
-                                              className="text-[9px] px-1.5 py-[2px] rounded cursor-pointer border-none"
-                                              style={{ background: "var(--red-bg)", color: "var(--c-red)" }}>🗑</button>
-                                          </div>
-                                        </>
-                                      ) : (
-                                        <div className="text-[9px] text-t-txt3 mt-0.5">—</div>
-                                      )}
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
 
-                  {/* Backtest Geçmişi */}
-                  {backtestDosyalar.length > 0 && (
-                    <div className="mt-8">
-                      <div className="text-[13px] font-medium pb-2 mb-4" style={{ color: "#fbbf24", borderBottom: "0.5px solid #92400e" }}>
-                        📊 Backtest Geçmişi
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {backtestDosyalar.map((d, i) => (
-                          <div key={i} className="rounded-[10px] p-3" style={{ background: "var(--card)", border: "0.5px solid #92400e" }}>
-                            <span className="inline-block text-[9px] font-semibold px-[7px] py-[2px] rounded mb-1.5"
-                              style={{ background: "#451a03", color: "#fbbf24", border: "0.5px solid #92400e" }}>
-                              📊 Haftalık Backtest
-                            </span>
-                            <div className="font-mono text-[13px] font-medium text-t-txt">{parseDateFromName(d.ad)}</div>
-                            <div className="text-[11px] text-t-txt3 mb-2">{d.boyut}</div>
-                            <div className="flex gap-1.5">
-                              <a href={getDownloadUrl(d.ad)} download
-                                className="px-2 py-[3px] rounded text-[10px] font-bold text-t-accent cursor-pointer no-underline"
-                                style={{ background: "var(--blue-bg)", border: "1px solid rgba(59,130,246,.25)" }}>⬇ İndir</a>
-                              <button onClick={() => handleDeleteFile(d.ad)}
-                                className="px-2 py-[3px] rounded text-[10px] font-bold cursor-pointer border-none"
-                                style={{ background: "var(--red-bg)", color: "var(--c-red)" }}>🗑 Sil</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                                {!tatil && acikGunler[gunKey] && (
+                                  <div className="flex gap-2 p-[6px_14px_10px_32px] flex-wrap">
+                                    {slotlar.map(saat => {
+                                      const dosya = saatler[saat];
+                                      return dosya ? (
+                                        <div key={saat} className="flex items-center gap-2 bg-t-bg2 rounded-md px-2.5 py-[5px]"
+                                          style={{ border: "0.5px solid var(--bdr2)" }}>
+                                          <span className="text-[11px] text-t-accent font-medium font-mono">{saat}</span>
+                                          <span className="text-[10px] text-t-txt3">{typeof dosya.boyut === 'string' ? dosya.boyut : `${(Number(dosya.boyut) / 1024).toFixed(0)} KB`}</span>
+                                          <button onClick={() => window.open(getDownloadUrl(dosya.ad))}
+                                            className="text-[11px] cursor-pointer text-t-accent bg-transparent border-none p-0 hover:opacity-70">⬇</button>
+                                          <button onClick={() => handleDeleteFile(dosya.ad)}
+                                            className="text-[11px] cursor-pointer bg-transparent border-none p-0 hover:opacity-70" style={{ color: "var(--c-red)" }}>🗑</button>
+                                        </div>
+                                      ) : (
+                                        <div key={saat} className="flex items-center gap-2 rounded-md px-2.5 py-[5px] opacity-30"
+                                          style={{ border: "0.5px dashed var(--bdr)" }}>
+                                          <span className="text-[11px] text-t-txt3 font-mono">{saat}</span>
+                                          <span className="text-[10px] text-t-txt3">—</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
-                </>
-              )}
-            </div>
-          );
-        })()}
+
+                  {/* AYLIK BACKTEST BÖLÜMÜ */}
+                  {ayBacktest.length > 0 && (
+                    <div className="rounded-[10px] overflow-hidden" style={{ border: "0.5px solid #92400e" }}>
+                      <div onClick={() => toggleBacktest(ayKey)}
+                        className="flex items-center gap-2.5 p-[10px_14px] cursor-pointer bg-t-bg2 hover:bg-t-bg3 transition-all">
+                        <span className="text-[10px] text-t-txt3">{acikBacktest[ayKey] ? '▼' : '▶'}</span>
+                        <span className="text-[13px] font-medium text-t-txt flex-1">{ayLabel} Backtest Geçmişi</span>
+                        <span className="text-[10px] px-2 py-[2px] rounded font-semibold" style={{ background: "#1a0f00", color: "#fbbf24", border: "0.5px solid #92400e" }}>Haftalık</span>
+                        <button onClick={e => { e.stopPropagation(); indirBacktestAyZip(ayKey); }}
+                          className="text-[10px] px-2.5 py-[3px] rounded cursor-pointer bg-transparent transition-all hover:opacity-80"
+                          style={{ border: "0.5px solid #92400e", color: "#fbbf24" }}>
+                          ⬇ {ayLabel} Backtest İndir
+                        </button>
+                      </div>
+
+                      {acikBacktest[ayKey] && (
+                        <div className="bg-t-bg3" style={{ borderTop: "0.5px solid #92400e" }}>
+                          {ayBacktest.sort((a: any, b: any) => b.ad.localeCompare(a.ad)).map((d: any) => (
+                            <div key={d.ad} className="flex items-center gap-2.5 p-[8px_14px_8px_24px]" style={{ borderBottom: "0.5px solid var(--bdr)" }}>
+                              <span className="text-[12px] flex-1 font-mono" style={{ color: "#fbbf24" }}>
+                                {d.tarihLabel} · {d.saat}
+                              </span>
+                              <span className="text-[10px] text-t-txt3">{typeof d.boyut === 'string' ? d.boyut : `${(Number(d.boyut) / 1024).toFixed(0)} KB`}</span>
+                              <button onClick={() => window.open(getDownloadUrl(d.ad))}
+                                className="text-[11px] cursor-pointer text-t-accent bg-transparent border-none p-0 hover:opacity-70">⬇</button>
+                              <button onClick={() => handleDeleteFile(d.ad)}
+                                className="text-[11px] cursor-pointer bg-transparent border-none p-0 hover:opacity-70" style={{ color: "var(--c-red)" }}>🗑</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Manual File Upload */}
+      {/* Manuel Dosya Ekleme */}
       <div className="bg-t-card rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
         <div className="p-[13px_20px] bg-t-bg2 flex items-center justify-between" style={{ borderBottom: "1px solid var(--bdr)" }}>
           <h3 className="font-syne text-[13px] font-bold text-t-txt">📎 Manuel Dosya Ekleme</h3>

@@ -208,35 +208,65 @@ export default function PortfolioTab() {
             return (
               <div key={pId} className="bg-t-card2 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
                 {/* Collapsed header */}
-                <div className="p-[14px_18px] flex items-center justify-between flex-wrap gap-2 cursor-pointer" onClick={() => togglePort(pId)}
+                <div className="p-[10px_16px] flex items-center gap-4 cursor-pointer" onClick={() => togglePort(pId)}
                   style={{ borderBottom: isOpen ? "1px solid var(--bdr)" : "none" }}>
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-[14px]">{isOpen ? "▼" : "▶️"}</span>
+                  {/* SOL: ok + portföy adı + meta */}
+                  <div className="flex items-center gap-2.5 min-w-0 shrink-0" style={{ minWidth: "180px" }}>
+                    <span className="text-[11px] text-t-txt3">{isOpen ? "▼" : "▶"}</span>
                     <div className="min-w-0">
-                      <span className="text-[15px] font-bold font-syne text-t-txt">{p.name}</span>
-                      <div className="text-[10px] text-t-txt3 mt-0.5">
-                        {stocks.length} hisse
-                        {stocks.length > 0 && (
-                          <span className="ml-2">
-                            {stocks.map(s => s.ticker).join(" · ")}
-                          </span>
-                        )}
+                      <span className="text-[13px] font-medium text-t-txt">{p.name}</span>
+                      <div className="text-[10px] text-t-txt3 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <span>{(() => {
+                          try {
+                            const d = new Date((p as any).createdAt);
+                            if (isNaN(d.getTime())) return '—';
+                            const aylar = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+                            return `${d.getDate()} ${aylar[d.getMonth()]} ${d.getFullYear()}`;
+                          } catch { return '—'; }
+                        })()}</span>
+                        <span style={{ color: "var(--bdr2)" }}>·</span>
+                        <span>{stocks.length} hisse</span>
+                        <span style={{ color: "var(--bdr2)" }}>·</span>
+                        <span>Aktif Gün: {(() => {
+                          try {
+                            const d = new Date((p as any).createdAt);
+                            if (isNaN(d.getTime())) return 0;
+                            return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+                          } catch { return 0; }
+                        })()}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0" onClick={e => e.stopPropagation()}>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-t-bg4 text-t-txt3" style={{ border: "1px solid var(--bdr)" }}>PORTFÖY</span>
-                    {stocks.length > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[13px] font-bold font-mono ${totalPnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
-                          {totalPnlPct >= 0 ? "↑" : "↓"} {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(1)}%
-                        </span>
-                        <span className={`text-[11px] font-mono ${totalPnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
-                          {totalPnlTL >= 0 ? "+" : ""}{totalPnlTL.toFixed(2)} ₺
-                        </span>
-                      </div>
-                    )}
+
+                  {/* ORTA: hisse chip'leri */}
+                  <div className="flex gap-1.5 flex-1 overflow-hidden items-center flex-wrap" onClick={e => e.stopPropagation()}>
+                    {stocks.map(s => {
+                      const cp = livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price;
+                      const deg = s.price > 0 ? ((cp - s.price) / s.price * 100) : 0;
+                      return (
+                        <div key={s.ticker} className="flex items-center gap-1.5 bg-t-bg3 rounded px-2 py-[3px] whitespace-nowrap"
+                          style={{ border: "0.5px solid var(--bdr)" }}>
+                          <span className="text-[11px] font-medium text-t-txt">{s.ticker}</span>
+                          <span className="text-[10px] font-mono" style={{ color: deg >= 0 ? "#2CC98A" : "#E05252" }}>
+                            {deg >= 0 ? "+" : ""}{deg.toFixed(1)}%
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* SAĞ: toplam değişim */}
+                  {stocks.length > 0 && (
+                    <div className="flex items-center gap-1.5 shrink-0 ml-auto whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                      <span className="text-[10px] text-t-txt3">Değişim</span>
+                      <span className={`text-[13px] font-medium font-mono ${totalPnlPct >= 0 ? "text-t-green" : "text-t-red"}`}>
+                        {totalPnlPct >= 0 ? "↑" : "↓"} {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(1)}%
+                      </span>
+                      <span className={`text-[12px] font-mono ${totalPnlTL >= 0 ? "text-t-green" : "text-t-red"}`}>
+                        {totalPnlTL >= 0 ? "+" : ""}{totalPnlTL.toFixed(2)} ₺
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Open body */}
