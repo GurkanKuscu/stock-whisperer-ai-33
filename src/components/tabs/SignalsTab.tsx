@@ -4,7 +4,7 @@ import SignalCard from "@/components/SignalCard";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 import MarketSummaryPanel from "@/components/MarketSummaryPanel";
 
-export default function SignalsTab() {
+export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
   const [addTicker, setAddTicker] = useState<string | null>(null);
   const [filter, setFilter] = useState<"top10" | "confirmed" | "dikkatli" | "pending" | "watchlist">("top10");
@@ -77,7 +77,7 @@ export default function SignalsTab() {
                     style={{ background: "linear-gradient(135deg, var(--gold), var(--gold-d))", boxShadow: "0 2px 8px rgba(201,148,58,.4)" }}>
                     {index + 1}
                   </div>
-                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} />
+                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
                 </div>
               ))
             : filter === "dikkatli"
@@ -87,11 +87,11 @@ export default function SignalsTab() {
                     style={{ background: "rgba(245,158,11,.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,.25)" }}>
                     🔍 DİKKATLİ
                   </div>
-                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} />
+                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
                 </div>
               ))
             : current.map(ticker => (
-                <SignalCard key={ticker} ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} />
+                <SignalCard key={ticker} ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
               ))
           }
         </div>

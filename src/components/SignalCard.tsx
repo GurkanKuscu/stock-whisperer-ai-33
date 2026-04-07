@@ -7,6 +7,7 @@ interface SignalCardProps {
   ticker: string;
   stock: StockData;
   onAddPortfolio?: (ticker: string) => void;
+  onTickerClick?: (ticker: string) => void;
 }
 
 function formatVol(v: number): string {
@@ -38,7 +39,7 @@ function getVerdictInfo(stock: StockData) {
   return { label: "🔴 GİRME", cls: "bg-[var(--red-bg)] text-t-red-l border-[var(--red-bdr)]", sub: `Temel ${tp}p · Kombine ${kp}p` };
 }
 
-export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCardProps) {
+export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClick }: SignalCardProps) {
   const [temelOpen, setTemelOpen] = useState(false);
   const rsiM = getRsiMomentum(stock.rsi);
   const verdict = getVerdictInfo(stock);
@@ -69,7 +70,8 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
       {/* Header */}
       <div className="p-[18px_20px] flex justify-between items-start" style={{ borderBottom: "1px solid var(--bdr)" }}>
         <div className="flex flex-col gap-[5px]">
-          <div className="font-syne text-[24px] font-extrabold tracking-[-0.5px] leading-none text-t-txt">{ticker}</div>
+          <div className="font-syne text-[24px] font-extrabold tracking-[-0.5px] leading-none text-t-txt cursor-pointer hover:underline"
+            onClick={() => onTickerClick?.(ticker)}>{ticker}</div>
           <div className="flex items-center gap-[7px] text-[11px]">
             <span className="text-t-txt2 font-medium">{stock.sector_name}</span>
             <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{tr(SIGNAL_TR, stock.signal)}</span>
