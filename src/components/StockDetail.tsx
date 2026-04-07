@@ -244,11 +244,32 @@ export default function StockDetail({ ticker, onBack }: Props) {
                   formatter={(v: number, name: string) => {
                     if (name === "sma20") return [v?.toFixed(2), "SMA 20"];
                     if (name === "sma50") return [v?.toFixed(2), "SMA 50"];
+                    if (name === "sma200") return [v?.toFixed(2), "SMA 200"];
                     return [v?.toFixed(2) + " ₺", "Fiyat"];
                   }} />
                 <Area type="monotone" dataKey="value" stroke={chartColor} strokeWidth={2} fill={`url(#grad-${ticker})`} dot={false} />
                 <Line type="monotone" dataKey="sma20" stroke="#C9943A" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
-                <Line type="monotone" dataKey="sma50" stroke="#E05252" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="sma50" stroke="#facc15" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="sma200" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="6 3" dot={false} connectNulls />
+                {indicators.crosses.map((c, idx) => (
+                  <ReferenceDot
+                    key={idx}
+                    x={c.date}
+                    y={c.price}
+                    r={6}
+                    fill={c.type === 'golden' ? '#facc15' : '#ef4444'}
+                    stroke={c.type === 'golden' ? '#a16207' : '#991b1b'}
+                    strokeWidth={1.5}
+                    label={{
+                      value: c.type === 'golden' ? '⭐ GC' : '✕ DC',
+                      position: 'top',
+                      fill: c.type === 'golden' ? '#facc15' : '#ef4444',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      offset: 10,
+                    }}
+                  />
+                ))}
               </AreaChart>
             </ResponsiveContainer>
           ) : (
