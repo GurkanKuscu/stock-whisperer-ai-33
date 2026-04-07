@@ -124,8 +124,14 @@ export default function DashboardTab() {
                   </div>
                 ))
               : market.map((item, i) => (
-                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px]" style={{ borderRight: i < market.length - 1 ? "0.5px solid #2d3748" : "none" }}>
-                    <div className="text-[9px] mb-0.5" style={{ color: "#64748b" }}>{item.label}</div>
+                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,.03)]"
+                    onClick={() => { setChartSymbol(item.symbol); setChartLabel(item.label); }}
+                    style={{
+                      borderRight: i < market.length - 1 ? "0.5px solid #2d3748" : "none",
+                      background: chartSymbol === item.symbol ? "rgba(201,148,58,.06)" : "transparent",
+                      borderBottom: chartSymbol === item.symbol ? "2px solid #C9943A" : "2px solid transparent",
+                    }}>
+                    <div className="text-[9px] mb-0.5" style={{ color: chartSymbol === item.symbol ? "#C9943A" : "#64748b" }}>{item.label}</div>
                     <div className="text-[15px] font-medium" style={{ color: "#e2e8f0" }}>
                       {item.value > 0 ? item.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
                     </div>
@@ -141,14 +147,10 @@ export default function DashboardTab() {
           <div className="p-3.5">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <div className="text-[11px]" style={{ color: "#64748b" }}>BIST 100</div>
+                <div className="text-[11px]" style={{ color: "#64748b" }}>{chartLabel}</div>
                 <div className="text-[22px] font-medium" style={{ color: "#e2e8f0" }}>
-                  {market[0]?.value > 0 ? market[0].value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
-                  {market[0] && (
-                    <span className="text-[13px] ml-2" style={{ color: market[0].change >= 0 ? "#2CC98A" : "#E05252" }}>
-                      {market[0].change >= 0 ? "+" : ""}{market[0].change?.toFixed(2)}%
-                    </span>
-                  )}
+                  {(() => { const sel = market.find(m => m.symbol === chartSymbol); return sel && sel.value > 0 ? sel.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"; })()}
+                  {(() => { const sel = market.find(m => m.symbol === chartSymbol); return sel ? <span className="text-[13px] ml-2" style={{ color: sel.change >= 0 ? "#2CC98A" : "#E05252" }}>{sel.change >= 0 ? "+" : ""}{sel.change?.toFixed(2)}%</span> : null; })()}
                 </div>
               </div>
               <div className="flex gap-1">
