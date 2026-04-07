@@ -44,7 +44,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const lastTaramaRef = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!initialLoaded) setLoading(true);
+    if (!initialLoadedRef.current) setLoading(true);
     setError(null);
     try {
       const snap = await fetchSnapshot();
@@ -59,12 +59,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       setData(snap);
       setIsMockMode(false);
-      if (!initialLoaded) setInitialLoaded(true);
+      if (!initialLoadedRef.current) initialLoadedRef.current = true;
     } catch (e: any) {
       console.warn("API unavailable, using mock data:", e.message);
       setData(MOCK_DATA);
       setIsMockMode(true);
-      if (!initialLoaded) setInitialLoaded(true);
+      if (!initialLoadedRef.current) initialLoadedRef.current = true;
     } finally {
       setLoading(false);
     }
