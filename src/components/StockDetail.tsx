@@ -73,14 +73,6 @@ function calcMACD(closes: number[]) {
   const histogram = macdLine.map((v, i) => v - signalLine[i]);
   return { macd: macdLine, signal: signalLine, histogram };
 }
-  if (closes.length < 26) return { macd: [], signal: [], histogram: [] };
-  const ema12 = calcEMA(closes, 12);
-  const ema26 = calcEMA(closes, 26);
-  const macdLine = ema12.map((v, i) => v - ema26[i]);
-  const signalLine = calcEMA(macdLine, 9);
-  const histogram = macdLine.map((v, i) => v - signalLine[i]);
-  return { macd: macdLine, signal: signalLine, histogram };
-}
 
 export default function StockDetail({ ticker, onBack }: Props) {
   const { data } = useAppData();
