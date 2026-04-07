@@ -144,40 +144,45 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
         </div>
       )}
 
-      {/* Verdict */}
-      <div className="p-[13px_18px] cursor-pointer hover:opacity-90"
+      {/* Verdict — PROMPT K layout */}
+      <div className="p-[8px_12px] cursor-pointer hover:opacity-90" style={{ borderTop: "0.5px solid var(--bdr)" }}
         onClick={() => setTemelOpen(!temelOpen)}>
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px]">
-            Temel Karar {temelOpen ? "▲" : "▼"} detay
+        <div className="flex justify-between items-start gap-2">
+          {/* Sol: Temel + Karar */}
+          <div className="flex flex-col gap-1">
+            <div className="text-[11px] text-t-txt3 font-medium tracking-[1px]">
+              TEMEL KARAR {temelOpen ? "▲" : "▼"}
+            </div>
+            <div className="text-[12px] text-t-txt">
+              Temel: <span style={{
+                color: stock.temel_sinyal?.includes('GÜÇLÜ') ? '#2CC98A'
+                  : stock.temel_sinyal?.includes('ORTA') ? '#F59E0B'
+                  : stock.temel_sinyal?.includes('ZAYIF') ? '#F97316'
+                  : '#E05252'
+              }}>{stock.temel_sinyal || '—'}</span> {stock.temel_puan ? `${stock.temel_puan}p` : ''}
+            </div>
+            {stock.kombine_karar && (
+              <div className="text-[12px]" style={{ color: '#94a3b8' }}>
+                {stock.kombine_karar}
+              </div>
+            )}
           </div>
-          <span className={`px-3 py-[5px] rounded-md text-[10.5px] font-bold whitespace-nowrap tracking-[.01em] border ${verdict.cls}`}>
-            {verdict.label}
-          </span>
-        </div>
-        {/* Temel sinyal */}
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[10px] text-t-txt3">Temel:</span>
-          <span className="text-[11px] font-medium" style={{
-            color: stock.temel_sinyal?.includes('GÜÇLÜ') ? '#2CC98A'
-              : stock.temel_sinyal?.includes('ORTA') ? '#F59E0B'
-              : stock.temel_sinyal?.includes('ZAYIF') ? '#F97316'
-              : '#E05252'
-          }}>
-            {stock.temel_sinyal || '—'}
-          </span>
-          <span className="text-[10px] text-t-txt3">{stock.temel_puan ? `${stock.temel_puan}p` : ''}</span>
-        </div>
-        {/* Kombine karar */}
-        <div className="text-[11px] font-medium" style={{
-          color: stock.kombine_karar?.includes('GÜÇLÜ') ? '#2CC98A'
-            : stock.kombine_karar?.includes('GİRİLEBİLİR') ? '#2CC98A'
-            : stock.kombine_karar?.includes('DİKKATLİ') ? '#F59E0B'
-            : stock.kombine_karar?.includes('BEKLE') ? '#F97316'
-            : stock.kombine_karar?.includes('GIRME') || stock.kombine_karar?.includes('GİRME') ? '#E05252'
-            : '#94a3b8'
-        }}>
-          {stock.kombine_karar || '—'}
+
+          {/* Sağ: Durum badge */}
+          <div className="shrink-0">
+            {(() => {
+              const k = stock.kombine_karar ?? '';
+              if ((k.includes('GİRİLEBİLİR') || k.includes('GİR')) && !k.includes('GİRME')) {
+                return <span className="inline-block px-3 py-1 rounded-[20px] text-[11px] font-medium" style={{ background: '#0d2e1f', color: '#2CC98A' }}>✅ GİR</span>;
+              } else if (k.includes('BEKLE') || k.includes('DİKKATLİ') || k.includes('İZLE')) {
+                return <span className="inline-block px-3 py-1 rounded-[20px] text-[11px] font-medium" style={{ background: '#2e2a0d', color: '#F59E0B' }}>⚠️ BEKLE</span>;
+              } else if (k.includes('GİRME') || k.includes('TEMEL ENGEL')) {
+                return <span className="inline-block px-3 py-1 rounded-[20px] text-[11px] font-medium" style={{ background: '#2e0d0d', color: '#E05252' }}>❌ GİRME</span>;
+              } else {
+                return <span className="inline-block px-3 py-1 rounded-[20px] text-[11px] font-medium" style={{ background: '#1e2d3d', color: '#64748b' }}>— VERİ YOK</span>;
+              }
+            })()}
+          </div>
         </div>
       </div>
 
