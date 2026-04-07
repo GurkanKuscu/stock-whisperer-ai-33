@@ -2,6 +2,7 @@ export interface StockData {
   score: number;
   signal: string;
   close: number;
+  prev_close?: number;
   stop_loss: number;
   target: number;
   rr_ratio: number;

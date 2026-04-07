@@ -94,6 +94,20 @@ export default function DashboardTab() {
     .slice(0, 6)
     .map(t => ({ ticker: t, avg_vol_tl: data[t].avg_vol_tl, chg: data[t].perf_1d ?? 0 }));
 
+  // Günlük değişim hesapla
+  const withChange = tickers
+    .map(t => {
+      const d = data[t];
+      const chg = d.prev_close && d.prev_close > 0
+        ? ((d.close - d.prev_close) / d.prev_close) * 100
+        : (d.perf_1d ?? 0);
+      return { ticker: t, close: d.close, chg };
+    })
+    .filter(x => x.chg !== 0);
+
+  const topGainers = [...withChange].sort((a, b) => b.chg - a.chg).slice(0, 6);
+  const topLosers = [...withChange].sort((a, b) => a.chg - b.chg).slice(0, 6);
+
   // KAP haberleri
   const kapHaberler = tickers
     .flatMap(t => (data[t].kap_haberler ?? []).map(h => ({ ...h, ticker: t })))
