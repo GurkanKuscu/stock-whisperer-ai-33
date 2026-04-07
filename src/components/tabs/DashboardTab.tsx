@@ -121,7 +121,79 @@ export default function DashboardTab() {
         }
       </div>
 
-      {/* 2. Sistem Durumu */}
+      {/* 2. BIST100 Grafik + Sistem Durumu */}
+      <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-2 mb-3">
+        {/* Sol: BIST100 Grafik */}
+        <div className="rounded-xl p-3.5" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <div className="text-[11px]" style={{ color: "#64748b" }}>BIST 100</div>
+              <div className="text-[22px] font-medium" style={{ color: "#e2e8f0" }}>
+                {market[0]?.value > 0 ? market[0].value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
+                {market[0] && (
+                  <span className="text-[13px] ml-2" style={{ color: market[0].change >= 0 ? "#2CC98A" : "#E05252" }}>
+                    {market[0].change >= 0 ? "+" : ""}{market[0].change?.toFixed(2)}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {["1H", "1A", "3A", "6A", "1Y"].map(p => (
+                <button key={p} onClick={() => setChartPeriod(p)}
+                  className="border-none cursor-pointer"
+                  style={{
+                    padding: "3px 8px", borderRadius: 6, fontSize: 11,
+                    background: chartPeriod === p ? "#C9943A" : "transparent",
+                    color: chartPeriod === p ? "#000" : "#64748b",
+                  }}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ height: 160 }}>
+            {chartLoading ? (
+              <div className="h-full flex items-center justify-center text-[11px]" style={{ color: "#64748b" }}>Grafik yükleniyor...</div>
+            ) : chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="bistGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2CC98A" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#2CC98A" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
+                    tickFormatter={(v: string) => { const parts = v.split("-"); return parts.length >= 2 ? `${parts[2] ?? ""}/${parts[1]}` : v; }}
+                    interval="preserveStartEnd" minTickGap={40} />
+                  <YAxis orientation="right" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
+                    domain={["dataMin - 100", "dataMax + 100"]}
+                    tickFormatter={(v: number) => v.toLocaleString("tr-TR")} width={55} />
+                  <Tooltip
+                    contentStyle={{ background: "#1a1f2e", border: "1px solid #2d3748", borderRadius: 8, fontSize: 11 }}
+                    labelStyle={{ color: "#64748b" }}
+                    formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), "BIST100"]} />
+                  <Area type="monotone" dataKey="value" stroke="#2CC98A" strokeWidth={2} fill="url(#bistGradient)" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-[11px]" style={{ color: "#64748b" }}>Grafik verisi bulunamadı</div>
+            )}
+          </div>
+        </div>
+
+        {/* Sağ: Sistem Durumu */}
+        <div className="grid grid-cols-2 gap-1.5">
+          {systemStats.map((item, i) => (
+            <div key={i} className="rounded-xl p-3 text-center" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+              <div className="text-[26px] font-medium" style={{ color: item.color }}>{item.val}</div>
+              <div className="text-[10px] mt-1 tracking-[0.5px]" style={{ color: "#64748b" }}>{item.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Üçlü Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {systemStats.map((item, i) => (
           <div key={i} className="rounded-xl p-3 text-center" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
