@@ -13,6 +13,9 @@ export default function DashboardTab() {
   const { data } = useAppData();
   const [market, setMarket] = useState<MarketItem[]>([]);
   const [marketLoading, setMarketLoading] = useState(true);
+  const [chartData, setChartData] = useState<{ date: string; value: number }[]>([]);
+  const [chartPeriod, setChartPeriod] = useState("1A");
+  const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
     fetchMarket()
@@ -30,6 +33,18 @@ export default function DashboardTab() {
       .catch(() => {})
       .finally(() => setMarketLoading(false));
   }, []);
+
+  useEffect(() => {
+    setChartLoading(true);
+    fetchBistChart(chartPeriod)
+      .then(d => {
+        if (d.dates && d.closes) {
+          setChartData(d.dates.map((dt, i) => ({ date: dt, value: d.closes[i] })));
+        }
+      })
+      .catch(() => setChartData([]))
+      .finally(() => setChartLoading(false));
+  }, [chartPeriod]);
 
   const tickers = Object.keys(data);
 
