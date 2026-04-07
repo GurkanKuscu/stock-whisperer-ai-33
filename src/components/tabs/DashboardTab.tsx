@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
-import { fetchMarket } from "@/services/api";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
+import { fetchMarket, fetchBistChart } from "@/services/api";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MarketItem {
   label: string;
