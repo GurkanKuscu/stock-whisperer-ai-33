@@ -37,13 +37,14 @@ function loadLocalPortfolios(): PortfolioMap {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<SnapshotData>({});
   const [loading, setLoading] = useState(true);
+  const initialLoadedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [portfolios, setPortfoliosState] = useState<PortfolioMap>(loadLocalPortfolios);
   const [isMockMode, setIsMockMode] = useState(false);
   const lastTaramaRef = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (!initialLoadedRef.current) setLoading(true);
     setError(null);
     try {
       const snap = await fetchSnapshot();
@@ -58,10 +59,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       setData(snap);
       setIsMockMode(false);
+      if (!initialLoadedRef.current) initialLoadedRef.current = true;
     } catch (e: any) {
       console.warn("API unavailable, using mock data:", e.message);
       setData(MOCK_DATA);
       setIsMockMode(true);
+      if (!initialLoadedRef.current) initialLoadedRef.current = true;
     } finally {
       setLoading(false);
     }
