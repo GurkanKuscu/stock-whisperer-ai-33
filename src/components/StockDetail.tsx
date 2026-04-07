@@ -285,11 +285,42 @@ export default function StockDetail({ ticker, onBack }: Props) {
         </div>
       )}
 
+      {/* Bollinger Bantları Paneli */}
+      {enrichedData.some(d => d.bbUpper != null) && (
+        <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>BOLLINGER BANTLARI (20, 2)</div>
+          <div className="h-[180px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={enrichedData}>
+                <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                  tickFormatter={v => v.slice(5)} interval="preserveStartEnd" />
+                <YAxis domain={["auto", "auto"]} tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                  orientation="right" tickFormatter={v => v.toLocaleString("tr-TR")} />
+                <Tooltip contentStyle={tooltipStyle}
+                  formatter={(v: number, name: string) => {
+                    const labels: Record<string, string> = { bbUpper: "Üst Bant", bbLower: "Alt Bant", bbMid: "Orta (SMA 20)", value: "Fiyat" };
+                    return [v?.toFixed(2), labels[name] || name];
+                  }} />
+                <Line type="monotone" dataKey="bbUpper" stroke="#C9943A" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="bbLower" stroke="#C9943A" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="bbMid" stroke="#64748b" strokeWidth={1} dot={false} connectNulls />
+                <Line type="monotone" dataKey="value" stroke={chartColor} strokeWidth={1.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex gap-4 mt-2 text-[10px]" style={{ color: "#64748b" }}>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#C9943A", borderTop: "1px dashed #C9943A" }} />Üst/Alt Bant</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#64748b" }} />Orta (SMA 20)</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: chartColor }} />Fiyat</span>
+          </div>
+        </div>
+      )}
+
       {/* MACD Paneli */}
       {enrichedData.some(d => d.macd != null && d.macd !== 0) && (
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
           <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>MACD (12, 26, 9)</div>
-          <div className="h-[100px]">
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={enrichedData}>
                 <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
