@@ -62,7 +62,7 @@ export default function MarketBar() {
         <span className="font-mono text-[12px] font-semibold text-t-txt2">{stats.sentimentSub}</span>
         <div className="flex items-center gap-4 text-[11px] text-t-txt3">
           <span>Taranan: <strong className="text-t-txt2">{stats.total}</strong></span>
-          <span>Breadth: <strong className="text-t-txt2">%{stats.breadth}</strong></span>
+          <span title="Skoru 60+ olan hisselerin oranı — piyasa genişliğini gösterir">Piyasa Genişliği: <strong className="text-t-txt2">%{stats.breadth}</strong></span>
         </div>
       </div>
 
