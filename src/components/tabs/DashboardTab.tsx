@@ -188,7 +188,7 @@ export default function DashboardTab() {
                     <Tooltip
                       contentStyle={{ background: "#1a1f2e", border: "1px solid #2d3748", borderRadius: 8, fontSize: 11 }}
                       labelStyle={{ color: "#64748b" }}
-                      formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), "BIST100"]} />
+                      formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), chartLabel]} />
                     <Area type="monotone" dataKey="value" stroke="#2CC98A" strokeWidth={2} fill="url(#bistGradient)" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
