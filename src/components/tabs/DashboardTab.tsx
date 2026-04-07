@@ -119,7 +119,7 @@ export default function DashboardTab() {
     { label: "ONAYLI", val: confirmed, color: "#2CC98A" },
     { label: "BEKLEYEN", val: pending, color: "#F59E0B" },
     { label: "İZLEME", val: izleme, color: "#60a5fa" },
-    { label: "BREADTH", val: `${breadth}%`, color: "#94a3b8" },
+    { label: "PİYASA GENİŞLİĞİ", val: `${breadth}%`, color: "#94a3b8" },
   ];
 
   return (
