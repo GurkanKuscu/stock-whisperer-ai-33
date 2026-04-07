@@ -288,10 +288,17 @@ export default function StockDetail({ ticker, onBack }: Props) {
         </div>
         {/* SMA Lejant */}
         {chartType === "fiyat" && chartData.length > 0 && (
-          <div className="flex gap-4 mt-2 text-[10px]" style={{ color: "#64748b" }}>
+          <div className="flex flex-wrap gap-3 mt-2 text-[10px]" style={{ color: "#64748b" }}>
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: chartColor }} />Fiyat</span>
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#C9943A", borderTop: "1px dashed #C9943A" }} />SMA 20</span>
-            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#E05252", borderTop: "1px dashed #E05252" }} />SMA 50</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#facc15", borderTop: "1px dashed #facc15" }} />SMA 50</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#94a3b8", borderTop: "1px dashed #94a3b8" }} />SMA 200</span>
+            {indicators.crosses.length > 0 && (
+              <>
+                <span style={{ color: "#facc15" }}>⭐ Golden Cross</span>
+                <span style={{ color: "#ef4444" }}>✕ Death Cross</span>
+              </>
+            )}
           </div>
         )}
       </div>
