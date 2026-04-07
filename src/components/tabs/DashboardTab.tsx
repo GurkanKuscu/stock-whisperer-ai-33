@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchMarket, fetchBistChart } from "@/services/api";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import StockDetail from "@/components/StockDetail";
 
 interface MarketItem {
   label: string;
@@ -28,7 +29,7 @@ export default function DashboardTab() {
   const [chartSymbol, setChartSymbol] = useState("xu100");
   const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
-
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   useEffect(() => {
     fetchMarket()
       .then(m => {
@@ -121,6 +122,10 @@ export default function DashboardTab() {
     { label: "İZLEME", val: izleme, color: "#60a5fa" },
     { label: "PİYASA GENİŞLİĞİ", val: `${breadth}%`, color: "#94a3b8" },
   ];
+
+  if (selectedTicker) {
+    return <StockDetail ticker={selectedTicker} onBack={() => setSelectedTicker(null)} />;
+  }
 
   return (
     <div className="animate-fade-in">
@@ -233,7 +238,7 @@ export default function DashboardTab() {
           {topSignals.map((s, i) => (
             <div key={i} className="flex justify-between py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium" style={{ color: "#e2e8f0" }}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{s.sector_name} · RSI {s.rsi}</div>
               </div>
               <div className="flex gap-1 items-center">
@@ -277,7 +282,7 @@ export default function DashboardTab() {
           {topVolume.map((s, i) => (
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium" style={{ color: "#e2e8f0" }}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{(s.avg_vol_tl / 1e6).toFixed(1)}M ₺</div>
               </div>
               <div className="text-[12px] font-medium" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
@@ -293,7 +298,7 @@ export default function DashboardTab() {
           {topGainers.map((s, i) => (
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium" style={{ color: "#e2e8f0" }}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{s.close.toFixed(2)} ₺</div>
               </div>
               <div className="text-[12px] font-medium" style={{ color: "#2CC98A" }}>
@@ -309,7 +314,7 @@ export default function DashboardTab() {
           {topLosers.map((s, i) => (
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium" style={{ color: "#e2e8f0" }}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{s.close.toFixed(2)} ₺</div>
               </div>
               <div className="text-[12px] font-medium" style={{ color: "#E05252" }}>
