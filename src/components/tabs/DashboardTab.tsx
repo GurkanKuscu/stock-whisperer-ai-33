@@ -225,8 +225,8 @@ export default function DashboardTab() {
       </div>
 
 
-      {/* 3. Üçlü Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+      {/* 3. Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2 mb-3">
         {/* En İyi Sinyaller */}
         <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
           <div className="text-[10px] mb-2 tracking-[0.5px]" style={{ color: "#64748b" }}>EN İYİ SİNYALLER</div>
