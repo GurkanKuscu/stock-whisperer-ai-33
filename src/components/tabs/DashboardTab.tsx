@@ -321,26 +321,36 @@ export default function DashboardTab() {
       </div>
 
       {/* 4. KAP Haberleri */}
-      <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
-        <div className="text-[10px] mb-2.5 tracking-[0.5px]" style={{ color: "#64748b" }}>SON KAP HABERLERİ</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+      <div className="rounded-xl p-4" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[14px]">📰</span>
+          <span className="text-[11px] font-semibold tracking-[0.5px]" style={{ color: "#94a3b8" }}>SON KAP HABERLERİ</span>
+          <span className="text-[10px] ml-auto px-2 py-0.5 rounded-full" style={{ background: "#1e293b", color: "#64748b" }}>{kapHaberler.length} haber</span>
+        </div>
+        <div className="space-y-0">
           {kapHaberler.map((h: any, i: number) => {
             const href = h.url ?? h.link;
             const inner = (
-              <div className="flex gap-2 items-start py-1.5" style={{ borderBottom: "0.5px solid #1e2535" }}>
-                <span className="text-[11px] font-medium shrink-0" style={{ color: "#60a5fa" }}>{h.ticker ?? ""}</span>
-                <div>
-                  <div className="text-[11px] leading-relaxed" style={{ color: "#e2e8f0" }}>{h.baslik}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: "#475569" }}>{h.tarih}</div>
+              <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#1a2235]"
+                style={{ borderBottom: i < kapHaberler.length - 1 ? "0.5px solid #1e2535" : "none" }}>
+                <span className="text-[10.5px] font-bold font-mono px-2 py-0.5 rounded shrink-0 mt-0.5"
+                  style={{ background: "#1e293b", color: "#60a5fa", border: "1px solid #2d3748" }}>{h.ticker ?? ""}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11.5px] leading-[1.6] font-medium truncate" style={{ color: "#e2e8f0" }}>{h.baslik}</div>
+                  <div className="text-[10px] mt-1 flex items-center gap-2" style={{ color: "#475569" }}>
+                    <span>{h.tarih}</span>
+                    {h.kaynak && <span className="px-1.5 py-px rounded text-[9px]" style={{ background: "#1e293b" }}>{h.kaynak}</span>}
+                  </div>
                 </div>
+                {href && <span className="text-[10px] shrink-0 mt-1" style={{ color: "#60a5fa" }}>→</span>}
               </div>
             );
             return href
-              ? <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="no-underline">{inner}</a>
+              ? <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="no-underline block">{inner}</a>
               : <div key={i}>{inner}</div>;
           })}
           {kapHaberler.length === 0 && (
-            <div className="text-[11px] py-4 text-center" style={{ color: "#64748b" }}>KAP haberi bulunamadı</div>
+            <div className="text-[11px] py-6 text-center" style={{ color: "#64748b" }}>KAP haberi bulunamadı</div>
           )}
         </div>
       </div>
