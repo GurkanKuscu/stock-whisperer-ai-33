@@ -16,7 +16,7 @@ export default function FundamentalTab() {
   const filtered = tickers.filter(t => {
     if (temelFiltre === 'TÜMÜ') return true;
     const s = data[t].temel_sinyal ?? '';
-    if (temelFiltre === 'TEMEL GÜÇLÜ') return s.includes('GÜÇLÜ');
+    if (temelFiltre === 'TEMEL GÜÇLÜ') return s.includes('GÜÇLÜ') || s.includes('TEMEL GÜÇ');
     if (temelFiltre === 'TEMEL ORTA') return s.includes('ORTA');
     if (temelFiltre === 'TEMEL ZAYIF') return s.includes('ZAYIF');
     if (temelFiltre === 'TEMEL KÖTÜ') return s.includes('KÖTÜ');
