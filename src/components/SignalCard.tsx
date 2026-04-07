@@ -148,21 +148,23 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
       <div className="p-[8px_12px] cursor-pointer hover:opacity-90" style={{ borderTop: "0.5px solid var(--bdr)" }}
         onClick={() => setTemelOpen(!temelOpen)}>
         <div className="flex justify-between items-start gap-2">
-          {/* Sol: Temel + Karar */}
-          <div className="flex flex-col gap-1">
-            <div className="text-[11px] text-t-txt3 font-medium tracking-[1px]">
-              TEMEL KARAR {temelOpen ? "▲" : "▼"}
-            </div>
-            <div className="text-[12px] text-t-txt">
-              Temel: <span style={{
+          {/* Sol: Temel Karar + ok */}
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] text-t-txt3 font-medium tracking-[1px]">
+                TEMEL KARAR {temelOpen ? "▲" : "▼"}
+              </div>
+              <span className="text-[12px] font-semibold" style={{
                 color: stock.temel_sinyal?.includes('GÜÇLÜ') ? '#2CC98A'
                   : stock.temel_sinyal?.includes('ORTA') ? '#F59E0B'
                   : stock.temel_sinyal?.includes('ZAYIF') ? '#F97316'
                   : '#E05252'
-              }}>{stock.temel_sinyal || '—'}</span> {stock.temel_puan ? `${stock.temel_puan}p` : ''}
+              }}>
+                {stock.temel_sinyal || '—'} {stock.temel_puan ? `${stock.temel_puan}p` : ''}
+              </span>
             </div>
             {stock.kombine_karar && (
-              <div className="text-[12px]" style={{ color: '#94a3b8' }}>
+              <div className="text-[11px]" style={{ color: '#94a3b8' }}>
                 {stock.kombine_karar}
               </div>
             )}
