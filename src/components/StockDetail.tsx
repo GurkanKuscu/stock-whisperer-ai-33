@@ -1,13 +1,63 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchStockChart } from "@/services/api";
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import {
+  AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
+  XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Cell
+} from "recharts";
 import type { StockData } from "@/types/stock";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 
 interface Props {
   ticker: string;
   onBack: () => void;
+}
+
+// SMA hesaplama
+function calcSMA(data: number[], period: number): (number | null)[] {
+  return data.map((_, i) => {
+    if (i < period - 1) return null;
+    const slice = data.slice(i - period + 1, i + 1);
+    return slice.reduce((a, b) => a + b, 0) / period;
+  });
+}
+
+// RSI hesaplama
+function calcRSI(closes: number[], period = 14): (number | null)[] {
+  const rsi: (number | null)[] = new Array(closes.length).fill(null);
+  if (closes.length < period + 1) return rsi;
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const diff = closes[i] - closes[i - 1];
+    if (diff >= 0) avgGain += diff; else avgLoss -= diff;
+  }
+  avgGain /= period; avgLoss /= period;
+  rsi[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  for (let i = period + 1; i < closes.length; i++) {
+    const diff = closes[i] - closes[i - 1];
+    avgGain = (avgGain * (period - 1) + Math.max(diff, 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + Math.max(-diff, 0)) / period;
+    rsi[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+  return rsi;
+}
+
+// MACD hesaplama
+function calcEMA(data: number[], period: number): number[] {
+  const k = 2 / (period + 1);
+  const ema = [data[0]];
+  for (let i = 1; i < data.length; i++) ema.push(data[i] * k + ema[i - 1] * (1 - k));
+  return ema;
+}
+
+function calcMACD(closes: number[]) {
+  if (closes.length < 26) return { macd: [], signal: [], histogram: [] };
+  const ema12 = calcEMA(closes, 12);
+  const ema26 = calcEMA(closes, 26);
+  const macdLine = ema12.map((v, i) => v - ema26[i]);
+  const signalLine = calcEMA(macdLine, 9);
+  const histogram = macdLine.map((v, i) => v - signalLine[i]);
+  return { macd: macdLine, signal: signalLine, histogram };
 }
 
 export default function StockDetail({ ticker, onBack }: Props) {
@@ -36,6 +86,27 @@ export default function StockDetail({ ticker, onBack }: Props) {
       .finally(() => setChartLoading(false));
   }, [ticker, period]);
 
+  // Teknik göstergeler
+  const indicators = useMemo(() => {
+    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [] };
+    const closes = chartData.map(d => d.value);
+    const rsi = calcRSI(closes);
+    const { macd, signal, histogram } = calcMACD(closes);
+    const sma20 = calcSMA(closes, 20);
+    const sma50 = calcSMA(closes, 50);
+    return { rsi, macd, signal, histogram, sma20, sma50 };
+  }, [chartData]);
+
+  const enrichedData = useMemo(() => chartData.map((d, i) => ({
+    ...d,
+    sma20: indicators.sma20[i],
+    sma50: indicators.sma50[i],
+    rsi: indicators.rsi[i],
+    macd: indicators.macd[i],
+    macdSignal: indicators.signal[i],
+    macdHist: indicators.histogram[i],
+  })), [chartData, indicators]);
+
   if (!snap) {
     return (
       <div className="text-center p-10">
@@ -54,6 +125,11 @@ export default function StockDetail({ ticker, onBack }: Props) {
   const low = snap.low ?? close;
   const high = snap.high ?? close;
   const priceRange = high - low;
+
+  // Dinamik grafik rengi
+  const chartColor = isPositive ? "#2CC98A" : "#E05252";
+
+  const tooltipStyle = { background: "#1e293b", border: "1px solid #2d3748", borderRadius: 8, fontSize: 12 };
 
   return (
     <div className="space-y-3">
@@ -88,7 +164,7 @@ export default function StockDetail({ ticker, onBack }: Props) {
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Fiyat Grafiği */}
       <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex gap-2">
@@ -123,44 +199,110 @@ export default function StockDetail({ ticker, onBack }: Props) {
             <div className="h-full flex items-center justify-center text-t-txt3 text-[12px]">Grafik verisi bulunamadı</div>
           ) : chartType === "fiyat" ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={enrichedData}>
                 <defs>
                   <linearGradient id={`grad-${ticker}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#C9943A" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#C9943A" stopOpacity={0} />
+                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
                   tickFormatter={v => v.slice(5)} interval="preserveStartEnd" />
                 <YAxis domain={["auto", "auto"]} tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
                   orientation="right" tickFormatter={v => v.toLocaleString("tr-TR")} />
-                <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #2d3748", borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: "#94a3b8" }} formatter={(v: number) => [v.toFixed(2) + " ₺", "Fiyat"]} />
-                <Area type="monotone" dataKey="value" stroke="#C9943A" strokeWidth={2} fill={`url(#grad-${ticker})`} />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: "#94a3b8" }}
+                  formatter={(v: number, name: string) => {
+                    if (name === "sma20") return [v?.toFixed(2), "SMA 20"];
+                    if (name === "sma50") return [v?.toFixed(2), "SMA 50"];
+                    return [v?.toFixed(2) + " ₺", "Fiyat"];
+                  }} />
+                <Area type="monotone" dataKey="value" stroke={chartColor} strokeWidth={2} fill={`url(#grad-${ticker})`} dot={false} />
+                <Line type="monotone" dataKey="sma20" stroke="#C9943A" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="sma50" stroke="#E05252" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
+              <BarChart data={enrichedData}>
                 <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
                   tickFormatter={v => v.slice(5)} interval="preserveStartEnd" />
                 <YAxis tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
                   orientation="right" tickFormatter={v => (v / 1e6).toFixed(0) + "M"} />
-                <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #2d3748", borderRadius: 8, fontSize: 12 }}
+                <Tooltip contentStyle={tooltipStyle}
                   formatter={(v: number) => [(v / 1e6).toFixed(2) + "M", "Hacim"]} />
                 <Bar dataKey="volume" fill="#3b82f6" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
+        {/* SMA Lejant */}
+        {chartType === "fiyat" && chartData.length > 0 && (
+          <div className="flex gap-4 mt-2 text-[10px]" style={{ color: "#64748b" }}>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: chartColor }} />Fiyat</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#C9943A", borderTop: "1px dashed #C9943A" }} />SMA 20</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#E05252", borderTop: "1px dashed #E05252" }} />SMA 50</span>
+          </div>
+        )}
       </div>
 
-      {/* Gün Özeti + Piyasa Bilgisi */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* RSI Paneli */}
+      {enrichedData.some(d => d.rsi != null) && (
+        <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>RSI (14)</div>
+          <div className="h-[100px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={enrichedData}>
+                <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                  tickFormatter={v => v.slice(5)} interval="preserveStartEnd" />
+                <YAxis domain={[0, 100]} tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                  orientation="right" ticks={[0, 30, 50, 70, 100]} />
+                <ReferenceLine y={70} stroke="#E05252" strokeDasharray="3 3" strokeWidth={1} />
+                <ReferenceLine y={30} stroke="#2CC98A" strokeDasharray="3 3" strokeWidth={1} />
+                <Tooltip contentStyle={tooltipStyle}
+                  formatter={(v: number) => [v?.toFixed(1), "RSI"]} />
+                <Line type="monotone" dataKey="rsi" stroke="#C9943A" strokeWidth={1.5} dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* MACD Paneli */}
+      {enrichedData.some(d => d.macd != null && d.macd !== 0) && (
+        <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>MACD (12, 26, 9)</div>
+          <div className="h-[100px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={enrichedData}>
+                <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                  tickFormatter={v => v.slice(5)} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                  orientation="right" />
+                <ReferenceLine y={0} stroke="#2d3748" strokeWidth={1} />
+                <Tooltip contentStyle={tooltipStyle}
+                  formatter={(v: number, name: string) => {
+                    const label = name === "macd" ? "MACD" : name === "macdSignal" ? "Sinyal" : "Histogram";
+                    return [v?.toFixed(3), label];
+                  }} />
+                <Bar dataKey="macdHist" fill="#C9943A" opacity={0.6} radius={[1, 1, 0, 0]} />
+                <Line type="monotone" dataKey="macd" stroke="#2CC98A" strokeWidth={1.5} dot={false} connectNulls />
+                <Line type="monotone" dataKey="macdSignal" stroke="#E05252" strokeWidth={1.5} dot={false} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex gap-4 mt-2 text-[10px]" style={{ color: "#64748b" }}>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#2CC98A" }} />MACD</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#E05252" }} />Sinyal</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#C9943A" }} />Histogram</span>
+          </div>
+        </div>
+      )}
+
+      {/* Gün Özeti + BISThinker Analizi + Piyasa Bilgisi */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Gün Özeti */}
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
           <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>GÜN ÖZETİ</div>
-          {/* Düşük-Yüksek bar */}
           <div className="mb-4">
             <div className="flex justify-between text-[11px] mb-1" style={{ color: "#64748b" }}>
               <span>Düşük: {low.toFixed(2)} ₺</span>
@@ -189,11 +331,41 @@ export default function StockDetail({ ticker, onBack }: Props) {
           </div>
         </div>
 
+        {/* BISThinker Analizi */}
+        <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>BISThinker ANALİZİ</div>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              ["SKOR", snap.score + "p", snap.score >= 70 ? "#2CC98A" : snap.score >= 50 ? "#F59E0B" : "#E05252"],
+              ["RSI", snap.rsi?.toFixed(1) ?? "—", snap.rsi < 30 ? "#2CC98A" : snap.rsi > 70 ? "#E05252" : "#e2e8f0"],
+              ["STOP", snap.stop_loss ? snap.stop_loss.toFixed(2) + " ₺" : "—", "#E05252"],
+              ["HEDEF", snap.target ? snap.target.toFixed(2) + " ₺" : "—", "#2CC98A"],
+            ] as [string, string, string][]).map(([label, val, color]) => (
+              <div key={label} className="rounded-lg p-2.5 text-center" style={{ background: "#0f1117" }}>
+                <div className="text-[10px]" style={{ color: "#64748b" }}>{label}</div>
+                <div className="text-[16px] font-medium" style={{ color }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          {snap.kombine_karar && (
+            <div className="mt-3 text-[12px] p-2.5 rounded-lg" style={{
+              background: "#0f1117",
+              color: snap.kombine_karar.includes("GİRİLEBİLİR") || snap.kombine_karar.includes("GÜÇLÜ") ? "#2CC98A"
+                : snap.kombine_karar.includes("DİKKATLİ") ? "#F59E0B"
+                : snap.kombine_karar.includes("BEKLE") ? "#F97316"
+                : snap.kombine_karar.includes("GİRME") ? "#E05252"
+                : "#94a3b8"
+            }}>
+              {snap.kombine_karar}
+            </div>
+          )}
+        </div>
+
         {/* Piyasa Bilgisi */}
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
           <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>PİYASA BİLGİSİ</div>
           {([
-            ["Piyasa Değeri", snap.market_cap ? (snap.market_cap / 1e9).toFixed(2) + " Mr ₺" : "—"],
+            ["Piyasa Değeri", snap.market_cap ? (snap.market_cap / 1e9).toFixed(2) + " Br ₺" : "—"],
             ["F/K Oranı", snap.fk != null ? String(snap.fk) : "—"],
             ["PD/DD", snap.pddd != null ? String(snap.pddd) : "—"],
             ["52H Yüksek", snap.week52_high ? snap.week52_high.toFixed(2) + " ₺" : "—"],
@@ -205,29 +377,6 @@ export default function StockDetail({ ticker, onBack }: Props) {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* BISThinker Analizi */}
-      <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
-        <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>BISThinker ANALİZİ</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {([
-            ["SKOR", snap.score + "p", snap.score >= 70 ? "#2CC98A" : snap.score >= 50 ? "#F59E0B" : "#E05252"],
-            ["RSI", snap.rsi?.toFixed(1) ?? "—", "#e2e8f0"],
-            ["STOP", snap.stop_loss ? snap.stop_loss.toFixed(2) + " ₺" : "—", "#E05252"],
-            ["HEDEF", snap.target ? snap.target.toFixed(2) + " ₺" : "—", "#2CC98A"],
-          ] as [string, string, string][]).map(([label, val, color]) => (
-            <div key={label} className="rounded-lg p-2.5 text-center" style={{ background: "#0f1117" }}>
-              <div className="text-[10px]" style={{ color: "#64748b" }}>{label}</div>
-              <div className="text-[16px] font-medium" style={{ color }}>{val}</div>
-            </div>
-          ))}
-        </div>
-        {snap.kombine_karar && (
-          <div className="mt-3 text-[12px] p-2.5 rounded-lg" style={{ background: "#0f1117", color: "#94a3b8" }}>
-            {snap.kombine_karar}
-          </div>
-        )}
       </div>
 
       {/* KAP Haberleri */}
