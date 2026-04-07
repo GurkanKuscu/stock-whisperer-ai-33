@@ -248,6 +248,16 @@ export default function StockDetail({ ticker, onBack }: Props) {
           ))}
         </div>
       )}
+
+      {showAddModal && (
+        <AddToPortfolioModal
+          ticker={ticker}
+          price={close}
+          stop={snap.stop_loss ?? 0}
+          target={snap.target ?? 0}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
     </div>
   );
 }
