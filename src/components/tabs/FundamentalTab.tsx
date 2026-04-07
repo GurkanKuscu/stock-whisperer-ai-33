@@ -98,6 +98,9 @@ export default function FundamentalTab() {
                       </span>
                     </td>
                     <td className="p-[10px_14px]">
+                      <div className="text-[11px] text-t-txt2">{s.sector_name ?? "—"}</div>
+                    </td>
+                    <td className="p-[10px_14px]">
                       <div className="text-[11px] font-semibold" style={{
                         color: s.kombine_karar?.includes('GÜÇLÜ') || s.kombine_karar?.includes('GİRİLEBİLİR') ? '#2CC98A'
                           : s.kombine_karar?.includes('DİKKATLİ') ? '#F59E0B'
