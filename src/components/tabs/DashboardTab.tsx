@@ -7,7 +7,17 @@ interface MarketItem {
   label: string;
   value: number;
   change: number;
+  symbol: string;
 }
+
+const SYMBOL_MAP: Record<string, string> = {
+  "BIST100": "xu100",
+  "BIST30": "xu030",
+  "USD/TRY": "usdtry",
+  "EUR/TRY": "eurtry",
+  "ALTIN (GR)": "altin",
+  "BRENT": "brent",
+};
 
 export default function DashboardTab() {
   const { data } = useAppData();

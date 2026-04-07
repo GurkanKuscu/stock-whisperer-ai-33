@@ -62,8 +62,8 @@ export async function deleteSinyalArsiv(key: string): Promise<void> {
   if (!res.ok) throw new Error("Delete failed");
 }
 
-export async function fetchBistChart(period: string = "1A"): Promise<{ dates: string[]; closes: number[] }> {
-  const res = await fetch(`${API_BASE}/api/bist-chart?period=${period}`);
+export async function fetchBistChart(period: string = "1A", symbol: string = "xu100"): Promise<{ dates: string[]; closes: number[] }> {
+  const res = await fetch(`${API_BASE}/api/bist-chart?period=${period}&symbol=${symbol}`);
   if (!res.ok) throw new Error("BIST chart fetch failed");
   return res.json();
 }
