@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const TABS = [
+  { id: "anasayfa", icon: "🏠", label: "Ana Sayfa" },
   { id: "sinyaller", icon: "⚡", label: "Sinyaller" },
   { id: "temel", icon: "📊", label: "Temel Analiz" },
   { id: "alarmlar", icon: "🔔", label: "Alarmlar" },
@@ -35,7 +36,7 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
         style={{ background: "var(--bg)", borderColor: "var(--bdr)", opacity: 0.96 }}>
         <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-4 max-md:px-3 max-md:gap-2">
           {/* Brand */}
-          <div className="flex items-center shrink-0 cursor-pointer gap-3" onClick={() => onTabChange("sinyaller")}>
+          <div className="flex items-center shrink-0 cursor-pointer gap-3" onClick={() => onTabChange("anasayfa")}>
             <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[17px] relative"
               style={{
                 background: "linear-gradient(135deg, #C9943A, #8A6420)",
