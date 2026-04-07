@@ -25,18 +25,20 @@ export default function DashboardTab() {
   const [marketLoading, setMarketLoading] = useState(true);
   const [chartData, setChartData] = useState<{ date: string; value: number }[]>([]);
   const [chartPeriod, setChartPeriod] = useState("1A");
+  const [chartSymbol, setChartSymbol] = useState("xu100");
+  const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
     fetchMarket()
       .then(m => {
         const items: MarketItem[] = [
-          { label: "BIST100", value: m.xu100?.value ?? 0, change: m.xu100?.change_pct ?? 0 },
-          { label: "BIST30", value: m.xu030?.value ?? 0, change: m.xu030?.change_pct ?? 0 },
-          { label: "USD/TRY", value: m.usdtry?.value ?? 0, change: m.usdtry?.change_pct ?? 0 },
-          { label: "EUR/TRY", value: m.eurtry?.value ?? 0, change: m.eurtry?.change_pct ?? 0 },
-          { label: "ALTIN (GR)", value: m.altin?.value ?? 0, change: m.altin?.change_pct ?? 0 },
-          { label: "BRENT", value: m.brent?.value ?? 0, change: m.brent?.change_pct ?? 0 },
+          { label: "BIST100", value: m.xu100?.value ?? 0, change: m.xu100?.change_pct ?? 0, symbol: "xu100" },
+          { label: "BIST30", value: m.xu030?.value ?? 0, change: m.xu030?.change_pct ?? 0, symbol: "xu030" },
+          { label: "USD/TRY", value: m.usdtry?.value ?? 0, change: m.usdtry?.change_pct ?? 0, symbol: "usdtry" },
+          { label: "EUR/TRY", value: m.eurtry?.value ?? 0, change: m.eurtry?.change_pct ?? 0, symbol: "eurtry" },
+          { label: "ALTIN (GR)", value: m.altin?.value ?? 0, change: m.altin?.change_pct ?? 0, symbol: "altin" },
+          { label: "BRENT", value: m.brent?.value ?? 0, change: m.brent?.change_pct ?? 0, symbol: "brent" },
         ];
         setMarket(items);
       })
@@ -46,7 +48,7 @@ export default function DashboardTab() {
 
   useEffect(() => {
     setChartLoading(true);
-    fetchBistChart(chartPeriod)
+    fetchBistChart(chartPeriod, chartSymbol)
       .then(d => {
         if (d.dates && d.closes) {
           setChartData(d.dates.map((dt, i) => ({ date: dt, value: d.closes[i] })));
@@ -54,7 +56,7 @@ export default function DashboardTab() {
       })
       .catch(() => setChartData([]))
       .finally(() => setChartLoading(false));
-  }, [chartPeriod]);
+  }, [chartPeriod, chartSymbol]);
 
   const tickers = Object.keys(data);
 
