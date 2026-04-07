@@ -282,10 +282,12 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
                 <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => onTickerClick?.(s.ticker)}>{s.ticker}</div>
-                <div className="text-[10px]" style={{ color: "#64748b" }}>{(s.avg_vol_tl / 1e6).toFixed(1)}M ₺</div>
+                <div className="text-[10px]" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
+                  {s.chg >= 0 ? "+" : ""}{s.chg.toFixed(2)}%
+                </div>
               </div>
-              <div className="text-[12px] font-medium" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
-                {s.chg >= 0 ? "+" : ""}{s.chg?.toFixed(2)}%
+              <div className="text-[12px] font-medium font-mono" style={{ color: "#e2e8f0" }}>
+                {(s.avg_vol_tl / 1e6).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}M ₺
               </div>
             </div>
           ))}
