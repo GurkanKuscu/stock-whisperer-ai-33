@@ -138,8 +138,8 @@ export default function DashboardTab() {
                   </div>
                 ))
               : market.map((item, i) => (
-                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,.03)]"
-                    onClick={() => { setChartSymbol(item.symbol); setChartLabel(item.label); }}
+                  <div key={i} className={`flex-1 min-w-[100px] p-[10px_14px] transition-all ${item.symbol === "xu100" ? "cursor-pointer hover:bg-[rgba(255,255,255,.03)]" : ""}`}
+                    onClick={() => { if (item.symbol === "xu100") { setChartSymbol(item.symbol); setChartLabel(item.label); } }}
                     style={{
                       borderRight: i < market.length - 1 ? "0.5px solid #2d3748" : "none",
                       background: chartSymbol === item.symbol ? "rgba(201,148,58,.06)" : "transparent",
