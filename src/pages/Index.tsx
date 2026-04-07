@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AppProvider, useAppData } from "@/context/AppContext";
 import Header from "@/components/Header";
+import DashboardTab from "@/components/tabs/DashboardTab";
 import MarketBar from "@/components/MarketBar";
 import SignalsTab from "@/components/tabs/SignalsTab";
 import FundamentalTab from "@/components/tabs/FundamentalTab";
@@ -13,7 +14,7 @@ import PortfolioTab from "@/components/tabs/PortfolioTab";
 import Footer from "@/components/Footer";
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState("sinyaller");
+  const [activeTab, setActiveTab] = useState("anasayfa");
   const { loading, error } = useAppData();
 
   return (
@@ -38,6 +39,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="animate-fade-in">
+              {activeTab === "anasayfa" && <DashboardTab />}
               {activeTab === "sinyaller" && <SignalsTab />}
               {activeTab === "temel" && <FundamentalTab />}
               {activeTab === "alarmlar" && <AlarmsTab />}
