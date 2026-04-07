@@ -35,35 +35,20 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
         style={{ background: "var(--bg)", borderColor: "var(--bdr)", opacity: 0.96 }}>
         <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-4 max-md:px-3 max-md:gap-2">
           {/* Brand */}
-          <div className="flex items-center shrink-0 cursor-pointer" onClick={() => onTabChange("sinyaller")}>
-            <img
-              src="/bisthinker-logo.svg"
-              alt="BISThinker"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+          <div className="flex items-center shrink-0 cursor-pointer gap-3" onClick={() => onTabChange("sinyaller")}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[17px] relative"
               style={{
-                height: 'auto',
-                width: 'auto',
-                maxHeight: '36px',
-                maxWidth: '200px',
-                objectFit: 'contain',
-                display: 'block'
-              }}
-            />
-            <div className="hidden flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[17px] relative"
-                style={{
-                  background: "linear-gradient(135deg, #C9943A, #8A6420)",
-                  boxShadow: "0 0 20px rgba(201,148,58,.3), inset 0 1px 0 rgba(255,255,255,.15)"
-                }}>
-                ⚡
+                background: "linear-gradient(135deg, #C9943A, #8A6420)",
+                boxShadow: "0 0 20px rgba(201,148,58,.3), inset 0 1px 0 rgba(255,255,255,.15)"
+              }}>
+              ⚡
+            </div>
+            <div>
+              <div className="font-syne text-[16px] font-extrabold tracking-[.5px]">
+                BISTHINKER<span className="text-[10px] align-super text-t-gold opacity-70">®</span>
               </div>
-              <div>
-                <div className="font-syne text-[16px] font-extrabold tracking-[.5px]">
-                  BISTHINKER<span className="text-[10px] align-super text-t-gold opacity-70">®</span>
-                </div>
-                <div className="text-[9px] text-t-txt3 font-medium uppercase tracking-[1.2px] mt-[1px]">
-                  Kurumsal Yatırım Platformu
-                </div>
+              <div className="text-[9px] text-t-txt3 font-medium uppercase tracking-[1.2px] mt-[1px]">
+                Kurumsal Yatırım Platformu
               </div>
             </div>
           </div>
