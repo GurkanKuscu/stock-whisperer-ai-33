@@ -50,7 +50,29 @@ function calcEMA(data: number[], period: number): number[] {
   return ema;
 }
 
+function calcBollinger(closes: number[]) {
+  const sma20 = closes.map((_, i) =>
+    i < 19 ? null : closes.slice(i - 19, i + 1).reduce((a, b) => a + b) / 20);
+  const std20 = closes.map((_, i) => {
+    if (i < 19) return null;
+    const slice = closes.slice(i - 19, i + 1);
+    const mean = slice.reduce((a, b) => a + b) / 20;
+    return Math.sqrt(slice.reduce((a, b) => a + (b - mean) ** 2, 0) / 20);
+  });
+  const upper = sma20.map((s, i) => (s != null && std20[i] != null) ? s + 2 * std20[i]! : null);
+  const lower = sma20.map((s, i) => (s != null && std20[i] != null) ? s - 2 * std20[i]! : null);
+  return { upper, lower, mid: sma20 };
+}
+
 function calcMACD(closes: number[]) {
+  if (closes.length < 26) return { macd: [], signal: [], histogram: [] };
+  const ema12 = calcEMA(closes, 12);
+  const ema26 = calcEMA(closes, 26);
+  const macdLine = ema12.map((v, i) => v - ema26[i]);
+  const signalLine = calcEMA(macdLine, 9);
+  const histogram = macdLine.map((v, i) => v - signalLine[i]);
+  return { macd: macdLine, signal: signalLine, histogram };
+}
   if (closes.length < 26) return { macd: [], signal: [], histogram: [] };
   const ema12 = calcEMA(closes, 12);
   const ema26 = calcEMA(closes, 26);
@@ -88,13 +110,14 @@ export default function StockDetail({ ticker, onBack }: Props) {
 
   // Teknik göstergeler
   const indicators = useMemo(() => {
-    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [] };
+    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], bbUpper: [], bbLower: [], bbMid: [] };
     const closes = chartData.map(d => d.value);
     const rsi = calcRSI(closes);
     const { macd, signal, histogram } = calcMACD(closes);
     const sma20 = calcSMA(closes, 20);
     const sma50 = calcSMA(closes, 50);
-    return { rsi, macd, signal, histogram, sma20, sma50 };
+    const { upper: bbUpper, lower: bbLower, mid: bbMid } = calcBollinger(closes);
+    return { rsi, macd, signal, histogram, sma20, sma50, bbUpper, bbLower, bbMid };
   }, [chartData]);
 
   const enrichedData = useMemo(() => chartData.map((d, i) => ({
@@ -105,6 +128,9 @@ export default function StockDetail({ ticker, onBack }: Props) {
     macd: indicators.macd[i],
     macdSignal: indicators.signal[i],
     macdHist: indicators.histogram[i],
+    bbUpper: indicators.bbUpper[i],
+    bbLower: indicators.bbLower[i],
+    bbMid: indicators.bbMid[i],
   })), [chartData, indicators]);
 
   if (!snap) {
