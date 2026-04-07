@@ -39,7 +39,7 @@ function getVerdictInfo(stock: StockData) {
   return { label: "🔴 GİRME", cls: "bg-[var(--red-bg)] text-t-red-l border-[var(--red-bdr)]", sub: `Temel ${tp}p · Kombine ${kp}p` };
 }
 
-export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCardProps) {
+export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClick }: SignalCardProps) {
   const [temelOpen, setTemelOpen] = useState(false);
   const rsiM = getRsiMomentum(stock.rsi);
   const verdict = getVerdictInfo(stock);
