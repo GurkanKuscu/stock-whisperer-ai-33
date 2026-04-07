@@ -3,7 +3,7 @@ import { useAppData } from "@/context/AppContext";
 import { fetchStockChart } from "@/services/api";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
-  XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Cell
+  XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, ReferenceDot, Cell
 } from "recharts";
 import type { StockData } from "@/types/stock";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
@@ -103,20 +103,30 @@ export default function StockDetail({ ticker, onBack }: Props) {
 
   // Teknik göstergeler
   const indicators = useMemo(() => {
-    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], bbUpper: [], bbLower: [], bbMid: [], bbBandwidth: [] };
+    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], sma200: [], bbUpper: [], bbLower: [], bbMid: [], bbBandwidth: [], crosses: [] };
     const closes = chartData.map(d => d.value);
+    const dates = chartData.map(d => d.date);
     const rsi = calcRSI(closes);
     const { macd, signal, histogram } = calcMACD(closes);
     const sma20 = calcSMA(closes, 20);
     const sma50 = calcSMA(closes, 50);
+    const sma200 = calcSMA(closes, 200);
     const { upper: bbUpper, lower: bbLower, mid: bbMid, bandwidth: bbBandwidth } = calcBollinger(closes);
-    return { rsi, macd, signal, histogram, sma20, sma50, bbUpper, bbLower, bbMid, bbBandwidth };
+    // Golden Cross / Death Cross
+    const crosses = dates.map((date, i) => {
+      if (i < 1 || !sma50[i] || !sma50[i-1] || !sma200[i] || !sma200[i-1]) return null;
+      if (sma50[i-1]! < sma200[i-1]! && sma50[i]! >= sma200[i]!) return { date, type: 'golden' as const, price: closes[i] };
+      if (sma50[i-1]! > sma200[i-1]! && sma50[i]! <= sma200[i]!) return { date, type: 'death' as const, price: closes[i] };
+      return null;
+    }).filter((c): c is { date: string; type: 'golden' | 'death'; price: number } => c !== null);
+    return { rsi, macd, signal, histogram, sma20, sma50, sma200, bbUpper, bbLower, bbMid, bbBandwidth, crosses };
   }, [chartData]);
 
   const enrichedData = useMemo(() => chartData.map((d, i) => ({
     ...d,
     sma20: indicators.sma20[i],
     sma50: indicators.sma50[i],
+    sma200: indicators.sma200[i],
     rsi: indicators.rsi[i],
     macd: indicators.macd[i],
     macdSignal: indicators.signal[i],
