@@ -290,7 +290,21 @@ export default function StockDetail({ ticker, onBack }: Props) {
       {/* Bollinger Bantları Paneli */}
       {enrichedData.some(d => d.bbUpper != null) && (
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>BOLLINGER BANTLARI (20, 2)</div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>BOLLINGER BANTLARI (20, 2)</span>
+            {(() => {
+              const bwValues = enrichedData.map(d => d.bbBandwidth).filter((v): v is number => v != null);
+              if (bwValues.length < 20) return null;
+              const current = bwValues[bwValues.length - 1];
+              const recent = bwValues.slice(-60);
+              const minBw = Math.min(...recent);
+              const rangeBw = Math.max(...recent) - minBw;
+              const pct = rangeBw > 0 ? ((current - minBw) / rangeBw) * 100 : 50;
+              if (pct < 15) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse" style={{ background: "rgba(239,68,68,.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,.3)" }}>🔥 SQUEEZE</span>;
+              if (pct < 30) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: "rgba(245,158,11,.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,.25)" }}>⚠️ Daralma</span>;
+              return null;
+            })()}
+          </div>
           <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={enrichedData}>
