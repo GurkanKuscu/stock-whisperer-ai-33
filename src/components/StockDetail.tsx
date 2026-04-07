@@ -298,8 +298,8 @@ export default function StockDetail({ ticker, onBack }: Props) {
         </div>
       )}
 
-      {/* Gün Özeti + BISThinker Analizi + Piyasa Bilgisi */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* Gün Özeti + Piyasa Bilgisi */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Gün Özeti */}
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
           <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>GÜN ÖZETİ</div>
@@ -331,10 +331,30 @@ export default function StockDetail({ ticker, onBack }: Props) {
           </div>
         </div>
 
-        {/* BISThinker Analizi */}
+        {/* Piyasa Bilgisi */}
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>BISThinker ANALİZİ</div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>PİYASA BİLGİSİ</div>
+          {([
+            ["Piyasa Değeri", snap.market_cap ? (snap.market_cap / 1e9).toFixed(2) + " Br ₺" : "—"],
+            ["F/K Oranı", snap.fk != null ? String(snap.fk) : "—"],
+            ["PD/DD", snap.pddd != null ? String(snap.pddd) : "—"],
+            ["52H Yüksek", snap.week52_high ? snap.week52_high.toFixed(2) + " ₺" : "—"],
+            ["52H Düşük", snap.week52_low ? snap.week52_low.toFixed(2) + " ₺" : "—"],
+          ] as [string, string][]).map(([label, val]) => (
+            <div key={label} className="flex justify-between py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
+              <span className="text-[12px]" style={{ color: "#64748b" }}>{label}</span>
+              <span className="text-[12px] font-medium" style={{ color: "#e2e8f0" }}>{val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* BISThinker Teknik Analiz + Temel Analiz */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Teknik Analiz */}
+        <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>BISThinker TEKNİK ANALİZ</div>
+          <div className="grid grid-cols-2 gap-2 mb-2">
             {([
               ["SKOR", snap.score + "p", snap.score >= 70 ? "#2CC98A" : snap.score >= 50 ? "#F59E0B" : "#E05252"],
               ["RSI", snap.rsi?.toFixed(1) ?? "—", snap.rsi < 30 ? "#2CC98A" : snap.rsi > 70 ? "#E05252" : "#e2e8f0"],
@@ -344,6 +364,26 @@ export default function StockDetail({ ticker, onBack }: Props) {
               <div key={label} className="rounded-lg p-2.5 text-center" style={{ background: "#0f1117" }}>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{label}</div>
                 <div className="text-[16px] font-medium" style={{ color }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          {/* Ek teknik veriler */}
+          <div className="space-y-1 mt-3">
+            {([
+              ["R/R Oranı", snap.rr_ratio ? snap.rr_ratio.toFixed(2) : "—"],
+              ["Trend", snap.trend ?? "—"],
+              ["Haftalık Trend", snap.weekly_trend ?? "—"],
+              ["Squeeze", snap.squeeze ?? "—"],
+              ["Pump", snap.pump ?? "—"],
+              ["Smart Money", snap.smart_money ?? "—"],
+            ] as [string, string][]).map(([label, val]) => (
+              <div key={label} className="flex justify-between py-[4px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
+                <span className="text-[11px]" style={{ color: "#64748b" }}>{label}</span>
+                <span className="text-[11px] font-medium" style={{
+                  color: val === "YUKARI" || val === "BOĞA" || val === "EVET" ? "#2CC98A"
+                    : val === "AŞAĞI" || val === "AYI" || val === "HAYIR" ? "#E05252"
+                    : "#e2e8f0"
+                }}>{val}</span>
               </div>
             ))}
           </div>
@@ -361,21 +401,50 @@ export default function StockDetail({ ticker, onBack }: Props) {
           )}
         </div>
 
-        {/* Piyasa Bilgisi */}
+        {/* Temel Analiz */}
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>PİYASA BİLGİSİ</div>
-          {([
-            ["Piyasa Değeri", snap.market_cap ? (snap.market_cap / 1e9).toFixed(2) + " Br ₺" : "—"],
-            ["F/K Oranı", snap.fk != null ? String(snap.fk) : "—"],
-            ["PD/DD", snap.pddd != null ? String(snap.pddd) : "—"],
-            ["52H Yüksek", snap.week52_high ? snap.week52_high.toFixed(2) + " ₺" : "—"],
-            ["52H Düşük", snap.week52_low ? snap.week52_low.toFixed(2) + " ₺" : "—"],
-          ] as [string, string][]).map(([label, val]) => (
-            <div key={label} className="flex justify-between py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
-              <span className="text-[12px]" style={{ color: "#64748b" }}>{label}</span>
-              <span className="text-[12px] font-medium" style={{ color: "#e2e8f0" }}>{val}</span>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>BISThinker TEMEL ANALİZ</div>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            {([
+              ["TEMEL PUAN", snap.temel_puan != null ? snap.temel_puan + "p" : "—",
+                snap.temel_puan != null ? (snap.temel_puan >= 70 ? "#2CC98A" : snap.temel_puan >= 50 ? "#F59E0B" : "#E05252") : "#94a3b8"],
+              ["KOMBİNE PUAN", snap.kombine_puan != null ? snap.kombine_puan + "p" : "—",
+                snap.kombine_puan != null ? (snap.kombine_puan >= 70 ? "#2CC98A" : snap.kombine_puan >= 50 ? "#F59E0B" : "#E05252") : "#94a3b8"],
+            ] as [string, string, string][]).map(([label, val, color]) => (
+              <div key={label} className="rounded-lg p-2.5 text-center" style={{ background: "#0f1117" }}>
+                <div className="text-[10px]" style={{ color: "#64748b" }}>{label}</div>
+                <div className="text-[16px] font-medium" style={{ color }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          {snap.temel_sinyal && (
+            <div className="mb-3 text-[12px] p-2.5 rounded-lg text-center" style={{
+              background: "#0f1117",
+              color: snap.temel_sinyal.includes("GÜÇLÜ") || snap.temel_sinyal.includes("GÜÇ") ? "#2CC98A"
+                : snap.temel_sinyal.includes("ORTA") ? "#F59E0B"
+                : snap.temel_sinyal.includes("ZAYIF") ? "#F97316"
+                : snap.temel_sinyal.includes("KÖTÜ") ? "#E05252"
+                : "#94a3b8"
+            }}>
+              Temel Sinyal: {snap.temel_sinyal}
             </div>
-          ))}
+          )}
+          <div className="space-y-1">
+            {([
+              ["F/K", snap.fk != null ? String(snap.fk) : "—"],
+              ["PD/DD", snap.pddd != null ? String(snap.pddd) : "—"],
+              ["FD/FAVÖK", snap.fd_favok != null ? String(snap.fd_favok) : "—"],
+              ["ROE", snap.roe != null ? "%" + snap.roe : "—"],
+              ["Net Borç", snap.net_borc != null ? (snap.net_borc / 1e6).toFixed(0) + " Mn ₺" : "—"],
+              ["FCF", snap.fcf != null ? (snap.fcf / 1e6).toFixed(0) + " Mn ₺" : "—"],
+              ["FAVÖK Marjı", snap.favok_marj != null ? "%" + snap.favok_marj : "—"],
+            ] as [string, string][]).map(([label, val]) => (
+              <div key={label} className="flex justify-between py-[4px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
+                <span className="text-[11px]" style={{ color: "#64748b" }}>{label}</span>
+                <span className="text-[11px] font-medium" style={{ color: "#e2e8f0" }}>{val}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
