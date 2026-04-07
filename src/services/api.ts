@@ -1,6 +1,6 @@
 import type { SnapshotData, ArsivFile, PortfolioMap } from "@/types/stock";
 
-const API_BASE = "http://207.154.212.100:8080";
+const API_BASE = "";
 
 export async function fetchSnapshot(): Promise<SnapshotData> {
   const res = await fetch(`${API_BASE}/api/snapshot`);
