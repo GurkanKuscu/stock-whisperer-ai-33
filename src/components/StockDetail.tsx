@@ -61,7 +61,8 @@ function calcBollinger(closes: number[]) {
   });
   const upper = sma20.map((s, i) => (s != null && std20[i] != null) ? s + 2 * std20[i]! : null);
   const lower = sma20.map((s, i) => (s != null && std20[i] != null) ? s - 2 * std20[i]! : null);
-  return { upper, lower, mid: sma20 };
+  const bandwidth = sma20.map((s, i) => (s != null && s > 0 && upper[i] != null && lower[i] != null) ? ((upper[i]! - lower[i]!) / s) * 100 : null);
+  return { upper, lower, mid: sma20, bandwidth };
 }
 
 function calcMACD(closes: number[]) {
@@ -102,14 +103,14 @@ export default function StockDetail({ ticker, onBack }: Props) {
 
   // Teknik göstergeler
   const indicators = useMemo(() => {
-    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], bbUpper: [], bbLower: [], bbMid: [] };
+    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], bbUpper: [], bbLower: [], bbMid: [], bbBandwidth: [] };
     const closes = chartData.map(d => d.value);
     const rsi = calcRSI(closes);
     const { macd, signal, histogram } = calcMACD(closes);
     const sma20 = calcSMA(closes, 20);
     const sma50 = calcSMA(closes, 50);
-    const { upper: bbUpper, lower: bbLower, mid: bbMid } = calcBollinger(closes);
-    return { rsi, macd, signal, histogram, sma20, sma50, bbUpper, bbLower, bbMid };
+    const { upper: bbUpper, lower: bbLower, mid: bbMid, bandwidth: bbBandwidth } = calcBollinger(closes);
+    return { rsi, macd, signal, histogram, sma20, sma50, bbUpper, bbLower, bbMid, bbBandwidth };
   }, [chartData]);
 
   const enrichedData = useMemo(() => chartData.map((d, i) => ({
@@ -123,6 +124,7 @@ export default function StockDetail({ ticker, onBack }: Props) {
     bbUpper: indicators.bbUpper[i],
     bbLower: indicators.bbLower[i],
     bbMid: indicators.bbMid[i],
+    bbBandwidth: indicators.bbBandwidth[i],
   })), [chartData, indicators]);
 
   if (!snap) {
@@ -312,6 +314,29 @@ export default function StockDetail({ ticker, onBack }: Props) {
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#C9943A", borderTop: "1px dashed #C9943A" }} />Üst/Alt Bant</span>
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#64748b" }} />Orta (SMA 20)</span>
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: chartColor }} />Fiyat</span>
+          </div>
+          {/* Bandwidth alt grafiği */}
+          <div className="mt-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#64748b" }}>BANT GENİŞLİĞİ (%)</div>
+            <div className="h-[80px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={enrichedData}>
+                  <defs>
+                    <linearGradient id="bwGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                    tickFormatter={v => v.slice(5)} interval="preserveStartEnd" />
+                  <YAxis domain={["auto", "auto"]} tick={{ fill: "#475569", fontSize: 9 }} tickLine={false} axisLine={false}
+                    orientation="right" tickFormatter={v => v.toFixed(1)} />
+                  <Tooltip contentStyle={tooltipStyle}
+                    formatter={(v: number) => [v?.toFixed(2) + "%", "Bant Genişliği"]} />
+                  <Area type="monotone" dataKey="bbBandwidth" stroke="#8b5cf6" strokeWidth={1.5} fill="url(#bwGrad)" dot={false} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}
