@@ -61,3 +61,9 @@ export async function deleteSinyalArsiv(key: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/sinyal-arsiv/${key}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Delete failed");
 }
+
+export async function fetchBistChart(period: string = "1A"): Promise<{ dates: string[]; closes: number[] }> {
+  const res = await fetch(`${API_BASE}/api/bist-chart?period=${period}`);
+  if (!res.ok) throw new Error("BIST chart fetch failed");
+  return res.json();
+}
