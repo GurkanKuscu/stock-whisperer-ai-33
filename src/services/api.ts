@@ -69,7 +69,7 @@ export async function fetchBistChart(period: string = "1A", symbol: string = "xu
 }
 
 export async function fetchStockChart(ticker: string, period: string = "1A"): Promise<{ dates: string[]; closes: number[]; volumes?: number[] }> {
-  const res = await fetch(`${API_BASE}/api/bist-chart?period=${period}&symbol=${ticker}`);
+  const res = await fetch(`${API_BASE}/api/bist-chart?ticker=${ticker}&period=${period}`);
   if (!res.ok) throw new Error("Stock chart fetch failed");
   return res.json();
 }
