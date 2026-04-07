@@ -94,6 +94,20 @@ export default function DashboardTab() {
     .slice(0, 6)
     .map(t => ({ ticker: t, avg_vol_tl: data[t].avg_vol_tl, chg: data[t].perf_1d ?? 0 }));
 
+  // Günlük değişim hesapla
+  const withChange = tickers
+    .map(t => {
+      const d = data[t];
+      const chg = d.prev_close && d.prev_close > 0
+        ? ((d.close - d.prev_close) / d.prev_close) * 100
+        : (d.perf_1d ?? 0);
+      return { ticker: t, close: d.close, chg };
+    })
+    .filter(x => x.chg !== 0);
+
+  const topGainers = [...withChange].sort((a, b) => b.chg - a.chg).slice(0, 6);
+  const topLosers = [...withChange].sort((a, b) => a.chg - b.chg).slice(0, 6);
+
   // KAP haberleri
   const kapHaberler = tickers
     .flatMap(t => (data[t].kap_haberler ?? []).map(h => ({ ...h, ticker: t })))
@@ -211,8 +225,8 @@ export default function DashboardTab() {
       </div>
 
 
-      {/* 3. Üçlü Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+      {/* 3. Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2 mb-3">
         {/* En İyi Sinyaller */}
         <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
           <div className="text-[10px] mb-2 tracking-[0.5px]" style={{ color: "#64748b" }}>EN İYİ SİNYALLER</div>
@@ -268,6 +282,38 @@ export default function DashboardTab() {
               </div>
               <div className="text-[12px] font-medium" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
                 {s.chg >= 0 ? "+" : ""}{s.chg?.toFixed(2)}%
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* En Çok Yükselenler */}
+        <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          <div className="text-[10px] mb-2 tracking-[0.5px]" style={{ color: "#64748b" }}>EN ÇOK YÜKSELENLER 📈</div>
+          {topGainers.map((s, i) => (
+            <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
+              <div>
+                <div className="text-[13px] font-medium" style={{ color: "#e2e8f0" }}>{s.ticker}</div>
+                <div className="text-[10px]" style={{ color: "#64748b" }}>{s.close.toFixed(2)} ₺</div>
+              </div>
+              <div className="text-[12px] font-medium" style={{ color: "#2CC98A" }}>
+                +{s.chg.toFixed(2)}%
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* En Çok Düşenler */}
+        <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          <div className="text-[10px] mb-2 tracking-[0.5px]" style={{ color: "#64748b" }}>EN ÇOK DÜŞENLER 📉</div>
+          {topLosers.map((s, i) => (
+            <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
+              <div>
+                <div className="text-[13px] font-medium" style={{ color: "#e2e8f0" }}>{s.ticker}</div>
+                <div className="text-[10px]" style={{ color: "#64748b" }}>{s.close.toFixed(2)} ₺</div>
+              </div>
+              <div className="text-[12px] font-medium" style={{ color: "#E05252" }}>
+                {s.chg.toFixed(2)}%
               </div>
             </div>
           ))}
