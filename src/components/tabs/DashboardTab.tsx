@@ -193,15 +193,6 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {/* 3. Üçlü Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-        {systemStats.map((item, i) => (
-          <div key={i} className="rounded-xl p-3 text-center" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
-            <div className="text-[26px] font-medium" style={{ color: item.color }}>{item.val}</div>
-            <div className="text-[10px] mt-1 tracking-[0.5px]" style={{ color: "#64748b" }}>{item.label}</div>
-          </div>
-        ))}
-      </div>
 
       {/* 3. Üçlü Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
