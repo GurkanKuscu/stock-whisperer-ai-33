@@ -7,7 +7,17 @@ interface MarketItem {
   label: string;
   value: number;
   change: number;
+  symbol: string;
 }
+
+const SYMBOL_MAP: Record<string, string> = {
+  "BIST100": "xu100",
+  "BIST30": "xu030",
+  "USD/TRY": "usdtry",
+  "EUR/TRY": "eurtry",
+  "ALTIN (GR)": "altin",
+  "BRENT": "brent",
+};
 
 export default function DashboardTab() {
   const { data } = useAppData();
@@ -15,18 +25,20 @@ export default function DashboardTab() {
   const [marketLoading, setMarketLoading] = useState(true);
   const [chartData, setChartData] = useState<{ date: string; value: number }[]>([]);
   const [chartPeriod, setChartPeriod] = useState("1A");
+  const [chartSymbol, setChartSymbol] = useState("xu100");
+  const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
     fetchMarket()
       .then(m => {
         const items: MarketItem[] = [
-          { label: "BIST100", value: m.xu100?.value ?? 0, change: m.xu100?.change_pct ?? 0 },
-          { label: "BIST30", value: m.xu030?.value ?? 0, change: m.xu030?.change_pct ?? 0 },
-          { label: "USD/TRY", value: m.usdtry?.value ?? 0, change: m.usdtry?.change_pct ?? 0 },
-          { label: "EUR/TRY", value: m.eurtry?.value ?? 0, change: m.eurtry?.change_pct ?? 0 },
-          { label: "ALTIN (GR)", value: m.altin?.value ?? 0, change: m.altin?.change_pct ?? 0 },
-          { label: "BRENT", value: m.brent?.value ?? 0, change: m.brent?.change_pct ?? 0 },
+          { label: "BIST100", value: m.xu100?.value ?? 0, change: m.xu100?.change_pct ?? 0, symbol: "xu100" },
+          { label: "BIST30", value: m.xu030?.value ?? 0, change: m.xu030?.change_pct ?? 0, symbol: "xu030" },
+          { label: "USD/TRY", value: m.usdtry?.value ?? 0, change: m.usdtry?.change_pct ?? 0, symbol: "usdtry" },
+          { label: "EUR/TRY", value: m.eurtry?.value ?? 0, change: m.eurtry?.change_pct ?? 0, symbol: "eurtry" },
+          { label: "ALTIN (GR)", value: m.altin?.value ?? 0, change: m.altin?.change_pct ?? 0, symbol: "altin" },
+          { label: "BRENT", value: m.brent?.value ?? 0, change: m.brent?.change_pct ?? 0, symbol: "brent" },
         ];
         setMarket(items);
       })
@@ -36,7 +48,7 @@ export default function DashboardTab() {
 
   useEffect(() => {
     setChartLoading(true);
-    fetchBistChart(chartPeriod)
+    fetchBistChart(chartPeriod, chartSymbol)
       .then(d => {
         if (d.dates && d.closes) {
           setChartData(d.dates.map((dt, i) => ({ date: dt, value: d.closes[i] })));
@@ -44,7 +56,7 @@ export default function DashboardTab() {
       })
       .catch(() => setChartData([]))
       .finally(() => setChartLoading(false));
-  }, [chartPeriod]);
+  }, [chartPeriod, chartSymbol]);
 
   const tickers = Object.keys(data);
 
@@ -112,8 +124,14 @@ export default function DashboardTab() {
                   </div>
                 ))
               : market.map((item, i) => (
-                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px]" style={{ borderRight: i < market.length - 1 ? "0.5px solid #2d3748" : "none" }}>
-                    <div className="text-[9px] mb-0.5" style={{ color: "#64748b" }}>{item.label}</div>
+                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,.03)]"
+                    onClick={() => { setChartSymbol(item.symbol); setChartLabel(item.label); }}
+                    style={{
+                      borderRight: i < market.length - 1 ? "0.5px solid #2d3748" : "none",
+                      background: chartSymbol === item.symbol ? "rgba(201,148,58,.06)" : "transparent",
+                      borderBottom: chartSymbol === item.symbol ? "2px solid #C9943A" : "2px solid transparent",
+                    }}>
+                    <div className="text-[9px] mb-0.5" style={{ color: chartSymbol === item.symbol ? "#C9943A" : "#64748b" }}>{item.label}</div>
                     <div className="text-[15px] font-medium" style={{ color: "#e2e8f0" }}>
                       {item.value > 0 ? item.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
                     </div>
@@ -129,14 +147,10 @@ export default function DashboardTab() {
           <div className="p-3.5">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <div className="text-[11px]" style={{ color: "#64748b" }}>BIST 100</div>
+                <div className="text-[11px]" style={{ color: "#64748b" }}>{chartLabel}</div>
                 <div className="text-[22px] font-medium" style={{ color: "#e2e8f0" }}>
-                  {market[0]?.value > 0 ? market[0].value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
-                  {market[0] && (
-                    <span className="text-[13px] ml-2" style={{ color: market[0].change >= 0 ? "#2CC98A" : "#E05252" }}>
-                      {market[0].change >= 0 ? "+" : ""}{market[0].change?.toFixed(2)}%
-                    </span>
-                  )}
+                  {(() => { const sel = market.find(m => m.symbol === chartSymbol); return sel && sel.value > 0 ? sel.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"; })()}
+                  {(() => { const sel = market.find(m => m.symbol === chartSymbol); return sel ? <span className="text-[13px] ml-2" style={{ color: sel.change >= 0 ? "#2CC98A" : "#E05252" }}>{sel.change >= 0 ? "+" : ""}{sel.change?.toFixed(2)}%</span> : null; })()}
                 </div>
               </div>
               <div className="flex gap-1">
@@ -174,7 +188,7 @@ export default function DashboardTab() {
                     <Tooltip
                       contentStyle={{ background: "#1a1f2e", border: "1px solid #2d3748", borderRadius: 8, fontSize: 11 }}
                       labelStyle={{ color: "#64748b" }}
-                      formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), "BIST100"]} />
+                      formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), chartLabel]} />
                     <Area type="monotone" dataKey="value" stroke="#2CC98A" strokeWidth={2} fill="url(#bistGradient)" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
