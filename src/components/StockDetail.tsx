@@ -3,6 +3,7 @@ import { useAppData } from "@/context/AppContext";
 import { fetchStockChart } from "@/services/api";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import type { StockData } from "@/types/stock";
+import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 
 interface Props {
   ticker: string;
@@ -14,6 +15,7 @@ export default function StockDetail({ ticker, onBack }: Props) {
   const snap = data[ticker] as StockData | undefined;
 
   const [chartType, setChartType] = useState<"fiyat" | "hacim">("fiyat");
+  const [showAddModal, setShowAddModal] = useState(false);
   const [period, setPeriod] = useState("1A");
   const [chartData, setChartData] = useState<{ date: string; value: number; volume?: number }[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
@@ -69,10 +71,21 @@ export default function StockDetail({ ticker, onBack }: Props) {
             <div className="text-[12px]" style={{ color: "#64748b" }}>{snap.sector_name ?? ""}</div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-[28px] font-medium" style={{ color: "#e2e8f0" }}>
-            {close.toFixed(2)} ₺
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowAddModal(true)}
+            className="px-3 py-1.5 rounded-lg text-[12px] font-bold border-none cursor-pointer transition-all hover:opacity-80"
+            style={{ background: "rgba(59,130,246,.12)", color: "#60a5fa", border: "1px solid rgba(59,130,246,.25)" }}>
+            + Portföye Ekle
+          </button>
+          <div className="text-right">
+            <div className="text-[28px] font-medium" style={{ color: "#e2e8f0" }}>
+              {close.toFixed(2)} ₺
+            </div>
+            <div className="text-[14px]" style={{ color: isPositive ? "#2CC98A" : "#E05252" }}>
+              {isPositive ? "+" : ""}{change.toFixed(2)} ({isPositive ? "+" : ""}{changePct.toFixed(2)}%)
+            </div>
           </div>
+        </div>
           <div className="text-[14px]" style={{ color: isPositive ? "#2CC98A" : "#E05252" }}>
             {isPositive ? "+" : ""}{change.toFixed(2)} ({isPositive ? "+" : ""}{changePct.toFixed(2)}%)
           </div>
