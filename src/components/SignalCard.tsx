@@ -147,31 +147,29 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
       {/* Verdict — PROMPT K layout */}
       <div className="p-[8px_12px] cursor-pointer hover:opacity-90" style={{ borderTop: "0.5px solid var(--bdr)" }}
         onClick={() => setTemelOpen(!temelOpen)}>
-        <div className="flex justify-between items-start gap-2">
+        <div className="flex justify-between items-center gap-2">
           {/* Sol: Temel Karar + ok */}
-          <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] text-t-txt3 font-medium tracking-[1px]">
-                TEMEL KARAR {temelOpen ? "▲" : "▼"}
-              </div>
-              <span className="text-[12px] font-semibold" style={{
-                color: stock.temel_sinyal?.includes('GÜÇLÜ') ? '#2CC98A'
-                  : stock.temel_sinyal?.includes('ORTA') ? '#F59E0B'
-                  : stock.temel_sinyal?.includes('ZAYIF') ? '#F97316'
-                  : '#E05252'
-              }}>
-                {stock.temel_sinyal || '—'} {stock.temel_puan ? `${stock.temel_puan}p` : ''}
-              </span>
-            </div>
-            {stock.kombine_karar && (
-              <div className="text-[11px]" style={{ color: '#94a3b8' }}>
-                {stock.kombine_karar}
-              </div>
-            )}
+          <div className="text-[11px] text-t-txt3 font-medium tracking-[1px] shrink-0">
+            TEMEL KARAR {temelOpen ? "▲" : "▼"}
           </div>
 
-          {/* Sağ: Durum badge */}
-          <div className="shrink-0">
+          {/* Orta: kombine karar */}
+          {stock.kombine_karar && (
+            <div className="text-[11px] text-right flex-1 min-w-0 truncate" style={{ color: '#94a3b8' }}>
+              {stock.kombine_karar}
+            </div>
+          )}
+
+          {/* Sağ: Temel sinyal + puan + badge */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[12px] font-semibold" style={{
+              color: stock.temel_sinyal?.includes('GÜÇLÜ') ? '#2CC98A'
+                : stock.temel_sinyal?.includes('ORTA') ? '#F59E0B'
+                : stock.temel_sinyal?.includes('ZAYIF') ? '#F97316'
+                : '#E05252'
+            }}>
+              {stock.temel_sinyal || '—'} {stock.temel_puan ? `${stock.temel_puan}p` : ''}
+            </span>
             {(() => {
               const k = stock.kombine_karar ?? '';
               if ((k.includes('GİRİLEBİLİR') || k.includes('GİR')) && !k.includes('GİRME')) {
