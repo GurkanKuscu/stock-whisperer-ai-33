@@ -123,6 +123,10 @@ export default function DashboardTab() {
     { label: "PİYASA GENİŞLİĞİ", val: `${breadth}%`, color: "#94a3b8" },
   ];
 
+  if (selectedTicker) {
+    return <StockDetail ticker={selectedTicker} onBack={() => setSelectedTicker(null)} />;
+  }
+
   return (
     <div className="animate-fade-in">
       {/* 1. BIST100 Grafik + Piyasa Özeti üstte */}
