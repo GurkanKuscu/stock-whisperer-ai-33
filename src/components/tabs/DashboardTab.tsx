@@ -98,87 +98,90 @@ export default function DashboardTab() {
 
   return (
     <div className="animate-fade-in">
-      {/* 1. Piyasa Özeti */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 mb-3">
-        {marketLoading
-          ? Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-3 animate-pulse" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
-                <div className="h-4 bg-t-bg4 rounded w-16 mb-2" />
-                <div className="h-6 bg-t-bg4 rounded w-20" />
-              </div>
-            ))
-          : market.map((item, i) => (
-              <div key={i} className="rounded-xl p-[12px_16px]" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
-                <div className="text-[10px] mb-1" style={{ color: "#64748b" }}>{item.label}</div>
-                <div className="text-[20px] font-medium" style={{ color: "#e2e8f0" }}>
-                  {item.value > 0 ? item.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
-                </div>
-                <div className="text-[12px] mt-0.5" style={{ color: item.change >= 0 ? "#2CC98A" : "#E05252" }}>
-                  {item.change >= 0 ? "+" : ""}{item.change?.toFixed(2)}%
-                </div>
-              </div>
-            ))
-        }
-      </div>
-
-      {/* 2. BIST100 Grafik + Sistem Durumu */}
+      {/* 1. BIST100 Grafik + Piyasa Özeti üstte */}
       <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-2 mb-3">
-        {/* Sol: BIST100 Grafik */}
-        <div className="rounded-xl p-3.5" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <div className="text-[11px]" style={{ color: "#64748b" }}>BIST 100</div>
-              <div className="text-[22px] font-medium" style={{ color: "#e2e8f0" }}>
-                {market[0]?.value > 0 ? market[0].value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
-                {market[0] && (
-                  <span className="text-[13px] ml-2" style={{ color: market[0].change >= 0 ? "#2CC98A" : "#E05252" }}>
-                    {market[0].change >= 0 ? "+" : ""}{market[0].change?.toFixed(2)}%
-                  </span>
-                )}
+        {/* Sol: Piyasa ticker bar + Grafik */}
+        <div className="rounded-xl" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          {/* Piyasa Özeti — yatay bar */}
+          <div className="flex flex-wrap gap-0" style={{ borderBottom: "0.5px solid #2d3748" }}>
+            {marketLoading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px] animate-pulse" style={{ borderRight: i < 5 ? "0.5px solid #2d3748" : "none" }}>
+                    <div className="h-3 bg-t-bg4 rounded w-12 mb-1" />
+                    <div className="h-4 bg-t-bg4 rounded w-16" />
+                  </div>
+                ))
+              : market.map((item, i) => (
+                  <div key={i} className="flex-1 min-w-[100px] p-[10px_14px]" style={{ borderRight: i < market.length - 1 ? "0.5px solid #2d3748" : "none" }}>
+                    <div className="text-[9px] mb-0.5" style={{ color: "#64748b" }}>{item.label}</div>
+                    <div className="text-[15px] font-medium" style={{ color: "#e2e8f0" }}>
+                      {item.value > 0 ? item.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
+                    </div>
+                    <div className="text-[10px]" style={{ color: item.change >= 0 ? "#2CC98A" : "#E05252" }}>
+                      {item.change >= 0 ? "+" : ""}{item.change?.toFixed(2)}%
+                    </div>
+                  </div>
+                ))
+            }
+          </div>
+
+          {/* Grafik header + chart */}
+          <div className="p-3.5">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <div className="text-[11px]" style={{ color: "#64748b" }}>BIST 100</div>
+                <div className="text-[22px] font-medium" style={{ color: "#e2e8f0" }}>
+                  {market[0]?.value > 0 ? market[0].value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
+                  {market[0] && (
+                    <span className="text-[13px] ml-2" style={{ color: market[0].change >= 0 ? "#2CC98A" : "#E05252" }}>
+                      {market[0].change >= 0 ? "+" : ""}{market[0].change?.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {["1H", "1A", "3A", "6A", "1Y"].map(p => (
+                  <button key={p} onClick={() => setChartPeriod(p)}
+                    className="border-none cursor-pointer"
+                    style={{
+                      padding: "3px 8px", borderRadius: 6, fontSize: 11,
+                      background: chartPeriod === p ? "#C9943A" : "transparent",
+                      color: chartPeriod === p ? "#000" : "#64748b",
+                    }}>
+                    {p}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="flex gap-1">
-              {["1H", "1A", "3A", "6A", "1Y"].map(p => (
-                <button key={p} onClick={() => setChartPeriod(p)}
-                  className="border-none cursor-pointer"
-                  style={{
-                    padding: "3px 8px", borderRadius: 6, fontSize: 11,
-                    background: chartPeriod === p ? "#C9943A" : "transparent",
-                    color: chartPeriod === p ? "#000" : "#64748b",
-                  }}>
-                  {p}
-                </button>
-              ))}
+            <div style={{ height: 160 }}>
+              {chartLoading ? (
+                <div className="h-full flex items-center justify-center text-[11px]" style={{ color: "#64748b" }}>Grafik yükleniyor...</div>
+              ) : chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="bistGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2CC98A" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#2CC98A" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
+                      tickFormatter={(v: string) => { const parts = v.split("-"); return parts.length >= 2 ? `${parts[2] ?? ""}/${parts[1]}` : v; }}
+                      interval="preserveStartEnd" minTickGap={40} />
+                    <YAxis orientation="right" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
+                      domain={["dataMin - 100", "dataMax + 100"]}
+                      tickFormatter={(v: number) => v.toLocaleString("tr-TR")} width={55} />
+                    <Tooltip
+                      contentStyle={{ background: "#1a1f2e", border: "1px solid #2d3748", borderRadius: 8, fontSize: 11 }}
+                      labelStyle={{ color: "#64748b" }}
+                      formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), "BIST100"]} />
+                    <Area type="monotone" dataKey="value" stroke="#2CC98A" strokeWidth={2} fill="url(#bistGradient)" dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-[11px]" style={{ color: "#64748b" }}>Grafik verisi bulunamadı</div>
+              )}
             </div>
-          </div>
-          <div style={{ height: 160 }}>
-            {chartLoading ? (
-              <div className="h-full flex items-center justify-center text-[11px]" style={{ color: "#64748b" }}>Grafik yükleniyor...</div>
-            ) : chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="bistGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#2CC98A" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#2CC98A" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
-                    tickFormatter={(v: string) => { const parts = v.split("-"); return parts.length >= 2 ? `${parts[2] ?? ""}/${parts[1]}` : v; }}
-                    interval="preserveStartEnd" minTickGap={40} />
-                  <YAxis orientation="right" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false}
-                    domain={["dataMin - 100", "dataMax + 100"]}
-                    tickFormatter={(v: number) => v.toLocaleString("tr-TR")} width={55} />
-                  <Tooltip
-                    contentStyle={{ background: "#1a1f2e", border: "1px solid #2d3748", borderRadius: 8, fontSize: 11 }}
-                    labelStyle={{ color: "#64748b" }}
-                    formatter={(v: number) => [v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }), "BIST100"]} />
-                  <Area type="monotone" dataKey="value" stroke="#2CC98A" strokeWidth={2} fill="url(#bistGradient)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-[11px]" style={{ color: "#64748b" }}>Grafik verisi bulunamadı</div>
-            )}
           </div>
         </div>
 
