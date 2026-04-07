@@ -29,7 +29,7 @@ export default function DashboardTab() {
   const [chartSymbol, setChartSymbol] = useState("xu100");
   const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
-
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   useEffect(() => {
     fetchMarket()
       .then(m => {
