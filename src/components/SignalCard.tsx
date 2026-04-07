@@ -145,17 +145,40 @@ export default function SignalCard({ ticker, stock, onAddPortfolio }: SignalCard
       )}
 
       {/* Verdict */}
-      <div className="p-[13px_18px] flex items-center justify-between gap-2 cursor-pointer hover:opacity-90"
+      <div className="p-[13px_18px] cursor-pointer hover:opacity-90"
         onClick={() => setTemelOpen(!temelOpen)}>
-        <div>
-          <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px] mb-[3px]">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px]">
             Temel Karar {temelOpen ? "▲" : "▼"} detay
           </div>
-          <div className="text-[10.5px] text-t-txt2">{verdict.sub}</div>
+          <span className={`px-3 py-[5px] rounded-md text-[10.5px] font-bold whitespace-nowrap tracking-[.01em] border ${verdict.cls}`}>
+            {verdict.label}
+          </span>
         </div>
-        <span className={`px-3 py-[5px] rounded-md text-[10.5px] font-bold whitespace-nowrap tracking-[.01em] border ${verdict.cls}`}>
-          {verdict.label}
-        </span>
+        {/* Temel sinyal */}
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="text-[10px] text-t-txt3">Temel:</span>
+          <span className="text-[11px] font-medium" style={{
+            color: stock.temel_sinyal?.includes('GÜÇLÜ') ? '#2CC98A'
+              : stock.temel_sinyal?.includes('ORTA') ? '#F59E0B'
+              : stock.temel_sinyal?.includes('ZAYIF') ? '#F97316'
+              : '#E05252'
+          }}>
+            {stock.temel_sinyal || '—'}
+          </span>
+          <span className="text-[10px] text-t-txt3">{stock.temel_puan ? `${stock.temel_puan}p` : ''}</span>
+        </div>
+        {/* Kombine karar */}
+        <div className="text-[11px] font-medium" style={{
+          color: stock.kombine_karar?.includes('GÜÇLÜ') ? '#2CC98A'
+            : stock.kombine_karar?.includes('GİRİLEBİLİR') ? '#2CC98A'
+            : stock.kombine_karar?.includes('DİKKATLİ') ? '#F59E0B'
+            : stock.kombine_karar?.includes('BEKLE') ? '#F97316'
+            : stock.kombine_karar?.includes('GIRME') || stock.kombine_karar?.includes('GİRME') ? '#E05252'
+            : '#94a3b8'
+        }}>
+          {stock.kombine_karar || '—'}
+        </div>
       </div>
 
       {/* Temel Detail (expandable) */}
