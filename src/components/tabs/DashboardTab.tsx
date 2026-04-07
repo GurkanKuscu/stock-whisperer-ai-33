@@ -89,7 +89,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
   // Hacim liderleri
   // Günlük değişim hesapla
   const withChange = tickers
-    .filter(t => data[t].prev_close && data[t].prev_close! > 0)
+    .filter(t => data[t].prev_close && data[t].prev_close! > 0 && data[t].close > 0)
     .map(t => {
       const d = data[t];
       const chg = ((d.close - d.prev_close!) / d.prev_close!) * 100;
