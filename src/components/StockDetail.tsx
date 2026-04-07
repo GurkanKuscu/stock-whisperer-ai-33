@@ -86,10 +86,6 @@ export default function StockDetail({ ticker, onBack }: Props) {
             </div>
           </div>
         </div>
-          <div className="text-[14px]" style={{ color: isPositive ? "#2CC98A" : "#E05252" }}>
-            {isPositive ? "+" : ""}{change.toFixed(2)} ({isPositive ? "+" : ""}{changePct.toFixed(2)}%)
-          </div>
-        </div>
       </div>
 
       {/* Chart */}
