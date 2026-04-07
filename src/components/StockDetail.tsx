@@ -3,7 +3,7 @@ import { useAppData } from "@/context/AppContext";
 import { fetchStockChart } from "@/services/api";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
-  XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Cell
+  XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, ReferenceDot, Cell
 } from "recharts";
 import type { StockData } from "@/types/stock";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
@@ -103,20 +103,30 @@ export default function StockDetail({ ticker, onBack }: Props) {
 
   // Teknik göstergeler
   const indicators = useMemo(() => {
-    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], bbUpper: [], bbLower: [], bbMid: [], bbBandwidth: [] };
+    if (chartData.length < 2) return { rsi: [], macd: [], signal: [], histogram: [], sma20: [], sma50: [], sma200: [], bbUpper: [], bbLower: [], bbMid: [], bbBandwidth: [], crosses: [] };
     const closes = chartData.map(d => d.value);
+    const dates = chartData.map(d => d.date);
     const rsi = calcRSI(closes);
     const { macd, signal, histogram } = calcMACD(closes);
     const sma20 = calcSMA(closes, 20);
     const sma50 = calcSMA(closes, 50);
+    const sma200 = calcSMA(closes, 200);
     const { upper: bbUpper, lower: bbLower, mid: bbMid, bandwidth: bbBandwidth } = calcBollinger(closes);
-    return { rsi, macd, signal, histogram, sma20, sma50, bbUpper, bbLower, bbMid, bbBandwidth };
+    // Golden Cross / Death Cross
+    const crosses = dates.map((date, i) => {
+      if (i < 1 || !sma50[i] || !sma50[i-1] || !sma200[i] || !sma200[i-1]) return null;
+      if (sma50[i-1]! < sma200[i-1]! && sma50[i]! >= sma200[i]!) return { date, type: 'golden' as const, price: closes[i] };
+      if (sma50[i-1]! > sma200[i-1]! && sma50[i]! <= sma200[i]!) return { date, type: 'death' as const, price: closes[i] };
+      return null;
+    }).filter((c): c is { date: string; type: 'golden' | 'death'; price: number } => c !== null);
+    return { rsi, macd, signal, histogram, sma20, sma50, sma200, bbUpper, bbLower, bbMid, bbBandwidth, crosses };
   }, [chartData]);
 
   const enrichedData = useMemo(() => chartData.map((d, i) => ({
     ...d,
     sma20: indicators.sma20[i],
     sma50: indicators.sma50[i],
+    sma200: indicators.sma200[i],
     rsi: indicators.rsi[i],
     macd: indicators.macd[i],
     macdSignal: indicators.signal[i],
@@ -234,11 +244,32 @@ export default function StockDetail({ ticker, onBack }: Props) {
                   formatter={(v: number, name: string) => {
                     if (name === "sma20") return [v?.toFixed(2), "SMA 20"];
                     if (name === "sma50") return [v?.toFixed(2), "SMA 50"];
+                    if (name === "sma200") return [v?.toFixed(2), "SMA 200"];
                     return [v?.toFixed(2) + " ₺", "Fiyat"];
                   }} />
                 <Area type="monotone" dataKey="value" stroke={chartColor} strokeWidth={2} fill={`url(#grad-${ticker})`} dot={false} />
                 <Line type="monotone" dataKey="sma20" stroke="#C9943A" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
-                <Line type="monotone" dataKey="sma50" stroke="#E05252" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="sma50" stroke="#facc15" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+                <Line type="monotone" dataKey="sma200" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="6 3" dot={false} connectNulls />
+                {indicators.crosses.map((c, idx) => (
+                  <ReferenceDot
+                    key={idx}
+                    x={c.date}
+                    y={c.price}
+                    r={6}
+                    fill={c.type === 'golden' ? '#facc15' : '#ef4444'}
+                    stroke={c.type === 'golden' ? '#a16207' : '#991b1b'}
+                    strokeWidth={1.5}
+                    label={{
+                      value: c.type === 'golden' ? '⭐ GC' : '✕ DC',
+                      position: 'top',
+                      fill: c.type === 'golden' ? '#facc15' : '#ef4444',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      offset: 10,
+                    }}
+                  />
+                ))}
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -257,10 +288,17 @@ export default function StockDetail({ ticker, onBack }: Props) {
         </div>
         {/* SMA Lejant */}
         {chartType === "fiyat" && chartData.length > 0 && (
-          <div className="flex gap-4 mt-2 text-[10px]" style={{ color: "#64748b" }}>
+          <div className="flex flex-wrap gap-3 mt-2 text-[10px]" style={{ color: "#64748b" }}>
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: chartColor }} />Fiyat</span>
             <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#C9943A", borderTop: "1px dashed #C9943A" }} />SMA 20</span>
-            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#E05252", borderTop: "1px dashed #E05252" }} />SMA 50</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#facc15", borderTop: "1px dashed #facc15" }} />SMA 50</span>
+            <span><span className="inline-block w-3 h-[2px] mr-1 align-middle" style={{ background: "#94a3b8", borderTop: "1px dashed #94a3b8" }} />SMA 200</span>
+            {indicators.crosses.length > 0 && (
+              <>
+                <span style={{ color: "#facc15" }}>⭐ Golden Cross</span>
+                <span style={{ color: "#ef4444" }}>✕ Death Cross</span>
+              </>
+            )}
           </div>
         )}
       </div>
