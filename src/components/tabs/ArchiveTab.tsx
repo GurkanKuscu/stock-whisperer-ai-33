@@ -5,7 +5,7 @@ import PriceProgressBar from "@/components/PriceProgressBar";
 import type { ArsivFile } from "@/types/stock";
 import JSZip from "jszip";
 
-const API_BASE = "http://207.154.212.100:8080";
+const API_BASE = "";
 
 interface ManualFile {
   name: string;
