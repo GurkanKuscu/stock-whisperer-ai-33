@@ -379,6 +379,32 @@ export default function StockDetail({ ticker, onBack }: Props) {
         </div>
       </div>
 
+      {/* Performans */}
+      {(() => {
+        const perfItems: [string, number][] = [];
+        if (snap.perf_1d != null) perfItems.push(["1 Gün", snap.perf_1d]);
+        if (snap.perf_5d != null) perfItems.push(["5 Gün", snap.perf_5d]);
+        if (snap.perf_1m != null) perfItems.push(["1 Ay", snap.perf_1m]);
+        if (snap.bist100_perf_5d != null) perfItems.push(["BIST100 5G", snap.bist100_perf_5d]);
+        if (snap.sector_perf_5d != null) perfItems.push(["Sektör 5G", snap.sector_perf_5d]);
+        if (perfItems.length === 0) return null;
+        return (
+          <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
+            <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>PERFORMANS</div>
+            <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${Math.min(perfItems.length, 5)}, 1fr)` }}>
+              {perfItems.map(([label, val]) => (
+                <div key={label} className="rounded-lg p-2.5 text-center" style={{ background: "#0f1117" }}>
+                  <div className="text-[10px] mb-1" style={{ color: "#64748b" }}>{label}</div>
+                  <div className="text-[14px] font-medium font-mono" style={{ color: val > 0 ? "#2CC98A" : val < 0 ? "#E05252" : "#94a3b8" }}>
+                    {val > 0 ? "+" : ""}{val.toFixed(2)}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* KAP Haberleri */}
       {snap.kap_haberler && snap.kap_haberler.length > 0 && (
         <div className="rounded-xl p-4" style={{ background: "#131720", border: "1px solid #1e2535" }}>
