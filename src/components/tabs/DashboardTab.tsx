@@ -33,12 +33,12 @@ export default function DashboardTab() {
     fetchMarket()
       .then(m => {
         const items: MarketItem[] = [
-          { label: "BIST100", value: m.xu100?.value ?? 0, change: m.xu100?.change_pct ?? 0, symbol: "xu100" },
-          { label: "BIST30", value: m.xu030?.value ?? 0, change: m.xu030?.change_pct ?? 0, symbol: "xu030" },
-          { label: "USD/TRY", value: m.usdtry?.value ?? 0, change: m.usdtry?.change_pct ?? 0, symbol: "usdtry" },
-          { label: "EUR/TRY", value: m.eurtry?.value ?? 0, change: m.eurtry?.change_pct ?? 0, symbol: "eurtry" },
-          { label: "ALTIN (GR)", value: m.altin?.value ?? 0, change: m.altin?.change_pct ?? 0, symbol: "altin" },
-          { label: "BRENT", value: m.brent?.value ?? 0, change: m.brent?.change_pct ?? 0, symbol: "brent" },
+          { label: "BIST100", value: m.BIST100?.value ?? 0, change: m.BIST100?.change_pct ?? 0, symbol: "xu100" },
+          { label: "BIST30", value: m.BIST30?.value ?? 0, change: m.BIST30?.change_pct ?? 0, symbol: "xu030" },
+          { label: "USD/TRY", value: m.USDTRY?.value ?? 0, change: m.USDTRY?.change_pct ?? 0, symbol: "usdtry" },
+          { label: "EUR/TRY", value: m.EURTRY?.value ?? 0, change: m.EURTRY?.change_pct ?? 0, symbol: "eurtry" },
+          { label: "ALTIN (GR)", value: m.ALTIN?.value ?? 0, change: m.ALTIN?.change_pct ?? 0, symbol: "altin" },
+          { label: "BRENT", value: m.BRENT?.value ?? 0, change: m.BRENT?.change_pct ?? 0, symbol: "brent" },
         ];
         setMarket(items);
       })
