@@ -57,7 +57,7 @@ export default function FundamentalTab() {
           <table className="w-full text-[12px] border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-t-bg3">
-                {["Hisse", "Skor", "T.Puan", "F/K", "PD/DD", "FD/FAVÖK", "ROE", "Karar", ""].map((h, i) => (
+                {["Hisse", "Skor", "T.Puan", "F/K", "PD/DD", "FD/FAVÖK", "ROE", "Sektör", "Karar", ""].map((h, i) => (
                   <th key={i} className="p-[10px_14px] text-left text-[10px] text-t-txt3 font-semibold uppercase tracking-[.6px]"
                     style={{ borderBottom: "1px solid var(--bdr)" }}>
                     {h}
