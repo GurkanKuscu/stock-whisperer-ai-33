@@ -378,18 +378,20 @@ export default function ArchiveTab() {
                                 </div>
 
                                 {!tatil && acikGunler[gunKey] && (
-                                  <div className="flex gap-2 p-[6px_14px_10px_32px] flex-wrap">
+                                  <div className="flex gap-2.5 p-[6px_14px_10px_32px] flex-wrap">
                                     {slotlar.map(saat => {
                                       const dosya = saatler[saat];
                                       return dosya ? (
-                                        <div key={saat} className="flex items-center gap-2 bg-t-bg2 rounded-md px-2.5 py-[5px]"
-                                          style={{ border: "0.5px solid var(--bdr2)" }}>
+                                        <div key={saat} className="flex items-center gap-2.5 bg-t-bg2 rounded-lg px-3 py-2"
+                                          style={{ border: "0.5px solid var(--bdr2)", minWidth: "80px" }}>
                                           <span className="text-[11px] text-t-accent font-medium font-mono">{saat}</span>
                                           <span className="text-[10px] text-t-txt3">{typeof dosya.boyut === 'string' ? dosya.boyut : `${(Number(dosya.boyut) / 1024).toFixed(0)} KB`}</span>
                                           <button onClick={() => window.open(getDownloadUrl(dosya.ad))}
-                                            className="text-[11px] cursor-pointer text-t-accent bg-transparent border-none p-0 hover:opacity-70">⬇</button>
+                                            className="text-[13px] cursor-pointer text-t-accent bg-transparent border-none px-3 py-1.5 rounded-md transition-all hover:opacity-70"
+                                            style={{ border: "0.5px solid rgba(59,130,246,.2)" }}>⬇ İndir</button>
                                           <button onClick={() => handleDeleteFile(dosya.ad)}
-                                            className="text-[11px] cursor-pointer bg-transparent border-none p-0 hover:opacity-70" style={{ color: "var(--c-red)" }}>🗑</button>
+                                            className="text-[13px] cursor-pointer bg-transparent border-none px-3 py-1.5 rounded-md transition-all hover:opacity-70"
+                                            style={{ color: "var(--c-red)", border: "0.5px solid rgba(127,29,29,.3)" }}>🗑 Sil</button>
                                         </div>
                                       ) : (
                                         <div key={saat} className="flex items-center gap-2 rounded-md px-2.5 py-[5px] opacity-30"
