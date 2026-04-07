@@ -234,7 +234,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
           {topSignals.map((s, i) => (
             <div key={i} className="flex justify-between py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => onTickerClick?.(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{s.sector_name} · RSI {s.rsi}</div>
               </div>
               <div className="flex gap-1 items-center">
@@ -278,7 +278,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
           {topVolume.map((s, i) => (
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => onTickerClick?.(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{(s.avg_vol_tl / 1e6).toFixed(1)}M ₺</div>
               </div>
               <div className="text-[12px] font-medium" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
@@ -294,7 +294,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
           {topGainers.map((s, i) => (
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => onTickerClick?.(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{s.close.toFixed(2)} ₺</div>
               </div>
               <div className="text-[12px] font-medium" style={{ color: "#2CC98A" }}>
@@ -310,7 +310,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
           {topLosers.map((s, i) => (
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
-                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => setSelectedTicker(s.ticker)}>{s.ticker}</div>
+                <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => onTickerClick?.(s.ticker)}>{s.ticker}</div>
                 <div className="text-[10px]" style={{ color: "#64748b" }}>{s.close.toFixed(2)} ₺</div>
               </div>
               <div className="text-[12px] font-medium" style={{ color: "#E05252" }}>
