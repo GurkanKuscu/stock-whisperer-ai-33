@@ -122,9 +122,6 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     { label: "PİYASA GENİŞLİĞİ", val: `${breadth}%`, color: "#94a3b8" },
   ];
 
-  if (selectedTicker) {
-    return <StockDetail ticker={selectedTicker} onBack={() => setSelectedTicker(null)} />;
-  }
 
   return (
     <div className="animate-fade-in">
