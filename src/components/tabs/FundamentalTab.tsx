@@ -72,7 +72,7 @@ export default function FundamentalTab({ onTickerClick }: { onTickerClick?: (tic
                   <tr key={ticker} className="hover:bg-t-bg3 transition-colors"
                     style={{ borderBottom: i < filtered.length - 1 ? "1px solid var(--bdr)" : "none" }}>
                     <td className="p-[10px_14px]">
-                      <div className="font-syne font-extrabold text-[13px] text-t-txt">{ticker}</div>
+                      <div className="font-syne font-extrabold text-[13px] text-t-txt cursor-pointer hover:underline" onClick={() => onTickerClick?.(ticker)}>{ticker}</div>
                       <div className="text-[9px] text-t-txt3 mt-0.5">{s.sector_name}</div>
                     </td>
                     <td className="p-[10px_14px] font-mono font-bold text-t-txt">{s.score}</td>
