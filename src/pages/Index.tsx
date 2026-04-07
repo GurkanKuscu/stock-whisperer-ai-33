@@ -11,15 +11,25 @@ import ArchiveTab from "@/components/tabs/ArchiveTab";
 import SectorsTab from "@/components/tabs/SectorsTab";
 import SearchTab from "@/components/tabs/SearchTab";
 import PortfolioTab from "@/components/tabs/PortfolioTab";
+import StockDetail from "@/components/StockDetail";
 import Footer from "@/components/Footer";
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState("anasayfa");
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const { loading, error } = useAppData();
+
+  const handleTickerClick = (ticker: string) => {
+    setSelectedTicker(ticker);
+  };
+
+  const handleBackFromDetail = () => {
+    setSelectedTicker(null);
+  };
 
   return (
     <div className="min-h-screen">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setSelectedTicker(null); }} />
       <main className="mt-[60px] min-h-[calc(100vh-60px)]">
         <div className="max-w-[1600px] mx-auto p-7 max-md:p-[12px_10px]">
           <MarketBar />
@@ -37,11 +47,15 @@ function Dashboard() {
               <div className="text-[11px]">{error}</div>
               <div className="text-[10px] mt-3 text-t-txt3">Demo veriler ile çalışılıyor</div>
             </div>
+          ) : selectedTicker ? (
+            <div className="animate-fade-in">
+              <StockDetail ticker={selectedTicker} onBack={handleBackFromDetail} />
+            </div>
           ) : (
             <div className="animate-fade-in">
-              {activeTab === "anasayfa" && <DashboardTab />}
-              {activeTab === "sinyaller" && <SignalsTab />}
-              {activeTab === "temel" && <FundamentalTab />}
+              {activeTab === "anasayfa" && <DashboardTab onTickerClick={handleTickerClick} />}
+              {activeTab === "sinyaller" && <SignalsTab onTickerClick={handleTickerClick} />}
+              {activeTab === "temel" && <FundamentalTab onTickerClick={handleTickerClick} />}
               {activeTab === "alarmlar" && <AlarmsTab />}
               {activeTab === "kap" && <KapNewsTab />}
               {activeTab === "arsiv" && <ArchiveTab />}
