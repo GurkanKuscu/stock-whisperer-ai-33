@@ -87,25 +87,29 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     .slice(0, 8);
 
   // Hacim liderleri
+  // Günlük değişim hesapla (prev_close bazlı, BIST limit filtreli)
+  const withChange = tickers
+    .filter(t => data[t].prev_close && data[t].prev_close! > 0)
+    .map(t => {
+      const d = data[t];
+      const chg = ((d.close - d.prev_close!) / d.prev_close!) * 100;
+      return { ticker: t, close: d.close, chg, avg_vol_tl: d.avg_vol_tl };
+    })
+    .filter(x => x.chg !== 0 && Math.abs(x.chg) <= 15);
+
+  const topGainers = [...withChange].sort((a, b) => b.chg - a.chg).slice(0, 6);
+  const topLosers = [...withChange].sort((a, b) => a.chg - b.chg).slice(0, 6);
+
+  // Hacim Liderleri (prev_close bazlı değişim)
   const topVolume = [...tickers]
     .filter(t => data[t].avg_vol_tl > 0)
     .sort((a, b) => data[b].avg_vol_tl - data[a].avg_vol_tl)
     .slice(0, 6)
-    .map(t => ({ ticker: t, avg_vol_tl: data[t].avg_vol_tl, chg: data[t].perf_1d ?? 0 }));
-
-  // Günlük değişim hesapla
-  const withChange = tickers
     .map(t => {
       const d = data[t];
-      const chg = d.prev_close && d.prev_close > 0
-        ? ((d.close - d.prev_close) / d.prev_close) * 100
-        : (d.perf_1d ?? 0);
-      return { ticker: t, close: d.close, chg };
-    })
-    .filter(x => x.chg !== 0);
-
-  const topGainers = [...withChange].sort((a, b) => b.chg - a.chg).slice(0, 6);
-  const topLosers = [...withChange].sort((a, b) => a.chg - b.chg).slice(0, 6);
+      const chg = d.prev_close && d.prev_close > 0 ? ((d.close - d.prev_close) / d.prev_close) * 100 : 0;
+      return { ticker: t, avg_vol_tl: d.avg_vol_tl, chg };
+    });
 
   // KAP haberleri
   const kapHaberler = tickers
@@ -278,10 +282,12 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
             <div key={i} className="flex justify-between items-center py-[5px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
               <div>
                 <div className="text-[13px] font-medium cursor-pointer hover:underline" style={{ color: "#e2e8f0" }} onClick={() => onTickerClick?.(s.ticker)}>{s.ticker}</div>
-                <div className="text-[10px]" style={{ color: "#64748b" }}>{(s.avg_vol_tl / 1e6).toFixed(1)}M ₺</div>
+                <div className="text-[10px]" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
+                  {s.chg >= 0 ? "+" : ""}{s.chg.toFixed(2)}%
+                </div>
               </div>
-              <div className="text-[12px] font-medium" style={{ color: s.chg >= 0 ? "#2CC98A" : "#E05252" }}>
-                {s.chg >= 0 ? "+" : ""}{s.chg?.toFixed(2)}%
+              <div className="text-[12px] font-medium font-mono" style={{ color: "#e2e8f0" }}>
+                {(s.avg_vol_tl / 1e6).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}M ₺
               </div>
             </div>
           ))}
