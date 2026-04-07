@@ -37,7 +37,7 @@ function loadLocalPortfolios(): PortfolioMap {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<SnapshotData>({});
   const [loading, setLoading] = useState(true);
-  const [initialLoaded, setInitialLoaded] = useState(false);
+  const initialLoadedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [portfolios, setPortfoliosState] = useState<PortfolioMap>(loadLocalPortfolios);
   const [isMockMode, setIsMockMode] = useState(false);
