@@ -3,6 +3,15 @@ export interface StockData {
   signal: string;
   close: number;
   prev_close?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  change?: number;
+  change_pct?: number;
+  market_cap?: number;
+  week52_high?: number;
+  week52_low?: number;
   stop_loss: number;
   target: number;
   rr_ratio: number;
