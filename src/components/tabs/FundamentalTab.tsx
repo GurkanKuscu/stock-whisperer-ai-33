@@ -4,7 +4,7 @@ import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 
 const TEMEL_FILTRELER = ['TÜMÜ', 'TEMEL GÜÇLÜ', 'TEMEL ORTA', 'TEMEL ZAYIF', 'TEMEL KÖTÜ'];
 
-export default function FundamentalTab() {
+export default function FundamentalTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
   const [temelFiltre, setTemelFiltre] = useState('TÜMÜ');
   const [addTicker, setAddTicker] = useState<string | null>(null);

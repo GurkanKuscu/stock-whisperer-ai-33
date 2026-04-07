@@ -4,7 +4,7 @@ import SignalCard from "@/components/SignalCard";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 import MarketSummaryPanel from "@/components/MarketSummaryPanel";
 
-export default function SignalsTab() {
+export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
   const [addTicker, setAddTicker] = useState<string | null>(null);
   const [filter, setFilter] = useState<"top10" | "confirmed" | "dikkatli" | "pending" | "watchlist">("top10");

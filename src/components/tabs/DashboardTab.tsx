@@ -20,7 +20,7 @@ const SYMBOL_MAP: Record<string, string> = {
   "BRENT": "brent",
 };
 
-export default function DashboardTab() {
+export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
   const [market, setMarket] = useState<MarketItem[]>([]);
   const [marketLoading, setMarketLoading] = useState(true);
@@ -29,7 +29,6 @@ export default function DashboardTab() {
   const [chartSymbol, setChartSymbol] = useState("xu100");
   const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
-  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   useEffect(() => {
     fetchMarket()
       .then(m => {
