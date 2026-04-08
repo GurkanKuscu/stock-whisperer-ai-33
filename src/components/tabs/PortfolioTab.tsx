@@ -356,18 +356,18 @@ const d = new Date(p.createdAt ?? '');
                               {c.durum === "HEDEF TUTTU" && (
                                 <div style={{
                                   position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(44,201,138,0.08)',
-                                  border: '1px solid rgba(44,201,138,0.3)',
-                                  padding: '8px 12px', pointerEvents: 'none',
-                                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2
+                                  background: 'rgba(44,201,138,0.18)',
+                                  border: '1px solid rgba(44,201,138,0.4)',
+                                  pointerEvents: 'none',
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3
                                 }}>
-                                  <div style={{ fontSize: 11, color: '#2CC98A', fontWeight: 500 }}>
+                                  <div style={{ fontSize: 12, color: '#2CC98A', fontWeight: 600 }}>
                                     🏆 Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}
                                   </div>
-                                  <div style={{ fontSize: 11, color: '#2CC98A' }}>
+                                  <div style={{ fontSize: 12, color: '#2CC98A' }}>
                                     Hedef: {s.target.toFixed(2)} ₺ · {bugun} {saat}
                                   </div>
-                                  <div style={{ fontSize: 11, color: '#2CC98A' }}>
+                                  <div style={{ fontSize: 12, color: '#2CC98A', fontWeight: 600 }}>
                                     +{c.pnlPct.toFixed(1)}% | +{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün
                                   </div>
                                 </div>
@@ -376,18 +376,18 @@ const d = new Date(p.createdAt ?? '');
                               {c.durum === "STOP LOSS" && (
                                 <div style={{
                                   position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(224,82,82,0.08)',
-                                  border: '1px solid rgba(224,82,82,0.3)',
-                                  padding: '8px 12px', pointerEvents: 'none',
-                                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2
+                                  background: 'rgba(224,82,82,0.18)',
+                                  border: '1px solid rgba(224,82,82,0.4)',
+                                  pointerEvents: 'none',
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3
                                 }}>
-                                  <div style={{ fontSize: 11, color: '#E05252', fontWeight: 500 }}>
+                                  <div style={{ fontSize: 12, color: '#E05252', fontWeight: 600 }}>
                                     💀 Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}
                                   </div>
-                                  <div style={{ fontSize: 11, color: '#E05252' }}>
+                                  <div style={{ fontSize: 12, color: '#E05252' }}>
                                     Stop: {s.stop.toFixed(2)} ₺ · {bugun} {saat}
                                   </div>
-                                  <div style={{ fontSize: 11, color: '#E05252' }}>
+                                  <div style={{ fontSize: 12, color: '#E05252', fontWeight: 600 }}>
                                     {c.pnlPct.toFixed(1)}% | {c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün
                                   </div>
                                 </div>
