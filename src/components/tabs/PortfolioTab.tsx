@@ -297,8 +297,17 @@ const d = new Date(p.createdAt ?? '');
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {stocks.map((s, i) => {
                           const c = getCalc(s);
+                          const bugun = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                          const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                          const girisTarih = (() => {
+                            try {
+                              const d = new Date(s.date ?? '');
+                              if (isNaN(d.getTime())) return '—';
+                              return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                            } catch { return '—'; }
+                          })();
                           return (
-                            <div key={i} className="rounded-xl p-3" style={{ background: "var(--bg3)", border: "0.5px solid var(--bdr2)" }}>
+                            <div key={i} className="rounded-xl p-3" style={{ background: "var(--bg3)", border: "0.5px solid var(--bdr2)", position: 'relative' }}>
                               <div className="flex justify-between items-center mb-1.5">
                                 <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
                                 <button onClick={() => setConfirmDelete({ type: "stock", pId, ticker: s.ticker })}
@@ -343,6 +352,46 @@ const d = new Date(p.createdAt ?? '');
                               </div>
                               <div className="text-[10px] text-t-txt3 mt-1.5">{c.gunFarki} gün · {c.durum === "AÇIK" ? "aktif" : c.durum === "HEDEF TUTTU" ? "başarılı" : "stop"}</div>
                               {s.note && <div className="text-[10px] text-t-txt3 mt-1 truncate">💬 {s.note}</div>}
+
+                              {c.durum === "HEDEF TUTTU" && (
+                                <div style={{
+                                  position: 'absolute', inset: 0, borderRadius: 12,
+                                  background: 'rgba(44,201,138,0.08)',
+                                  border: '1px solid rgba(44,201,138,0.3)',
+                                  padding: '8px 12px', pointerEvents: 'none',
+                                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2
+                                }}>
+                                  <div style={{ fontSize: 11, color: '#2CC98A', fontWeight: 500 }}>
+                                    🏆 Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: '#2CC98A' }}>
+                                    Hedef: {s.target.toFixed(2)} ₺ · {bugun} {saat}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: '#2CC98A' }}>
+                                    +{c.pnlPct.toFixed(1)}% | +{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün
+                                  </div>
+                                </div>
+                              )}
+
+                              {c.durum === "STOP LOSS" && (
+                                <div style={{
+                                  position: 'absolute', inset: 0, borderRadius: 12,
+                                  background: 'rgba(224,82,82,0.08)',
+                                  border: '1px solid rgba(224,82,82,0.3)',
+                                  padding: '8px 12px', pointerEvents: 'none',
+                                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2
+                                }}>
+                                  <div style={{ fontSize: 11, color: '#E05252', fontWeight: 500 }}>
+                                    💀 Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: '#E05252' }}>
+                                    Stop: {s.stop.toFixed(2)} ₺ · {bugun} {saat}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: '#E05252' }}>
+                                    {c.pnlPct.toFixed(1)}% | {c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
