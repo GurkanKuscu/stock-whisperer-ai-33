@@ -93,6 +93,7 @@ export default function ArchiveTab() {
   const [acikAylar, setAcikAylar] = useState<Record<string, boolean>>({});
   const [acikGunler, setAcikGunler] = useState<Record<string, boolean>>({});
   const [acikBacktest, setAcikBacktest] = useState<Record<string, boolean>>({});
+  const [gizliOverlay, setGizliOverlay] = useState<Set<string>>(new Set());
 
   const toggleAy = (key: string) => setAcikAylar(p => ({ ...p, [key]: !p[key] }));
   const toggleGun = (key: string) => setAcikGunler(p => ({ ...p, [key]: !p[key] }));
@@ -263,8 +264,11 @@ export default function ArchiveTab() {
                 : gunFarki + " günde stop oldu";
 
               const sonuc = currentPrice >= rec.hedef ? 'hedef' : currentPrice <= rec.stop ? 'stop' : null;
-              const bugun = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-              const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+              const now = new Date();
+              const bugun = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              const h = now.getHours();
+              const borsaSaati = (h >= 10 && h < 18) ? now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '18:00';
+              const overlayVisible = sonuc && !gizliOverlay.has(key);
 
               return (
                 <div key={key} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)", position: 'relative' }}>
@@ -304,35 +308,41 @@ export default function ArchiveTab() {
                     </button>
                   </div>
 
-                  {sonuc === 'hedef' && (
+                  {overlayVisible && sonuc === 'hedef' && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(10,25,20,0.85)',
+                      background: 'rgba(10,25,20,0.88)',
                       border: '2px solid rgba(44,201,138,0.5)',
-                      pointerEvents: 'none',
                       backdropFilter: 'blur(6px)',
                       zIndex: 30,
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                     }}>
-                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>🏆 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
-                      <span style={{ fontSize: 13, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {bugun} {saat}</span>
-                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
+                      <button onClick={() => setGizliOverlay(prev => new Set(prev).add(key))}
+                        style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
+                      <span style={{ fontSize: 28 }}>🏆</span>
+                      <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
+                      <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
                   )}
 
-                  {sonuc === 'stop' && (
+                  {overlayVisible && sonuc === 'stop' && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(25,10,10,0.85)',
+                      background: 'rgba(25,10,10,0.88)',
                       border: '2px solid rgba(224,82,82,0.5)',
-                      pointerEvents: 'none',
                       backdropFilter: 'blur(6px)',
                       zIndex: 30,
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                     }}>
-                      <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>💀 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
-                      <span style={{ fontSize: 13, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {bugun} {saat}</span>
-                      <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>{pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
+                      <button onClick={() => setGizliOverlay(prev => new Set(prev).add(key))}
+                        style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(224,82,82,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
+                      <span style={{ fontSize: 28 }}>💀</span>
+                      <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
+                      <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                      <span style={{ fontSize: 13, color: '#E05252', fontWeight: 700 }}>{pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
                   )}
                 </div>

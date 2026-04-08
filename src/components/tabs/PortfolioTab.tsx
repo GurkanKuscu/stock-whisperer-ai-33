@@ -104,6 +104,7 @@ export default function PortfolioTab() {
   const [viewMode, setViewMode] = useState<Record<string, "kart" | "tablo">>({});
   const [confirmDelete, setConfirmDelete] = useState<{ type: "port" | "stock"; pId: string; ticker?: string } | null>(null);
   const [addStockTo, setAddStockTo] = useState<string | null>(null);
+  const [gizliOverlay, setGizliOverlay] = useState<Set<string>>(new Set());
 
   const pIds = Object.keys(portfolios);
 
@@ -297,8 +298,11 @@ const d = new Date(p.createdAt ?? '');
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {stocks.map((s, i) => {
                           const c = getCalc(s);
-                          const bugun = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                          const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                          const now = new Date();
+                          const bugun = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                          const h = now.getHours();
+                          const borsaSaati = (h >= 10 && h < 18) ? now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '18:00';
+                          const overlayKey = `${pId}_${s.ticker}`;
                           const girisTarih = (() => {
                             try {
                               const d = new Date(s.date ?? '');
@@ -353,33 +357,39 @@ const d = new Date(p.createdAt ?? '');
                               <div className="text-[10px] text-t-txt3 mt-1.5">{c.gunFarki} gün · {c.durum === "AÇIK" ? "aktif" : c.durum === "HEDEF TUTTU" ? "başarılı" : "stop"}</div>
                               {s.note && <div className="text-[10px] text-t-txt3 mt-1 truncate">💬 {s.note}</div>}
 
-                              {c.durum === "HEDEF TUTTU" && (
+                              {c.durum === "HEDEF TUTTU" && !gizliOverlay.has(overlayKey) && (
                                 <div style={{
                                   position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(10,25,20,0.85)',
+                                  background: 'rgba(10,25,20,0.88)',
                                   border: '2px solid rgba(44,201,138,0.5)',
-                                  pointerEvents: 'none',
                                   backdropFilter: 'blur(6px)',
-                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                                 }}>
-                                  <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>🏆 Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
-                                  <span style={{ fontSize: 13, color: '#2CC98A' }}>Hedef: {s.target.toFixed(2)} ₺ · {bugun} {saat}</span>
-                                  <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>+{c.pnlPct.toFixed(1)}% | +{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
+                                  <button onClick={(e) => { e.stopPropagation(); setGizliOverlay(prev => new Set(prev).add(overlayKey)); }}
+                                    style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
+                                  <span style={{ fontSize: 28 }}>🏆</span>
+                                  <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{s.ticker}</span>
+                                  <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
+                                  <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {s.target.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                                  <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{c.pnlPct.toFixed(1)}% | +{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
                                 </div>
                               )}
 
-                              {c.durum === "STOP LOSS" && (
+                              {c.durum === "STOP LOSS" && !gizliOverlay.has(overlayKey) && (
                                 <div style={{
                                   position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(25,10,10,0.85)',
+                                  background: 'rgba(25,10,10,0.88)',
                                   border: '2px solid rgba(224,82,82,0.5)',
-                                  pointerEvents: 'none',
                                   backdropFilter: 'blur(6px)',
-                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                                 }}>
-                                  <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>💀 Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
-                                  <span style={{ fontSize: 13, color: '#E05252' }}>Stop: {s.stop.toFixed(2)} ₺ · {bugun} {saat}</span>
-                                  <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>{c.pnlPct.toFixed(1)}% | {c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
+                                  <button onClick={(e) => { e.stopPropagation(); setGizliOverlay(prev => new Set(prev).add(overlayKey)); }}
+                                    style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(224,82,82,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
+                                  <span style={{ fontSize: 28 }}>💀</span>
+                                  <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>{s.ticker}</span>
+                                  <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700 }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
+                                  <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {s.stop.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                                  <span style={{ fontSize: 13, color: '#E05252', fontWeight: 700 }}>{c.pnlPct.toFixed(1)}% | {c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
                                 </div>
                               )}
                             </div>
