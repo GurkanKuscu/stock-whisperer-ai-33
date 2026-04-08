@@ -327,6 +327,7 @@ export default function ArchiveTab() {
                       border: '2px solid rgba(224,82,82,0.5)',
                       pointerEvents: 'none',
                       backdropFilter: 'blur(6px)',
+                      zIndex: 30,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
                     }}>
                       <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>💀 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
