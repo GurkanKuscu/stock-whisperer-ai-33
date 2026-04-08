@@ -289,7 +289,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
                 </div>
               </div>
               <div className="text-[12px] font-medium font-mono" style={{ color: "#e2e8f0" }}>
-                {fmtVol(s.avg_vol_tl)}
+                {fmtVol(s.hacimTL)}
               </div>
             </div>
           ))}
