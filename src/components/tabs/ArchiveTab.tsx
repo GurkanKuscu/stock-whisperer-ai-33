@@ -264,8 +264,11 @@ export default function ArchiveTab() {
                 : gunFarki + " günde stop oldu";
 
               const sonuc = currentPrice >= rec.hedef ? 'hedef' : currentPrice <= rec.stop ? 'stop' : null;
-              const bugun = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-              const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+              const now = new Date();
+              const bugun = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              const h = now.getHours();
+              const borsaSaati = (h >= 10 && h < 18) ? now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '18:00';
+              const overlayVisible = sonuc && !gizliOverlay.has(key);
 
               return (
                 <div key={key} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)", position: 'relative' }}>
