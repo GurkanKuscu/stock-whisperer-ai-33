@@ -99,16 +99,17 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
   const topGainers = [...withChange].sort((a, b) => b.chg - a.chg).slice(0, 6);
   const topLosers = [...withChange].sort((a, b) => a.chg - b.chg).slice(0, 6);
 
-  // Hacim Liderleri
+  // Hacim Liderleri — hacimTL = volume * close
   const topVolume = [...tickers]
-    .filter(t => data[t].avg_vol_tl > 0)
-    .sort((a, b) => data[b].avg_vol_tl - data[a].avg_vol_tl)
-    .slice(0, 6)
+    .filter(t => (data[t].volume ?? 0) > 0 && data[t].close > 0)
     .map(t => {
       const d = data[t];
+      const hacimTL = (d.volume ?? 0) * d.close;
       const chg = d.prev_close && d.prev_close > 0 ? ((d.close - d.prev_close) / d.prev_close) * 100 : 0;
-      return { ticker: t, avg_vol_tl: d.avg_vol_tl, chg };
-    });
+      return { ticker: t, hacimTL, chg };
+    })
+    .sort((a, b) => b.hacimTL - a.hacimTL)
+    .slice(0, 6);
 
   const fmtVol = (v: number) => v >= 1e9 ? (v / 1e9).toFixed(1) + " Mr ₺" : (v / 1e6).toFixed(0) + " Mn ₺";
 
@@ -288,7 +289,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
                 </div>
               </div>
               <div className="text-[12px] font-medium font-mono" style={{ color: "#e2e8f0" }}>
-                {fmtVol(s.avg_vol_tl)}
+                {fmtVol(s.hacimTL)}
               </div>
             </div>
           ))}
