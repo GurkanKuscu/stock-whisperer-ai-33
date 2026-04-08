@@ -262,8 +262,12 @@ export default function ArchiveTab() {
                 ? gunFarki + " günde başarıldı"
                 : gunFarki + " günde stop oldu";
 
+              const sonuc = currentPrice >= rec.hedef ? 'hedef' : currentPrice <= rec.stop ? 'stop' : null;
+              const bugun = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
               return (
-                <div key={key} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)" }}>
+                <div key={key} className="bg-t-bg3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--bdr)", position: 'relative' }}>
                   <div className="p-[12px_16px] flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
                     <div className="flex items-center gap-2">
                       <span className="font-syne text-[15px] font-extrabold text-t-txt">{rec.hisse}</span>
@@ -299,6 +303,46 @@ export default function ArchiveTab() {
                       🗑️ Sil
                     </button>
                   </div>
+
+                  {sonuc === 'hedef' && (
+                    <div style={{
+                      position: 'absolute', inset: 0, borderRadius: 12,
+                      background: 'rgba(44,201,138,0.08)',
+                      border: '1px solid rgba(44,201,138,0.3)',
+                      padding: '8px 12px', pointerEvents: 'none',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2
+                    }}>
+                      <div style={{ fontSize: 11, color: '#2CC98A', fontWeight: 500 }}>
+                        🏆 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#2CC98A' }}>
+                        Hedef: {rec.hedef.toFixed(2)} ₺ · {bugun} {saat}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#2CC98A' }}>
+                        +{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün
+                      </div>
+                    </div>
+                  )}
+
+                  {sonuc === 'stop' && (
+                    <div style={{
+                      position: 'absolute', inset: 0, borderRadius: 12,
+                      background: 'rgba(224,82,82,0.08)',
+                      border: '1px solid rgba(224,82,82,0.3)',
+                      padding: '8px 12px', pointerEvents: 'none',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2
+                    }}>
+                      <div style={{ fontSize: 11, color: '#E05252', fontWeight: 500 }}>
+                        💀 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#E05252' }}>
+                        Stop: {rec.stop.toFixed(2)} ₺ · {bugun} {saat}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#E05252' }}>
+                        {pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
