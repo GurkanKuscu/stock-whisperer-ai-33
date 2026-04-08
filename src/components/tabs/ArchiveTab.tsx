@@ -307,9 +307,10 @@ export default function ArchiveTab() {
                   {sonuc === 'hedef' && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(44,201,138,0.15)',
-                      border: '2px solid rgba(44,201,138,0.4)',
+                      background: 'rgba(10,25,20,0.85)',
+                      border: '2px solid rgba(44,201,138,0.5)',
                       pointerEvents: 'none',
+                      backdropFilter: 'blur(6px)',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
                     }}>
                       <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>🏆 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
@@ -321,9 +322,10 @@ export default function ArchiveTab() {
                   {sonuc === 'stop' && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(224,82,82,0.15)',
-                      border: '2px solid rgba(224,82,82,0.4)',
+                      background: 'rgba(25,10,10,0.85)',
+                      border: '2px solid rgba(224,82,82,0.5)',
                       pointerEvents: 'none',
+                      backdropFilter: 'blur(6px)',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
                     }}>
                       <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>💀 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
