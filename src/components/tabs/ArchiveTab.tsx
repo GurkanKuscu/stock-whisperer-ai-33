@@ -306,33 +306,29 @@ export default function ArchiveTab() {
 
                   {sonuc === 'hedef' && (
                     <div style={{
-                      position: 'absolute', bottom: 0, left: 0, right: 0,
-                      borderRadius: '0 0 12px 12px',
-                      background: 'rgba(44,201,138,0.10)',
-                      borderTop: '1px solid rgba(44,201,138,0.3)',
-                      padding: '6px 12px', pointerEvents: 'none',
-                      display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap'
+                      position: 'absolute', inset: 0, borderRadius: 12,
+                      background: 'rgba(44,201,138,0.15)',
+                      border: '2px solid rgba(44,201,138,0.4)',
+                      pointerEvents: 'none',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
                     }}>
-                      <span style={{ fontSize: 11, color: '#2CC98A', fontWeight: 500 }}>🏆</span>
-                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
-                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {bugun} {saat}</span>
-                      <span style={{ fontSize: 11, color: '#2CC98A' }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
+                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>🏆 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 13, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {bugun} {saat}</span>
+                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 600 }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
                   )}
 
                   {sonuc === 'stop' && (
                     <div style={{
-                      position: 'absolute', bottom: 0, left: 0, right: 0,
-                      borderRadius: '0 0 12px 12px',
-                      background: 'rgba(224,82,82,0.10)',
-                      borderTop: '1px solid rgba(224,82,82,0.3)',
-                      padding: '6px 12px', pointerEvents: 'none',
-                      display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap'
+                      position: 'absolute', inset: 0, borderRadius: 12,
+                      background: 'rgba(224,82,82,0.15)',
+                      border: '2px solid rgba(224,82,82,0.4)',
+                      pointerEvents: 'none',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
                     }}>
-                      <span style={{ fontSize: 11, color: '#E05252', fontWeight: 500 }}>💀</span>
-                      <span style={{ fontSize: 11, color: '#E05252' }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
-                      <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {bugun} {saat}</span>
-                      <span style={{ fontSize: 11, color: '#E05252' }}>{pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
+                      <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>💀 Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 13, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {bugun} {saat}</span>
+                      <span style={{ fontSize: 13, color: '#E05252', fontWeight: 600 }}>{pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
                   )}
                 </div>
