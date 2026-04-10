@@ -326,7 +326,7 @@ export default function ArchiveTab() {
                     </div>
                   )}
 
-                  {overlayVisible && sonuc === 'stop' && (
+                  {overlayVisible && isStop && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
                       background: 'rgba(25,10,10,0.88)',
@@ -340,7 +340,7 @@ export default function ArchiveTab() {
                       <span style={{ fontSize: 28 }}>💀</span>
                       <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
                       <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
-                      <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                      <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {sonucTarih}</span>
                       <span style={{ fontSize: 13, color: '#E05252', fontWeight: 700 }}>{pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
                   )}
