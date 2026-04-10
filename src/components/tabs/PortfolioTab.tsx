@@ -382,6 +382,7 @@ const d = new Date(p.createdAt ?? '');
                                   background: 'rgba(25,10,10,0.88)',
                                   border: '2px solid rgba(224,82,82,0.5)',
                                   backdropFilter: 'blur(6px)',
+                                  zIndex: 30,
                                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                                 }}>
                                   <button onClick={(e) => { e.stopPropagation(); setGizliOverlay(prev => new Set(prev).add(overlayKey)); }}
