@@ -312,7 +312,7 @@ const d = new Date(p.createdAt ?? '');
                       /* Card view */
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {stocks.map((s, i) => {
-                          const c = getCalc(s);
+                          const c = getCalc(s, pId);
                           const now = new Date();
                           const bugun = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
                           const h = now.getHours();
@@ -432,7 +432,7 @@ const d = new Date(p.createdAt ?? '');
                           </thead>
                           <tbody>
                             {stocks.map((s, i) => {
-                              const c = getCalc(s);
+                              const c = getCalc(s, pId);
                               return (
                                 <tr key={i} style={{ borderBottom: "1px solid var(--bdr)" }}>
                                   <td className="p-2 font-bold font-mono text-t-txt" style={{ whiteSpace: "nowrap" }}>{s.ticker}</td>
