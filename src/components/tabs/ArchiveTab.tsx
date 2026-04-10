@@ -307,7 +307,7 @@ export default function ArchiveTab() {
                     </button>
                   </div>
 
-                  {overlayVisible && sonuc === 'hedef' && (
+                  {overlayVisible && isHedef && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
                       background: 'rgba(10,25,20,0.88)',
@@ -321,7 +321,7 @@ export default function ArchiveTab() {
                       <span style={{ fontSize: 28 }}>🏆</span>
                       <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
                       <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
-                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {sonucTarih}</span>
                       <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
                   )}
