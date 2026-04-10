@@ -83,6 +83,9 @@ export interface PortfolioStock {
   note: string;
   stop: number;
   target: number;
+  hedefTuttu?: boolean;
+  stopOldu?: boolean;
+  kapanisTarih?: string;
 }
 
 export interface Portfolio {

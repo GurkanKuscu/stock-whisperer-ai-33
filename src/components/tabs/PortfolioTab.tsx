@@ -133,7 +133,7 @@ export default function PortfolioTab() {
     setOpenPorts(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  const getCalc = (s: any) => {
+  const getCalc = (s: any, pId: string) => {
     const currentPrice = livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price;
     const pnlPct = s.price > 0 ? ((currentPrice - s.price) / s.price) * 100 : 0;
     const pnlTL = currentPrice - s.price;
@@ -148,8 +148,23 @@ export default function PortfolioTab() {
       } catch { return 0; }
     })();
     let durum = "AÇIK";
-    if (currentPrice >= s.target) durum = "HEDEF TUTTU";
-    if (currentPrice <= s.stop) durum = "STOP LOSS";
+    // Kalıcı durum: bir kez set edilince değişmez
+    if (s.hedefTuttu) {
+      durum = "HEDEF TUTTU";
+    } else if (s.stopOldu) {
+      durum = "STOP LOSS";
+    } else if (currentPrice >= s.target) {
+      durum = "HEDEF TUTTU";
+      s.hedefTuttu = true;
+      s.kapanisTarih = new Date().toISOString();
+      // Kalıcı kaydet
+      setTimeout(() => setPortfolios({ ...portfolios }), 0);
+    } else if (currentPrice <= s.stop) {
+      durum = "STOP LOSS";
+      s.stopOldu = true;
+      s.kapanisTarih = new Date().toISOString();
+      setTimeout(() => setPortfolios({ ...portfolios }), 0);
+    }
     return { currentPrice, pnlPct, pnlTL, entryPos, currentPos, gunFarki, durum };
   };
 
