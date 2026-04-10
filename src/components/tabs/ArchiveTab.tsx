@@ -27,6 +27,7 @@ interface SinyalRecord {
   temel_puan?: number;
   kombine_karar?: string;
   durum: string;
+  sonuc_tarih?: string;
 }
 
 const STORAGE_KEY = "bisthinker-manual-files";
