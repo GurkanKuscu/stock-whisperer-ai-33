@@ -245,9 +245,9 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
 
       {/* Piyasa + Sinyal Zamanı */}
       {(stock.piyasa_rejimi || (stock.sinyal_zamani && stock.sinyal_zamani !== 'NORMAL') || (stock.pozisyon_pct && stock.pozisyon_pct > 0)) && (
-        <div className="px-5 pb-1 pt-2 flex gap-1.5 flex-wrap" style={{ borderTop: "1px solid var(--bdr)" }}>
+        <div className="px-5 pb-1 pt-2 flex flex-wrap gap-1" style={{ borderTop: "1px solid var(--bdr)" }}>
           {stock.piyasa_rejimi && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-semibold" style={{
+            <span className="text-[9px] px-[5px] py-[2px] rounded-[10px] font-semibold" style={{
               background: stock.piyasa_rejimi === 'BULL' ? '#0d2e1f' : stock.piyasa_rejimi === 'BEAR' ? '#2e0d0d' : '#1e2535',
               color: stock.piyasa_rejimi === 'BULL' ? '#2CC98A' : stock.piyasa_rejimi === 'BEAR' ? '#E05252' : '#94a3b8'
             }}>
@@ -255,12 +255,12 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
             </span>
           )}
           {stock.sinyal_zamani && stock.sinyal_zamani !== 'NORMAL' && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#94a3b8' }}>
+            <span className="text-[9px] px-[5px] py-[2px] rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#94a3b8' }}>
               {stock.sinyal_zamani === 'ERKEN' ? '🌱 ERKEN' : '🔔 GEÇ'}
             </span>
           )}
           {stock.pozisyon_pct != null && stock.pozisyon_pct > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#60a5fa' }}>
+            <span className="text-[9px] px-[5px] py-[2px] rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#60a5fa' }}>
               📊 Poz: %{stock.pozisyon_pct}
             </span>
           )}
