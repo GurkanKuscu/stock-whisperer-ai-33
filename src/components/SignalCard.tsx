@@ -180,6 +180,11 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
             })()}
           </div>
         </div>
+        {stock.kombine_karar && (
+          <div className="text-[10px] text-t-txt3 mt-1 text-right truncate">
+            {stock.kombine_karar}
+          </div>
+        )}
       </div>
 
       {/* Temel Detail (expandable) */}
