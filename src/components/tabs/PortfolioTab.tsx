@@ -455,7 +455,12 @@ const d = new Date(p.createdAt ?? '');
                                   <td className={`p-2 font-mono font-bold ${c.pnlPct >= 0 ? "text-t-green" : "text-t-red"}`} style={{ whiteSpace: "nowrap" }}>
                                     {c.pnlPct >= 0 ? "+" : ""}{c.pnlPct.toFixed(1)}%
                                   </td>
-                                  <td className="p-2 text-t-txt3" style={{ whiteSpace: "nowrap" }}>{c.gunFarki}</td>
+                                  <td className="p-2" style={{ whiteSpace: "nowrap" }}>
+                                    <span className="text-t-txt3">{c.gunFarki}</span>
+                                    {c.gunFarki >= 15 && <span className="ml-1" style={{fontSize:10, color:'#E05252', fontWeight:700}}>⏰ 15g+</span>}
+                                    {c.gunFarki >= 10 && c.gunFarki < 15 && <span className="ml-1" style={{fontSize:10, color:'#F97316', fontWeight:700}}>⏰ 10g</span>}
+                                    {c.gunFarki >= 5 && c.gunFarki < 10 && <span className="ml-1" style={{fontSize:10, color:'#F59E0B', fontWeight:700}}>⏰ 5g</span>}
+                                  </td>
                                   <td className="p-2">
                                     <button onClick={() => setConfirmDelete({ type: "stock", pId, ticker: s.ticker })}
                                       className="text-t-txt3 hover:text-t-red cursor-pointer bg-transparent border-none text-[12px]">🗑️</button>
