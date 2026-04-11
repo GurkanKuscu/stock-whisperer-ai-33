@@ -191,13 +191,13 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
       {/* Temel Detail (expandable) */}
       {temelOpen && (
         <div className="p-[12px_18px] bg-t-bg3 text-[11px] text-t-txt2 animate-fade-in" style={{ borderTop: "1px solid var(--bdr)" }}>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {stock.fk != null && <span>F/K: <strong className={stock.fk < 15 ? "text-t-green" : stock.fk < 25 ? "text-t-warn" : "text-t-red"}>{stock.fk} {stock.fk < 15 ? "✅" : "❌"}</strong></span>}
-            {stock.pddd != null && <span>PD/DD: <strong className={stock.pddd < 1 ? "text-t-green" : "text-t-red"}>{stock.pddd} {stock.pddd < 1 ? "✅" : "❌"}</strong></span>}
-            {stock.fd_favok != null && <span>FD/FAVÖK: <strong>{stock.fd_favok}</strong></span>}
-            {stock.roe != null && <span>ROE: <strong>%{stock.roe}</strong></span>}
-            {stock.net_borc != null && <span>Net Borç: <strong className={stock.net_borc < 0 ? "text-t-green" : "text-t-red"}>{stock.net_borc > 0 ? "+" : ""}{(stock.net_borc / 1e9).toFixed(1)}B {stock.net_borc < 0 ? "✅" : "❌"}</strong></span>}
-            {stock.fcf != null && <span>FCF: <strong className={stock.fcf > 0 ? "text-t-green" : "text-t-red"}>{stock.fcf > 0 ? "+" : ""}{(stock.fcf / 1e6).toFixed(0)}M {stock.fcf > 0 ? "✅" : "❌"}</strong></span>}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-[3px]">
+            {stock.fk != null && <div className="flex justify-between"><span className="text-t-txt3">F/K</span><strong className={stock.fk < 15 ? "text-t-green" : stock.fk < 25 ? "text-t-warn" : "text-t-red"}>{stock.fk} {stock.fk < 15 ? "✅" : "❌"}</strong></div>}
+            {stock.pddd != null && <div className="flex justify-between"><span className="text-t-txt3">PD/DD</span><strong className={stock.pddd < 1 ? "text-t-green" : "text-t-red"}>{stock.pddd} {stock.pddd < 1 ? "✅" : "❌"}</strong></div>}
+            {stock.fd_favok != null && <div className="flex justify-between"><span className="text-t-txt3">FD/FAVÖK</span><strong className="text-t-txt">{stock.fd_favok}</strong></div>}
+            {stock.roe != null && <div className="flex justify-between"><span className="text-t-txt3">ROE</span><strong className="text-t-txt">%{stock.roe}</strong></div>}
+            {stock.net_borc != null && <div className="flex justify-between"><span className="text-t-txt3">Net Borç</span><strong className={stock.net_borc < 0 ? "text-t-green" : "text-t-red"}>{stock.net_borc > 0 ? "+" : ""}{(stock.net_borc / 1e9).toFixed(1)}B {stock.net_borc < 0 ? "✅" : "❌"}</strong></div>}
+            {stock.fcf != null && <div className="flex justify-between"><span className="text-t-txt3">FCF</span><strong className={stock.fcf > 0 ? "text-t-green" : "text-t-red"}>{stock.fcf > 0 ? "+" : ""}{(stock.fcf / 1e6).toFixed(0)}M {stock.fcf > 0 ? "✅" : "❌"}</strong></div>}
           </div>
 
           {/* Skor Breakdown */}
