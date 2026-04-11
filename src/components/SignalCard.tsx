@@ -243,6 +243,39 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
         </div>
       )}
 
+      {/* Piyasa + Sinyal Zamanı */}
+      {(stock.piyasa_rejimi || (stock.sinyal_zamani && stock.sinyal_zamani !== 'NORMAL') || (stock.pozisyon_pct && stock.pozisyon_pct > 0)) && (
+        <div className="px-5 pb-1 pt-2 flex gap-1.5 flex-wrap" style={{ borderTop: "1px solid var(--bdr)" }}>
+          {stock.piyasa_rejimi && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-semibold" style={{
+              background: stock.piyasa_rejimi === 'BULL' ? '#0d2e1f' : stock.piyasa_rejimi === 'BEAR' ? '#2e0d0d' : '#1e2535',
+              color: stock.piyasa_rejimi === 'BULL' ? '#2CC98A' : stock.piyasa_rejimi === 'BEAR' ? '#E05252' : '#94a3b8'
+            }}>
+              {stock.piyasa_rejimi === 'BULL' ? '🟢' : stock.piyasa_rejimi === 'BEAR' ? '🔴' : '🟡'} {stock.piyasa_rejimi}
+            </span>
+          )}
+          {stock.sinyal_zamani && stock.sinyal_zamani !== 'NORMAL' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#94a3b8' }}>
+              {stock.sinyal_zamani === 'ERKEN' ? '🌱 ERKEN' : '🔔 GEÇ'}
+            </span>
+          )}
+          {stock.pozisyon_pct != null && stock.pozisyon_pct > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#60a5fa' }}>
+              📊 Poz: %{stock.pozisyon_pct}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Yabancı + Temettü + 52H */}
+      {((stock.foreign_ratio != null && stock.foreign_ratio > 0) || (stock.div_yield != null && stock.div_yield > 0) || (stock.week52_pct != null && stock.week52_pct > 0)) && (
+        <div className="px-5 pb-2 pt-1 flex gap-3 text-[11px] text-t-txt3">
+          {stock.foreign_ratio != null && stock.foreign_ratio > 0 && <span>👥 Yab: %{stock.foreign_ratio.toFixed(1)}</span>}
+          {stock.div_yield != null && stock.div_yield > 0 && <span>💰 Tem: %{stock.div_yield.toFixed(1)}</span>}
+          {stock.week52_pct != null && stock.week52_pct > 0 && <span>📈 52H: %{stock.week52_pct.toFixed(0)}</span>}
+        </div>
+      )}
+
       {/* Add to Portfolio */}
       {onAddPortfolio && (
         <div className="p-[8px_14px] bg-t-bg3" style={{ borderTop: "1px solid var(--bdr)" }}>
