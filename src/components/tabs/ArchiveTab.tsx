@@ -279,6 +279,9 @@ export default function ArchiveTab() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[13px] font-bold text-t-txt bg-t-bg4 px-2 py-0.5 rounded" style={{ border: "1px solid var(--bdr2)" }}>{rec.skor}</span>
+                      {gunFarki >= 15 && <span style={{fontSize:10, color:'#E05252', fontWeight:700}}>⏰ 15g+</span>}
+                      {gunFarki >= 10 && gunFarki < 15 && <span style={{fontSize:10, color:'#F97316', fontWeight:700}}>⏰ 10g</span>}
+                      {gunFarki >= 5 && gunFarki < 10 && <span style={{fontSize:10, color:'#F59E0B', fontWeight:700}}>⏰ 5g</span>}
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                         durum.includes("HEDEF") ? "bg-[var(--green-bg)] text-t-green border border-[var(--green-bdr)]" :
                         durum.includes("STOP") ? "bg-[var(--red-bg)] text-t-red border border-[var(--red-bdr)]" :
