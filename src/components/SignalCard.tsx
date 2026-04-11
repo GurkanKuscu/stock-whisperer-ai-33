@@ -155,12 +155,6 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
             TEMEL KARAR {temelOpen ? "▲" : "▼"}
           </div>
 
-          {/* Orta: kombine karar */}
-          {stock.kombine_karar && (
-            <div className="text-[11px] text-right flex-1 min-w-0 truncate" style={{ color: '#94a3b8' }}>
-              {stock.kombine_karar}
-            </div>
-          )}
 
           {/* Sağ: Temel sinyal + puan + badge */}
           <div className="flex items-center gap-2 shrink-0">
