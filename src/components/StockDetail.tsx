@@ -502,12 +502,17 @@ export default function StockDetail({ ticker, onBack }: Props) {
               ["Squeeze", snap.squeeze ?? "—"],
               ["Pump", snap.pump ?? "—"],
               ["Smart Money", snap.smart_money ?? "—"],
+              ["Yabancı Oranı", snap.foreign_ratio != null && snap.foreign_ratio > 0 ? "%" + snap.foreign_ratio.toFixed(1) : "—"],
+              ["Temettü Verimi", snap.div_yield != null && snap.div_yield > 0 ? "%" + snap.div_yield.toFixed(1) : "—"],
+              ["52H Pozisyon", snap.week52_pct != null && snap.week52_pct > 0 ? "%" + snap.week52_pct.toFixed(0) : "—"],
+              ["Piyasa Rejimi", snap.piyasa_rejimi || "—"],
+              ["Sinyal Zamanı", snap.sinyal_zamani || "—"],
             ] as [string, string][]).map(([label, val]) => (
               <div key={label} className="flex justify-between py-[4px]" style={{ borderBottom: "0.5px solid #1e2535" }}>
                 <span className="text-[11px]" style={{ color: "#64748b" }}>{label}</span>
                 <span className="text-[11px] font-medium" style={{
-                  color: val === "YUKARI" || val === "BOĞA" || val === "EVET" ? "#2CC98A"
-                    : val === "AŞAĞI" || val === "AYI" || val === "HAYIR" ? "#E05252"
+                  color: val === "YUKARI" || val === "BOĞA" || val === "EVET" || val === "BULL" ? "#2CC98A"
+                    : val === "AŞAĞI" || val === "AYI" || val === "HAYIR" || val === "BEAR" ? "#E05252"
                     : "#e2e8f0"
                 }}>{val}</span>
               </div>
