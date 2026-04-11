@@ -328,7 +328,12 @@ const d = new Date(p.createdAt ?? '');
                           return (
                             <div key={i} className="rounded-xl p-3" style={{ background: "var(--bg3)", border: "0.5px solid var(--bdr2)", position: 'relative' }}>
                               <div className="flex justify-between items-center mb-1.5">
-                                <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
+                                  {c.gunFarki >= 15 && <span style={{fontSize:10, color:'#E05252', fontWeight:700}}>⏰ 15g+</span>}
+                                  {c.gunFarki >= 10 && c.gunFarki < 15 && <span style={{fontSize:10, color:'#F97316', fontWeight:700}}>⏰ 10g</span>}
+                                  {c.gunFarki >= 5 && c.gunFarki < 10 && <span style={{fontSize:10, color:'#F59E0B', fontWeight:700}}>⏰ 5g</span>}
+                                </div>
                                 <button onClick={() => setConfirmDelete({ type: "stock", pId, ticker: s.ticker })}
                                   className="text-t-txt3 hover:text-t-red cursor-pointer bg-transparent border-none text-[14px]">🗑️</button>
                               </div>
