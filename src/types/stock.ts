@@ -59,6 +59,13 @@ export interface StockData {
   perf_1m?: number;
   bist100_perf_5d?: number;
   sector_perf_5d?: number;
+  // Extra
+  piyasa_rejimi?: string;
+  sinyal_zamani?: string;
+  pozisyon_pct?: number;
+  foreign_ratio?: number;
+  div_yield?: number;
+  week52_pct?: number;
 }
 
 export interface KapHaber {
