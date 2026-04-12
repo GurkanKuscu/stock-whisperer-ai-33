@@ -4,13 +4,9 @@ import Header from "@/components/Header";
 import DashboardTab from "@/components/tabs/DashboardTab";
 import MarketBar from "@/components/MarketBar";
 import SignalsTab from "@/components/tabs/SignalsTab";
-import FundamentalTab from "@/components/tabs/FundamentalTab";
-import AlarmsTab from "@/components/tabs/AlarmsTab";
-import KapNewsTab from "@/components/tabs/KapNewsTab";
 import ArchiveTab from "@/components/tabs/ArchiveTab";
-import SectorsTab from "@/components/tabs/SectorsTab";
-import SearchTab from "@/components/tabs/SearchTab";
 import PortfolioTab from "@/components/tabs/PortfolioTab";
+import FinansAnaliziTab from "@/components/tabs/FinansAnaliziTab";
 import StockDetail from "@/components/StockDetail";
 import Footer from "@/components/Footer";
 
@@ -55,12 +51,8 @@ function Dashboard() {
             <div className="animate-fade-in">
               {activeTab === "anasayfa" && <DashboardTab onTickerClick={handleTickerClick} />}
               {activeTab === "sinyaller" && <SignalsTab onTickerClick={handleTickerClick} />}
-              {activeTab === "temel" && <FundamentalTab onTickerClick={handleTickerClick} />}
-              {activeTab === "alarmlar" && <AlarmsTab />}
-              {activeTab === "kap" && <KapNewsTab />}
+              {activeTab === "finans" && <FinansAnaliziTab />}
               {activeTab === "arsiv" && <ArchiveTab />}
-              {activeTab === "sektor" && <SectorsTab />}
-              {activeTab === "ara" && <SearchTab />}
               {activeTab === "portfolio" && <PortfolioTab />}
             </div>
           )}

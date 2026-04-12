@@ -4,13 +4,9 @@ import ThemeToggle from "@/components/ThemeToggle";
 const TABS = [
   { id: "anasayfa", icon: "🏠", label: "Ana Sayfa" },
   { id: "sinyaller", icon: "⚡", label: "Sinyaller" },
-  { id: "temel", icon: "📊", label: "Temel Analiz" },
-  { id: "alarmlar", icon: "🔔", label: "Alarmlar" },
-  { id: "kap", icon: "📰", label: "KAP Haberleri" },
-  { id: "arsiv", icon: "📋", label: "Arşiv" },
-  { id: "sektor", icon: "🏭", label: "Sektörler" },
-  { id: "ara", icon: "🔍", label: "Hisse Ara" },
+  { id: "finans", icon: "🤖", label: "Finans Analizi" },
   { id: "portfolio", icon: "📈", label: "Portföy" },
+  { id: "arsiv", icon: "📋", label: "Arşiv" },
 ];
 
 interface HeaderProps {
