@@ -10,6 +10,7 @@ const TABS = [
   { id: "portfolio", icon: "📈", label: "Portföy" },
   { id: "arsiv", icon: "📋", label: "Arşiv" },
   { id: "kacirilanlar", icon: "🎯", label: "Kaçırılanlar" },
+  { id: "rehber", icon: "📖", label: "Rehber" },
 ];
 
 interface HeaderProps {
