@@ -127,6 +127,15 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     { label: "PİYASA GENİŞLİĞİ", val: `${breadth}%`, color: "#94a3b8" },
   ];
 
+  // Alarmlar
+  const alarms: { icon: string; title: string; sub: string; type: string }[] = [];
+  Object.entries(data).forEach(([ticker, s]) => {
+    if (s.confirmed && s.score >= 80) alarms.push({ icon: "🟢", title: `${ticker} — Güçlü Sinyal`, sub: `Skor: ${s.score}`, type: "new" });
+    if (s.tavan_kapat) alarms.push({ icon: "🔔", title: `${ticker} — Tavan`, sub: `${s.close.toFixed(2)} ₺`, type: "tavan" });
+    if (s.manip_detected) alarms.push({ icon: "⚠️", title: `${ticker} — Manip`, sub: "Anormal hacim", type: "seri" });
+    if (s.rsi > 70) alarms.push({ icon: "📊", title: `${ticker} — Aşırı Alım`, sub: `RSI: ${s.rsi}`, type: "strong" });
+  });
+
 
   return (
     <div className="animate-fade-in">
