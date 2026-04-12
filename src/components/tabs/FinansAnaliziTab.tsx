@@ -114,18 +114,32 @@ export default function FinansAnaliziTab() {
 
     const rsColor = (stock as any)?.rs_signal === "GÜÇLÜ" ? "#2CC98A" : (stock as any)?.rs_signal === "ZAYIF" ? "#E05252" : "#60a5fa";
 
+    // AI karar önerisini analiz metninden parse et
+    const aiKarar = (() => {
+      const txt = item.analiz ?? "";
+      const lines = txt.split("\n");
+      for (const line of lines) {
+        const upper = line.toUpperCase();
+        if (upper.includes("GEÇ") || (upper.includes("GİRME"))) return { text: "❌ GEÇ", color: "#E05252", bg: "#2e0d0d" };
+        if (upper.includes("GİR") && !upper.includes("GİRME")) return { text: "✅ GİR", color: "#2CC98A", bg: "#0d2e1f" };
+        if (upper.includes("BEKLE")) return { text: "⚠️ BEKLE", color: "#F59E0B", bg: "#2e2a0d" };
+      }
+      return { text: "❓ BELİRSİZ", color: "#94a3b8", bg: "#1e2535" };
+    })();
+
     return (
       <div key={key} className="rounded-xl overflow-hidden" style={{ background: "#0f1117", border: "0.5px solid #2d3748" }}>
         {/* Header */}
-        <div className="p-3 flex items-start justify-between" style={{ borderBottom: "0.5px solid #1e2535" }}>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-syne text-[15px] font-bold" style={{ color: "#e2e8f0" }}>{ticker}</span>
-              {zamanIcon && <span className="text-[12px]">{zamanIcon}</span>}
-              {temelIcon && <span className="text-[12px]">{temelIcon}</span>}
-            </div>
+        <div className="p-3 flex items-center justify-between" style={{ borderBottom: "0.5px solid #1e2535" }}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-syne text-[15px] font-bold" style={{ color: "#e2e8f0" }}>{ticker}</span>
+            {zamanIcon && <span className="text-[12px]">{zamanIcon}</span>}
+            {temelIcon && <span className="text-[12px]">{temelIcon}</span>}
+            <span className="text-[11px] font-bold px-2 py-[3px] rounded-md" style={{ background: aiKarar.bg, color: aiKarar.color }}>
+              {aiKarar.text}
+            </span>
           </div>
-          <div className="text-[9px] text-right" style={{ color: "#64748b" }}>{item.tarih}</div>
+          <div className="text-[9px] text-right shrink-0" style={{ color: "#64748b" }}>{item.tarih}</div>
         </div>
 
         {/* Temel Karar */}
