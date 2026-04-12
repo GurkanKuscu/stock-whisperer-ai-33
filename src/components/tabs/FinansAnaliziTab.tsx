@@ -53,7 +53,8 @@ export default function FinansAnaliziTab() {
     setPortfolios({ ...portfolios, varsayilan: defaultPortfolio });
   };
 
-  const bugun = new Date().toLocaleDateString("tr-TR");
+  const now = new Date();
+  const bugun = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
   const entries = Object.entries(analizData);
   const bugunAnalizler = entries.filter(([, v]) => v.tarih?.startsWith(bugun));
   const arsivGruplari = entries
