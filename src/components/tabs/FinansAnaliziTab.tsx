@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { fetchFinansAnaliz, deleteFinansAnaliz } from "@/services/api";
+import { fetchFinansAnaliz, deleteFinansAnaliz, fetchSnapshot } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import type { SnapshotData } from "@/types/stock";
 
 interface AnalizItem {
   tarih: string;
@@ -14,14 +15,21 @@ interface AnalizItem {
 
 export default function FinansAnaliziTab() {
   const [analizData, setAnalizData] = useState<Record<string, AnalizItem>>({});
+  const [snapData, setSnapData] = useState<SnapshotData>({});
   const [loading, setLoading] = useState(true);
+  const [openDetails, setOpenDetails] = useState<Set<string>>(new Set());
   const { portfolios, setPortfolios } = useAppData();
 
   const loadData = () => {
     setLoading(true);
-    fetchFinansAnaliz()
-      .then(d => setAnalizData(d))
-      .catch(() => setAnalizData({}))
+    Promise.all([
+      fetchFinansAnaliz().catch(() => ({})),
+      fetchSnapshot().catch(() => ({})),
+    ])
+      .then(([analiz, snap]) => {
+        setAnalizData(analiz);
+        setSnapData(snap);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -40,17 +48,26 @@ export default function FinansAnaliziTab() {
 
   const handleAddPortfolio = (ticker: string) => {
     if (!ticker) return;
+    const stock = snapData[ticker];
     const defaultPortfolio = portfolios["varsayilan"] ?? { name: "Varsayılan", stocks: [] };
     if (defaultPortfolio.stocks.some(s => s.ticker === ticker)) return;
     defaultPortfolio.stocks.push({
       ticker,
-      price: 0,
+      price: stock?.close ?? 0,
       date: new Date().toISOString().split("T")[0],
       note: "Finans analizinden eklendi",
-      stop: 0,
-      target: 0,
+      stop: stock?.stop_loss ?? 0,
+      target: stock?.target ?? 0,
     });
     setPortfolios({ ...portfolios, varsayilan: defaultPortfolio });
+  };
+
+  const toggleDetail = (key: string) => {
+    setOpenDetails(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
   };
 
   const now = new Date();
@@ -76,6 +93,127 @@ export default function FinansAnaliziTab() {
       </div>
     );
   }
+
+  const renderCard = (key: string, item: AnalizItem) => {
+    const ticker = item.ticker ?? key.split("_")[0] ?? "";
+    const stock = snapData[ticker];
+    const zamanIcon = item.sinyal_zamani === "ERKEN" ? "🌱" : item.sinyal_zamani === "GEÇ" ? "🔔" : "";
+    const temelIcon = (stock?.temel_puan ?? item.temel_puan ?? 0) >= 70 ? "💎" : "";
+    const isOpen = openDetails.has(key);
+
+    // Kombine karar badge
+    const kombineKarar = stock?.kombine_karar ?? "";
+    let kararBadge = <span className="inline-block px-2 py-0.5 rounded-[20px] text-[9px] font-medium" style={{ background: '#1e2d3d', color: '#64748b' }}>— VERİ YOK</span>;
+    if ((kombineKarar.includes('GİRİLEBİLİR') || kombineKarar.includes('GİR')) && !kombineKarar.includes('GİRME')) {
+      kararBadge = <span className="inline-block px-2 py-0.5 rounded-[20px] text-[9px] font-medium" style={{ background: '#0d2e1f', color: '#2CC98A' }}>✅ GİR</span>;
+    } else if (kombineKarar.includes('BEKLE') || kombineKarar.includes('DİKKATLİ') || kombineKarar.includes('İZLE')) {
+      kararBadge = <span className="inline-block px-2 py-0.5 rounded-[20px] text-[9px] font-medium" style={{ background: '#2e2a0d', color: '#F59E0B' }}>⚠️ BEKLE</span>;
+    } else if (kombineKarar.includes('GİRME') || kombineKarar.includes('TEMEL ENGEL')) {
+      kararBadge = <span className="inline-block px-2 py-0.5 rounded-[20px] text-[9px] font-medium" style={{ background: '#2e0d0d', color: '#E05252' }}>❌ GİRME</span>;
+    }
+
+    const rsColor = (stock as any)?.rs_signal === "GÜÇLÜ" ? "#2CC98A" : (stock as any)?.rs_signal === "ZAYIF" ? "#E05252" : "#60a5fa";
+
+    return (
+      <div key={key} className="rounded-xl overflow-hidden" style={{ background: "#0f1117", border: "0.5px solid #2d3748" }}>
+        {/* Header */}
+        <div className="p-3 flex items-start justify-between" style={{ borderBottom: "0.5px solid #1e2535" }}>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-syne text-[15px] font-bold" style={{ color: "#e2e8f0" }}>{ticker}</span>
+              {zamanIcon && <span className="text-[12px]">{zamanIcon}</span>}
+              {temelIcon && <span className="text-[12px]">{temelIcon}</span>}
+            </div>
+          </div>
+          <div className="text-[9px] text-right" style={{ color: "#64748b" }}>{item.tarih}</div>
+        </div>
+
+        {/* Temel Karar */}
+        {stock && (
+          <div className="px-3 pt-2 pb-1">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-[.5px]" style={{ color: "#64748b" }}>TEMEL KARAR</span>
+              {kararBadge}
+            </div>
+            {kombineKarar && (
+              <div className="text-[10px] mb-1.5 truncate" style={{ color: "#94a3b8" }}>{kombineKarar}</div>
+            )}
+          </div>
+        )}
+
+        {/* Skor satırı */}
+        <div className="px-3 pb-1">
+          <div className="flex flex-wrap items-center gap-1.5" style={{ fontSize: 9 }}>
+            {stock && (
+              <>
+                <span className="px-[5px] py-[2px] rounded-[10px] font-semibold" style={{ background: "#0f1117", color: "#e2e8f0", border: "0.5px solid #2d3748" }}>
+                  📊 Skor:{stock.score}p
+                </span>
+                <span className="px-[5px] py-[2px] rounded-[10px] font-semibold" style={{ background: "#0f1117", color: rsColor, border: "0.5px solid #2d3748" }}>
+                  RS:{(stock as any).rs_signal === "GÜÇLÜ" ? "🟢" : (stock as any).rs_signal === "ZAYIF" ? "🔴" : "🔵"}
+                </span>
+              </>
+            )}
+            {stock?.piyasa_rejimi && (
+              <span className="px-[5px] py-[2px] rounded-[10px] font-semibold" style={{
+                background: stock.piyasa_rejimi === 'BULL' ? '#0d2e1f' : stock.piyasa_rejimi === 'BEAR' ? '#2e0d0d' : '#1e2535',
+                color: stock.piyasa_rejimi === 'BULL' ? '#2CC98A' : stock.piyasa_rejimi === 'BEAR' ? '#E05252' : '#94a3b8'
+              }}>
+                {stock.piyasa_rejimi === 'BULL' ? '🟢' : stock.piyasa_rejimi === 'BEAR' ? '🔴' : '🟡'} {stock.piyasa_rejimi}
+              </span>
+            )}
+            {stock?.pozisyon_pct != null && stock.pozisyon_pct > 0 && (
+              <span className="px-[5px] py-[2px] rounded-[10px] font-semibold" style={{ background: '#1e2535', color: '#60a5fa' }}>
+                Poz:%{stock.pozisyon_pct}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Temel metrikleri */}
+        {stock && (
+          <div className="px-3 pb-2">
+            <div className="flex flex-wrap gap-2.5" style={{ fontSize: 10, color: '#64748b' }}>
+              {stock.temel_puan != null && <span>📋 {stock.temel_puan}p</span>}
+              {stock.foreign_ratio != null && stock.foreign_ratio > 0 && <span>👥 %{stock.foreign_ratio.toFixed(1)}</span>}
+              {stock.div_yield != null && stock.div_yield > 0 && <span>💰 %{stock.div_yield.toFixed(1)}</span>}
+              {stock.week52_pct != null && stock.week52_pct > 0 && <span>📈 52H:%{stock.week52_pct.toFixed(0)}</span>}
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 p-3 pt-1" style={{ borderTop: "0.5px solid #1e2535" }}>
+          <button onClick={() => handleAddPortfolio(ticker)}
+            className="flex-1 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:opacity-90"
+            style={{ background: "#0d2e1f", color: "#2CC98A", border: "1px solid rgba(44,201,138,.3)" }}>
+            + Portföye Ekle
+          </button>
+          <button onClick={() => handleDelete(key)}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:opacity-90"
+            style={{ background: "#2e0d0d", color: "#E05252", border: "1px solid rgba(224,82,82,.3)" }}>
+            🗑️
+          </button>
+        </div>
+
+        {/* Collapsible analysis */}
+        <div>
+          <button onClick={() => toggleDetail(key)}
+            className="w-full py-2 text-[10px] font-semibold cursor-pointer transition-all hover:bg-[rgba(255,255,255,.03)]"
+            style={{ background: "#0a0d14", color: "#64748b", borderTop: "0.5px solid #1e2535", border: "none", borderTopStyle: "solid", borderTopWidth: "0.5px", borderTopColor: "#1e2535" }}>
+            {isOpen ? "▲ Finans Analizi Detayı" : "▼ Finans Analizi Detayı"}
+          </button>
+          {isOpen && (
+            <div className="p-3 animate-fade-in" style={{ borderTop: "0.5px solid #1e2535", background: "#0a0d14" }}>
+              <div className="text-[11px] leading-[1.7] whitespace-pre-wrap" style={{ color: "#94a3b8" }}>
+                {item.analiz ?? "Analiz metni yok"}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="animate-fade-in">
@@ -107,9 +245,7 @@ export default function FinansAnaliziTab() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {bugunAnalizler.map(([key, item]) => (
-              <AnalizCard key={key} itemKey={key} item={item} onDelete={handleDelete} onAddPortfolio={handleAddPortfolio} />
-            ))}
+            {bugunAnalizler.map(([key, item]) => renderCard(key, item))}
           </div>
         )}
       </div>
@@ -118,7 +254,7 @@ export default function FinansAnaliziTab() {
       {sortedArsivDays.length > 0 && (
         <div>
           <div className="text-[11px] font-bold uppercase tracking-[1px] text-t-txt3 mb-3">
-            📋 Analiz Arşivi
+            📋 Analiz Geçmişi
           </div>
           <Accordion type="multiple" className="space-y-1.5">
             {sortedArsivDays.map(gun => (
@@ -129,9 +265,7 @@ export default function FinansAnaliziTab() {
                 </AccordionTrigger>
                 <AccordionContent className="px-3 pb-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
-                    {arsivGruplari[gun].map(([key, item]) => (
-                      <AnalizCard key={key} itemKey={key} item={item} onDelete={handleDelete} onAddPortfolio={handleAddPortfolio} />
-                    ))}
+                    {arsivGruplari[gun].map(([key, item]) => renderCard(key, item))}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -147,54 +281,6 @@ export default function FinansAnaliziTab() {
           <div className="text-[11px] text-t-txt3 mt-1">AI analizleri burada görünecek</div>
         </div>
       )}
-    </div>
-  );
-}
-
-function AnalizCard({ itemKey, item, onDelete, onAddPortfolio }: {
-  itemKey: string;
-  item: AnalizItem;
-  onDelete: (key: string) => void;
-  onAddPortfolio: (ticker: string) => void;
-}) {
-  const ticker = item.ticker ?? itemKey.split("_")[0] ?? "";
-  const zamanIcon = item.sinyal_zamani === "ERKEN" ? "🌱" : item.sinyal_zamani === "GEÇ" ? "🔔" : "";
-  const temelIcon = (item.temel_puan ?? 0) >= 70 ? "💎" : "";
-
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "#0f1117", border: "0.5px solid #2d3748" }}>
-      {/* Header */}
-      <div className="p-3 flex items-start justify-between" style={{ borderBottom: "0.5px solid #1e2535" }}>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-syne text-[15px] font-bold" style={{ color: "#e2e8f0" }}>{ticker}</span>
-            {zamanIcon && <span className="text-[12px]">{zamanIcon}</span>}
-            {temelIcon && <span className="text-[12px]">{temelIcon}</span>}
-          </div>
-          <div className="text-[9px] mt-0.5" style={{ color: "#64748b" }}>{item.tarih}</div>
-        </div>
-      </div>
-
-      {/* Analiz metni */}
-      <div className="p-3">
-        <div className="text-[11px] leading-[1.7] whitespace-pre-wrap" style={{ color: "#94a3b8" }}>
-          {item.analiz ?? "Analiz metni yok"}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2 p-3 pt-0">
-        <button onClick={() => onAddPortfolio(ticker)}
-          className="flex-1 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:opacity-90"
-          style={{ background: "#0d2e1f", color: "#2CC98A", border: "1px solid rgba(44,201,138,.3)" }}>
-          + Portföye Ekle
-        </button>
-        <button onClick={() => onDelete(itemKey)}
-          className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:opacity-90"
-          style={{ background: "#2e0d0d", color: "#E05252", border: "1px solid rgba(224,82,82,.3)" }}>
-          🗑️
-        </button>
-      </div>
     </div>
   );
 }

@@ -1,17 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
+import { fetchFinansAnaliz } from "@/services/api";
 
-export default function SearchTab() {
+export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
+  const [analizData, setAnalizData] = useState<Record<string, any>>({});
+  const [analizLoading, setAnalizLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFinansAnaliz()
+      .then(d => setAnalizData(d))
+      .catch(() => setAnalizData({}))
+      .finally(() => setAnalizLoading(false));
+  }, []);
 
   const tickers = Object.keys(data);
   const matched = query.trim() ? tickers.filter(t => t.toUpperCase().includes(query.toUpperCase().trim())) : [];
   const result = matched.length === 1 ? { ticker: matched[0], stock: data[matched[0]] } : null;
 
   const quickList = tickers.filter(t => data[t].score >= 70).sort((a, b) => data[b].score - data[a].score).slice(0, 8);
+
+  // Find analysis for a ticker
+  const getTickerAnaliz = (ticker: string) => {
+    const entries = Object.entries(analizData);
+    const found = entries.find(([key, val]) => {
+      const t = val.ticker ?? key.split("_")[0] ?? "";
+      return t.toUpperCase() === ticker.toUpperCase();
+    });
+    return found ? { key: found[0], ...found[1] } : null;
+  };
 
   return (
     <div>
@@ -81,7 +101,8 @@ export default function SearchTab() {
         <div className="bg-t-card rounded-2xl overflow-hidden shadow-t animate-fade-in" style={{ border: "1px solid var(--bdr)" }}>
           <div className="p-[20px_24px] flex justify-between items-center flex-wrap gap-3" style={{ borderBottom: "1px solid var(--bdr)" }}>
             <div>
-              <div className="font-syne text-[26px] font-extrabold tracking-[-0.5px] text-t-txt">{result.ticker}</div>
+              <div className="font-syne text-[26px] font-extrabold tracking-[-0.5px] text-t-txt cursor-pointer hover:underline"
+                onClick={() => onTickerClick?.(result.ticker)}>{result.ticker}</div>
               <div className="text-[12px] text-t-txt2 mt-1">{result.stock.sector_name} · {tr(SIGNAL_TR, result.stock.signal)}</div>
             </div>
             <div className="flex items-center gap-3">
@@ -122,6 +143,43 @@ export default function SearchTab() {
                 <div className="text-[11px] text-t-txt3 py-4 text-center">Bu hisse için temel veri bulunamadı</div>
               )}
             </div>
+          </div>
+
+          {/* AI Analiz Bölümü */}
+          <div className="p-[16px_24px]" style={{ borderTop: "1px solid var(--bdr)" }}>
+            <div className="text-[9px] font-bold uppercase tracking-[.7px] text-t-txt3 mb-3">🤖 AI Finans Analizi</div>
+            {analizLoading ? (
+              <div className="text-[11px] text-t-txt3">Analiz yükleniyor...</div>
+            ) : (() => {
+              const analiz = getTickerAnaliz(result.ticker);
+              if (analiz) {
+                return (
+                  <div className="rounded-lg p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[12px]">🤖</span>
+                      <span className="text-[11px] font-semibold" style={{ color: "#e2e8f0" }}>{result.ticker} Analizi</span>
+                      <span className="text-[9px]" style={{ color: "#64748b" }}>{analiz.tarih}</span>
+                    </div>
+                    <div className="text-[11px] leading-[1.7] whitespace-pre-wrap" style={{ color: "#94a3b8", maxHeight: 200, overflowY: "auto" }}>
+                      {analiz.analiz ?? "Analiz metni yok"}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-t-txt3">Bu hisse için henüz AI analizi yok</span>
+                  <button
+                    onClick={() => {
+                      window.open(`http://207.154.212.100:8080/api/finans-analiz?ticker=${result.ticker}`, "_blank");
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:opacity-90"
+                    style={{ background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", color: "#fff" }}>
+                    🤖 Analiz Üret
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Verdict */}

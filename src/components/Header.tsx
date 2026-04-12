@@ -4,6 +4,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 const TABS = [
   { id: "anasayfa", icon: "🏠", label: "Ana Sayfa" },
   { id: "sinyaller", icon: "⚡", label: "Sinyaller" },
+  { id: "ara", icon: "🔍", label: "Hisse Ara" },
+  { id: "temel", icon: "📊", label: "Temel Analiz" },
   { id: "finans", icon: "🤖", label: "Finans Analizi" },
   { id: "portfolio", icon: "📈", label: "Portföy" },
   { id: "arsiv", icon: "📋", label: "Arşiv" },
@@ -55,13 +57,13 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
             {TABS.map(t => (
               <button key={t.id}
                 onClick={() => onTabChange(t.id)}
-                className={`px-3.5 py-[7px] text-[12px] font-medium cursor-pointer rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap tracking-[.01em] ${
+                className={`px-3 py-[7px] text-[11px] font-medium cursor-pointer rounded-lg transition-all flex items-center gap-1 whitespace-nowrap tracking-[.01em] ${
                   activeTab === t.id
                     ? "text-white bg-t-bg4 border border-solid"
                     : "text-t-txt2 hover:text-t-txt hover:bg-t-bg3 border border-transparent"
                 }`}
                 style={activeTab === t.id ? { borderColor: "var(--bdr2)" } : {}}>
-                <span className={`text-[13px] ${activeTab === t.id ? "opacity-100" : "opacity-80"}`}>{t.icon}</span>
+                <span className={`text-[12px] ${activeTab === t.id ? "opacity-100" : "opacity-80"}`}>{t.icon}</span>
                 <span className="hidden lg:inline">{t.label}</span>
               </button>
             ))}

@@ -7,6 +7,8 @@ import SignalsTab from "@/components/tabs/SignalsTab";
 import ArchiveTab from "@/components/tabs/ArchiveTab";
 import PortfolioTab from "@/components/tabs/PortfolioTab";
 import FinansAnaliziTab from "@/components/tabs/FinansAnaliziTab";
+import SearchTab from "@/components/tabs/SearchTab";
+import FundamentalTab from "@/components/tabs/FundamentalTab";
 import StockDetail from "@/components/StockDetail";
 import Footer from "@/components/Footer";
 
@@ -30,7 +32,6 @@ function Dashboard() {
         <div className="max-w-[1600px] mx-auto p-7 max-md:p-[12px_10px]">
           <MarketBar />
 
-          {/* Finans Analizi kendi verisini çeker, snapshot'a bağlı değil */}
           {activeTab === "finans" ? (
             <div className="animate-fade-in">
               <FinansAnaliziTab />
@@ -56,6 +57,8 @@ function Dashboard() {
             <div className="animate-fade-in">
               {activeTab === "anasayfa" && <DashboardTab onTickerClick={handleTickerClick} />}
               {activeTab === "sinyaller" && <SignalsTab onTickerClick={handleTickerClick} />}
+              {activeTab === "ara" && <SearchTab onTickerClick={handleTickerClick} />}
+              {activeTab === "temel" && <FundamentalTab onTickerClick={handleTickerClick} />}
               {activeTab === "arsiv" && <ArchiveTab />}
               {activeTab === "portfolio" && <PortfolioTab />}
             </div>
