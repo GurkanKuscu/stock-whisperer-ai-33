@@ -112,7 +112,7 @@ export default function FinansAnaliziTab() {
       kararBadge = <span className="inline-block px-2 py-0.5 rounded-[20px] text-[9px] font-medium" style={{ background: '#2e0d0d', color: '#E05252' }}>❌ GİRME</span>;
     }
 
-    const rsColor = stock?.rs_signal === "GÜÇLÜ" ? "#2CC98A" : stock?.rs_signal === "ZAYIF" ? "#E05252" : "#60a5fa";
+    const rsColor = (stock as any)?.rs_signal === "GÜÇLÜ" ? "#2CC98A" : (stock as any)?.rs_signal === "ZAYIF" ? "#E05252" : "#60a5fa";
 
     return (
       <div key={key} className="rounded-xl overflow-hidden" style={{ background: "#0f1117", border: "0.5px solid #2d3748" }}>
@@ -150,7 +150,7 @@ export default function FinansAnaliziTab() {
                   📊 Skor:{stock.score}p
                 </span>
                 <span className="px-[5px] py-[2px] rounded-[10px] font-semibold" style={{ background: "#0f1117", color: rsColor, border: "0.5px solid #2d3748" }}>
-                  RS:{stock.rs_signal === "GÜÇLÜ" ? "🟢" : stock.rs_signal === "ZAYIF" ? "🔴" : "🔵"}
+                  RS:{(stock as any).rs_signal === "GÜÇLÜ" ? "🟢" : (stock as any).rs_signal === "ZAYIF" ? "🔴" : "🔵"}
                 </span>
               </>
             )}
