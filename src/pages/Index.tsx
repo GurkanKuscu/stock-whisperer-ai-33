@@ -38,6 +38,14 @@ function Dashboard() {
             <div className="animate-fade-in">
               <FinansAnaliziTab />
             </div>
+          ) : activeTab === "kacirilanlar" ? (
+            <div className="animate-fade-in">
+              <KacirilanlarTab />
+            </div>
+          ) : activeTab === "rehber" ? (
+            <div className="animate-fade-in">
+              <RehberTab />
+            </div>
           ) : loading ? (
             <div className="p-[80px_20px] text-center text-t-txt3">
               <div className="text-[44px] mb-4 animate-pulse">⚡</div>
