@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { fetchKacirilanFirsatlar } from "@/services/api";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface Firsat {
   hisse: string;
@@ -21,6 +20,7 @@ interface Rapor {
 export default function KacirilanlarTab() {
   const [firsatlar, setFirsatlar] = useState<Record<string, Firsat>>({});
   const [raporlar, setRaporlar] = useState<Rapor[]>([]);
+  const [acikRapor, setAcikRapor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,28 +80,37 @@ export default function KacirilanlarTab() {
       </div>
 
       {/* Haftalık Raporlar */}
-      {raporlar.length > 0 && (
-        <div className="rounded-xl p-4" style={{ background: "var(--bg2)", border: "1px solid var(--bdr)" }}>
-          <div className="text-[13px] font-bold text-t-txt2 mb-3">📋 Haftalık Raporlar</div>
-          <Accordion type="single" collapsible>
-            {raporlar.map((r, i) => (
-              <AccordionItem key={i} value={`rapor-${i}`} className="border-b" style={{ borderColor: "var(--bdr)" }}>
-                <AccordionTrigger className="text-[13px] font-semibold text-t-txt2 hover:text-t-txt py-3">
-                  ▶ {r.tarih} Raporu
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div
-                    className="text-[12px] text-t-txt3 leading-relaxed whitespace-pre-wrap p-3 rounded-lg"
-                    style={{ background: "var(--bg3)" }}
-                  >
-                    {r.icerik}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      )}
+      <div style={{ marginBottom: 16 }}>
+        <h3 style={{ color: "#94a3b8", fontSize: 13, marginBottom: 8 }}>📋 Haftalık Raporlar</h3>
+        {raporlar.length > 0 ? (
+          raporlar.map((r, i) => (
+            <div key={i} style={{ marginBottom: 6 }}>
+              <button
+                onClick={() => setAcikRapor(acikRapor === i ? null : i)}
+                style={{
+                  width: "100%", textAlign: "left", padding: "8px 12px",
+                  background: "#1e2535", border: "1px solid #334155",
+                  borderRadius: 8, color: "#94a3b8", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                {acikRapor === i ? "▲" : "▶"} {r.tarih} Raporu
+              </button>
+              {acikRapor === i && (
+                <pre style={{
+                  background: "#0f172a", padding: 12, borderRadius: 8,
+                  color: "#cbd5e1", fontSize: 11, whiteSpace: "pre-wrap", marginTop: 4,
+                }}>
+                  {r.icerik}
+                </pre>
+              )}
+            </div>
+          ))
+        ) : (
+          <div style={{ color: "#64748b", fontSize: 12, padding: "8px 12px" }}>
+            Henüz haftalık rapor oluşmadı — her Pazar 12:00'de otomatik oluşur
+          </div>
+        )}
+      </div>
 
       {/* Fırsatlar Tablosu */}
       <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg2)", border: "1px solid var(--bdr)" }}>
