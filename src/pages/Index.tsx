@@ -71,7 +71,7 @@ function Dashboard() {
               {activeTab === "temel" && <FundamentalTab onTickerClick={handleTickerClick} />}
               {activeTab === "arsiv" && <ArchiveTab />}
               {activeTab === "portfolio" && <PortfolioTab />}
-              {activeTab === "kacirilanlar" && <KacirilanlarTab />}
+              
             </div>
           )}
         </div>
