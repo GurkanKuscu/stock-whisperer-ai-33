@@ -30,7 +30,12 @@ function Dashboard() {
         <div className="max-w-[1600px] mx-auto p-7 max-md:p-[12px_10px]">
           <MarketBar />
 
-          {loading ? (
+          {/* Finans Analizi kendi verisini çeker, snapshot'a bağlı değil */}
+          {activeTab === "finans" ? (
+            <div className="animate-fade-in">
+              <FinansAnaliziTab />
+            </div>
+          ) : loading ? (
             <div className="p-[80px_20px] text-center text-t-txt3">
               <div className="text-[44px] mb-4 animate-pulse">⚡</div>
               <div className="text-[14px] font-bold text-t-txt2">Veriler yükleniyor...</div>
@@ -51,7 +56,6 @@ function Dashboard() {
             <div className="animate-fade-in">
               {activeTab === "anasayfa" && <DashboardTab onTickerClick={handleTickerClick} />}
               {activeTab === "sinyaller" && <SignalsTab onTickerClick={handleTickerClick} />}
-              {activeTab === "finans" && <FinansAnaliziTab />}
               {activeTab === "arsiv" && <ArchiveTab />}
               {activeTab === "portfolio" && <PortfolioTab />}
             </div>
