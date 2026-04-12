@@ -127,6 +127,15 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     { label: "PİYASA GENİŞLİĞİ", val: `${breadth}%`, color: "#94a3b8" },
   ];
 
+  // Alarmlar
+  const alarms: { icon: string; title: string; sub: string; type: string }[] = [];
+  Object.entries(data).forEach(([ticker, s]) => {
+    if (s.confirmed && s.score >= 80) alarms.push({ icon: "🟢", title: `${ticker} — Güçlü Sinyal`, sub: `Skor: ${s.score}`, type: "new" });
+    if (s.tavan_kapat) alarms.push({ icon: "🔔", title: `${ticker} — Tavan`, sub: `${s.close.toFixed(2)} ₺`, type: "tavan" });
+    if (s.manip_detected) alarms.push({ icon: "⚠️", title: `${ticker} — Manip`, sub: "Anormal hacim", type: "seri" });
+    if (s.rsi > 70) alarms.push({ icon: "📊", title: `${ticker} — Aşırı Alım`, sub: `RSI: ${s.rsi}`, type: "strong" });
+  });
+
 
   return (
     <div className="animate-fade-in">
@@ -330,38 +339,90 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
         </div>
       </div>
 
-      {/* 4. KAP Haberleri */}
-      <div className="rounded-xl p-4" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-[14px]">📰</span>
-          <span className="text-[11px] font-semibold tracking-[0.5px]" style={{ color: "#94a3b8" }}>SON KAP HABERLERİ</span>
-          <span className="text-[10px] ml-auto px-2 py-0.5 rounded-full" style={{ background: "#1e293b", color: "#64748b" }}>{kapHaberler.length} haber</span>
+      {/* 4. Alt Bölüm — 3 Sütun: Alarmlar, KAP, Piyasa */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {/* Alarmlar */}
+        <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          <div className="text-[10px] mb-2 tracking-[0.5px] flex items-center gap-1.5" style={{ color: "#64748b" }}>
+            🔔 ALARMLAR
+            <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "#1e293b" }}>{alarms.length}</span>
+          </div>
+          <div style={{ maxHeight: 400, overflowY: "auto" }} className="space-y-1">
+            {alarms.slice(0, 10).map((a, i) => (
+              <div key={i} className="p-2 rounded-lg" style={{ background: "#0f1117", borderLeft: `2px solid ${a.type === "new" ? "#2CC98A" : a.type === "tavan" ? "#F59E0B" : a.type === "seri" ? "#E05252" : "#60a5fa"}` }}>
+                <div className="text-[11px] font-medium truncate" style={{ color: "#e2e8f0" }}>{a.icon} {a.title}</div>
+                <div className="text-[9px] mt-0.5" style={{ color: "#64748b" }}>{a.sub}</div>
+              </div>
+            ))}
+            {alarms.length === 0 && <div className="text-[11px] py-4 text-center" style={{ color: "#64748b" }}>Aktif alarm yok</div>}
+          </div>
         </div>
-        <div className="space-y-0">
-          {kapHaberler.map((h: any, i: number) => {
-            const href = h.url ?? h.link;
-            const inner = (
-              <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#1a2235]"
-                style={{ borderBottom: i < kapHaberler.length - 1 ? "0.5px solid #1e2535" : "none" }}>
-                <span className="text-[10.5px] font-bold font-mono px-2 py-0.5 rounded shrink-0 mt-0.5"
-                  style={{ background: "#1e293b", color: "#60a5fa", border: "1px solid #2d3748" }}>{h.ticker ?? ""}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11.5px] leading-[1.6] font-medium truncate" style={{ color: "#e2e8f0" }}>{h.baslik}</div>
-                  <div className="text-[10px] mt-1 flex items-center gap-2" style={{ color: "#475569" }}>
-                    <span>{h.tarih}</span>
-                    {h.kaynak && <span className="px-1.5 py-px rounded text-[9px]" style={{ background: "#1e293b" }}>{h.kaynak}</span>}
+
+        {/* KAP Haberleri */}
+        <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          <div className="text-[10px] mb-2 tracking-[0.5px] flex items-center gap-1.5" style={{ color: "#64748b" }}>
+            📰 KAP HABERLERİ
+            <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "#1e293b" }}>{kapHaberler.length}</span>
+          </div>
+          <div style={{ maxHeight: 400, overflowY: "auto" }} className="space-y-1">
+            {kapHaberler.slice(0, 10).map((h: any, i: number) => {
+              const href = h.url ?? h.link;
+              const inner = (
+                <div key={i} className="p-2 rounded-lg hover:bg-[#1a2235]" style={{ background: "#0f1117" }}>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[9px] font-bold font-mono px-1.5 py-px rounded" style={{ background: "#1e293b", color: "#60a5fa" }}>{h.ticker}</span>
+                    {h.kaynak && <span className="text-[8px] px-1 py-px rounded" style={{ background: "#1e293b", color: "#94a3b8" }}>{h.kaynak}</span>}
+                  </div>
+                  <div className="text-[10px] leading-[1.5] truncate" style={{ color: "#e2e8f0" }}>{h.baslik}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{h.tarih}</div>
+                </div>
+              );
+              return href
+                ? <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="no-underline block">{inner}</a>
+                : <div key={i}>{inner}</div>;
+            })}
+            {kapHaberler.length === 0 && <div className="text-[11px] py-4 text-center" style={{ color: "#64748b" }}>KAP haberi yok</div>}
+          </div>
+        </div>
+
+        {/* Piyasa Durumu */}
+        <div className="rounded-xl p-3" style={{ background: "#131720", border: "0.5px solid #2d3748" }}>
+          <div className="text-[10px] mb-2 tracking-[0.5px] flex items-center gap-1.5" style={{ color: "#64748b" }}>
+            📊 PİYASA DURUMU
+          </div>
+          <div style={{ maxHeight: 400, overflowY: "auto" }} className="space-y-1.5">
+            {market.map((item, i) => (
+              <div key={i} className="flex justify-between items-center p-2 rounded-lg" style={{ background: "#0f1117" }}>
+                <div>
+                  <div className="text-[10px] font-semibold" style={{ color: "#94a3b8" }}>{item.label}</div>
+                  <div className="text-[14px] font-medium font-mono" style={{ color: "#e2e8f0" }}>
+                    {item.value > 0 ? item.value.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : "—"}
                   </div>
                 </div>
-                {href && <span className="text-[10px] shrink-0 mt-1" style={{ color: "#60a5fa" }}>→</span>}
+                <div className="text-[11px] font-bold" style={{ color: item.change >= 0 ? "#2CC98A" : "#E05252" }}>
+                  {item.change >= 0 ? "+" : ""}{item.change?.toFixed(2)}%
+                </div>
               </div>
-            );
-            return href
-              ? <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="no-underline block">{inner}</a>
-              : <div key={i}>{inner}</div>;
-          })}
-          {kapHaberler.length === 0 && (
-            <div className="text-[11px] py-6 text-center" style={{ color: "#64748b" }}>KAP haberi bulunamadı</div>
-          )}
+            ))}
+            {/* Piyasa genişliği */}
+            <div className="p-2 rounded-lg" style={{ background: "#0f1117" }}>
+              <div className="text-[10px] font-semibold mb-1" style={{ color: "#94a3b8" }}>Piyasa Genişliği</div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-[4px] rounded-full" style={{ background: "#2d3748" }}>
+                  <div className="h-full rounded-full" style={{ width: `${breadth}%`, background: breadth > 50 ? "#2CC98A" : "#F59E0B" }} />
+                </div>
+                <span className="text-[12px] font-bold font-mono" style={{ color: breadth > 50 ? "#2CC98A" : "#F59E0B" }}>{breadth}%</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {systemStats.slice(0, 3).map((s, i) => (
+                <div key={i} className="text-center p-1.5 rounded-lg" style={{ background: "#0f1117" }}>
+                  <div className="text-[16px] font-bold" style={{ color: s.color }}>{s.val}</div>
+                  <div className="text-[8px]" style={{ color: "#64748b" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
