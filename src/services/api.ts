@@ -74,4 +74,14 @@ export async function fetchStockChart(ticker: string, period: string = "1A"): Pr
   const res = await fetch(`${API_BASE}/api/bist-chart?ticker=${ticker}&period=${period}`);
   if (!res.ok) throw new Error("Stock chart fetch failed");
   return res.json();
+
+export async function fetchFinansAnaliz(): Promise<Record<string, any>> {
+  const res = await fetch(`${API_BASE}/api/finans-analiz`);
+  if (!res.ok) throw new Error("Finans analiz fetch failed");
+  return res.json();
+}
+
+export async function deleteFinansAnaliz(key: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/finans-analiz/${key}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Delete failed");
 }
