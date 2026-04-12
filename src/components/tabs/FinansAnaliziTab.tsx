@@ -147,6 +147,14 @@ export default function FinansAnaliziTab() {
             <span className="text-[11px] font-bold px-2 py-[3px] rounded-md" style={{ background: aiKarar.bg, color: aiKarar.color }}>
               {aiKarar.text}
             </span>
+            {stock?.close != null && stock.close > 0 && (
+              <span className="text-[12px] font-bold" style={{ color: "#e2e8f0" }}>{stock.close}₺</span>
+            )}
+            {stock?.change_pct != null && stock.change_pct !== 0 && (
+              <span className="text-[11px]" style={{ color: stock.change_pct >= 0 ? "#2CC98A" : "#E05252" }}>
+                {stock.change_pct >= 0 ? "▲" : "▼"}{Math.abs(stock.change_pct).toFixed(1)}%
+              </span>
+            )}
           </div>
           <div className="text-[9px] text-right shrink-0" style={{ color: "#64748b" }}>{item.tarih}</div>
         </div>
