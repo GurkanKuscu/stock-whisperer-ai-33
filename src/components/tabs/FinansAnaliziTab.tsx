@@ -40,7 +40,7 @@ export default function FinansAnaliziTab() {
 
   const handleAddPortfolio = (ticker: string) => {
     if (!ticker) return;
-    const defaultPortfolio = portfolio["varsayilan"] ?? { name: "Varsayılan", stocks: [] };
+    const defaultPortfolio = portfolios["varsayilan"] ?? { name: "Varsayılan", stocks: [] };
     if (defaultPortfolio.stocks.some(s => s.ticker === ticker)) return;
     defaultPortfolio.stocks.push({
       ticker,
@@ -50,7 +50,7 @@ export default function FinansAnaliziTab() {
       stop: 0,
       target: 0,
     });
-    setPortfolio({ ...portfolio, varsayilan: defaultPortfolio });
+    setPortfolios({ ...portfolios, varsayilan: defaultPortfolio });
   };
 
   const bugun = new Date().toLocaleDateString("tr-TR");
