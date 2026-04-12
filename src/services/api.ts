@@ -86,3 +86,12 @@ export async function deleteFinansAnaliz(key: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/finans-analiz/${key}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Delete failed");
 }
+
+export async function fetchKacirilanFirsatlar(): Promise<{
+  firsatlar: Record<string, any>;
+  raporlar: { tarih: string; icerik: string }[];
+}> {
+  const res = await fetch(`${API_BASE}/api/kacirilan-firsatlar`);
+  if (!res.ok) throw new Error("Kacirilan firsatlar fetch failed");
+  return res.json();
+}
