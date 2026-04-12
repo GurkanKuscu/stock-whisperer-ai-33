@@ -9,6 +9,7 @@ import PortfolioTab from "@/components/tabs/PortfolioTab";
 import FinansAnaliziTab from "@/components/tabs/FinansAnaliziTab";
 import SearchTab from "@/components/tabs/SearchTab";
 import FundamentalTab from "@/components/tabs/FundamentalTab";
+import KacirilanlarTab from "@/components/tabs/KacirilanlarTab";
 import StockDetail from "@/components/StockDetail";
 import Footer from "@/components/Footer";
 

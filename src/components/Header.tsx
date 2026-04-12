@@ -4,11 +4,12 @@ import ThemeToggle from "@/components/ThemeToggle";
 const TABS = [
   { id: "anasayfa", icon: "🏠", label: "Ana Sayfa" },
   { id: "sinyaller", icon: "⚡", label: "Sinyaller" },
-  { id: "ara", icon: "🔍", label: "Hisse Ara" },
-  { id: "temel", icon: "📊", label: "Temel Analiz" },
   { id: "finans", icon: "🤖", label: "Finans Analizi" },
+  { id: "temel", icon: "📊", label: "Temel Analiz" },
+  { id: "ara", icon: "🔍", label: "Hisse Ara" },
   { id: "portfolio", icon: "📈", label: "Portföy" },
   { id: "arsiv", icon: "📋", label: "Arşiv" },
+  { id: "kacirilanlar", icon: "🎯", label: "Kaçırılanlar" },
 ];
 
 interface HeaderProps {
