@@ -15,7 +15,7 @@ interface AnalizItem {
 export default function FinansAnaliziTab() {
   const [analizData, setAnalizData] = useState<Record<string, AnalizItem>>({});
   const [loading, setLoading] = useState(true);
-  const { portfolio, setPortfolio } = useAppData();
+  const { portfolios, setPortfolios } = useAppData();
 
   const loadData = () => {
     setLoading(true);
