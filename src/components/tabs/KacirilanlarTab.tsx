@@ -36,6 +36,10 @@ export default function KacirilanlarTab() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Live prices for all firsatlar tickers
+  const firsatTickers = [...new Set(Object.values(firsatlar).map(f => f.hisse))];
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(firsatTickers);
+
   if (loading) {
     return (
       <div className="p-[80px_20px] text-center text-t-txt3">
@@ -73,12 +77,15 @@ export default function KacirilanlarTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span className="text-[20px]">🎯</span>
         <h2 className="text-[16px] font-bold text-t-txt">Kaçırılan Fırsatlar</h2>
         <span className="text-[11px] text-t-txt3 ml-2">
           GİRME kararı verilmiş ama yükselen hisseler
         </span>
+        <div className="ml-auto">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+        </div>
       </div>
 
       {/* Haftalık Raporlar */}
