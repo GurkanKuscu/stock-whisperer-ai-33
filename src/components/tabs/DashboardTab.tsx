@@ -71,28 +71,26 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
       .finally(() => setChartLoading(false));
   }, [chartPeriod, chartSymbol]);
 
-  const tickers = Object.keys(data);
-
   // Sistem durumu
-  const confirmed = tickers.filter(t => data[t].confirmed && data[t].score >= 70).length;
-  const pending = tickers.filter(t => data[t].pending && data[t].score >= 60).length;
-  const izleme = tickers.filter(t => !data[t].confirmed && !data[t].pending && data[t].score >= 55).length;
-  const bullish = tickers.filter(t => data[t].score >= 60).length;
+  const confirmed = tickers.filter(t => enriched[t].confirmed && enriched[t].score >= 70).length;
+  const pending = tickers.filter(t => enriched[t].pending && enriched[t].score >= 60).length;
+  const izleme = tickers.filter(t => !enriched[t].confirmed && !enriched[t].pending && enriched[t].score >= 55).length;
+  const bullish = tickers.filter(t => enriched[t].score >= 60).length;
   const breadth = tickers.length > 0 ? Math.round((bullish / tickers.length) * 100) : 0;
 
   // En iyi sinyaller
   const topSignals = [...tickers]
-    .sort((a, b) => data[b].score - data[a].score)
+    .sort((a, b) => enriched[b].score - enriched[a].score)
     .slice(0, 6)
-    .map(t => ({ ticker: t, ...data[t] }));
+    .map(t => ({ ticker: t, ...enriched[t] }));
 
   // Sektör gücü
   const sektorMap: Record<string, { toplam: number; count: number }> = {};
   tickers.forEach(t => {
-    const s = data[t].sector_name;
+    const s = enriched[t].sector_name;
     if (!s) return;
     if (!sektorMap[s]) sektorMap[s] = { toplam: 0, count: 0 };
-    sektorMap[s].toplam += data[t].score || 0;
+    sektorMap[s].toplam += enriched[t].score || 0;
     sektorMap[s].count += 1;
   });
   const sektorSirali = Object.entries(sektorMap)
@@ -100,12 +98,11 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     .sort((a, b) => b.ort - a.ort)
     .slice(0, 8);
 
-  // Hacim liderleri
   // Günlük değişim hesapla
   const withChange = tickers
-    .filter(t => data[t].prev_close && data[t].prev_close! > 0 && data[t].close > 0)
+    .filter(t => enriched[t].prev_close && enriched[t].prev_close! > 0 && enriched[t].close > 0)
     .map(t => {
-      const d = data[t];
+      const d = enriched[t];
       const chg = ((d.close - d.prev_close!) / d.prev_close!) * 100;
       return { ticker: t, close: d.close, chg, sector_name: d.sector_name };
     });
@@ -115,9 +112,9 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   // Hacim Liderleri — hacimTL = volume * close
   const topVolume = [...tickers]
-    .filter(t => (data[t].volume ?? 0) > 0 && data[t].close > 0)
+    .filter(t => (enriched[t].volume ?? 0) > 0 && enriched[t].close > 0)
     .map(t => {
-      const d = data[t];
+      const d = enriched[t];
       const hacimTL = (d.volume ?? 0) * d.close;
       const chg = d.prev_close && d.prev_close > 0 ? ((d.close - d.prev_close) / d.prev_close) * 100 : 0;
       return { ticker: t, hacimTL, chg };
