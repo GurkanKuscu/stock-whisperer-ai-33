@@ -79,7 +79,14 @@ function calcMACD(closes: number[]) {
 
 export default function StockDetail({ ticker, onBack }: Props) {
   const { data } = useAppData();
-  const snap = data[ticker] as StockData | undefined;
+  const snapRaw = data[ticker] as StockData | undefined;
+  
+  // Live price
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices([ticker]);
+  const snap = snapRaw ? {
+    ...snapRaw,
+    close: livePrices[ticker] && livePrices[ticker] > 0 ? livePrices[ticker] : snapRaw.close,
+  } : undefined;
 
   const [chartType, setChartType] = useState<"fiyat" | "hacim">("fiyat");
   const [showAddModal, setShowAddModal] = useState(false);
