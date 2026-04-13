@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchStockChart } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, ReferenceDot, Cell
@@ -77,7 +79,14 @@ function calcMACD(closes: number[]) {
 
 export default function StockDetail({ ticker, onBack }: Props) {
   const { data } = useAppData();
-  const snap = data[ticker] as StockData | undefined;
+  const snapRaw = data[ticker] as StockData | undefined;
+  
+  // Live price
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices([ticker]);
+  const snap = snapRaw ? {
+    ...snapRaw,
+    close: livePrices[ticker] && livePrices[ticker] > 0 ? livePrices[ticker] : snapRaw.close,
+  } : undefined;
 
   const [chartType, setChartType] = useState<"fiyat" | "hacim">("fiyat");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -176,6 +185,7 @@ export default function StockDetail({ ticker, onBack }: Props) {
             <div className="text-[20px] font-medium" style={{ color: "#e2e8f0" }}>{ticker}</div>
             <div className="text-[12px]" style={{ color: "#64748b" }}>{snap.sector_name ?? ""}</div>
           </div>
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowAddModal(true)}

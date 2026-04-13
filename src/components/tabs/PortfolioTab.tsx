@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
-import { fetchPrices } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import PriceProgressBar from "@/components/PriceProgressBar";
 
 function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
@@ -99,7 +100,6 @@ function AddStockModal({ onAdd, onClose, data }: { onAdd: (s: any) => void; onCl
 export default function PortfolioTab() {
   const { data, portfolios, setPortfolios } = useAppData();
   const [newName, setNewName] = useState("");
-  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [openPorts, setOpenPorts] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<Record<string, "kart" | "tablo">>({});
   const [confirmDelete, setConfirmDelete] = useState<{ type: "port" | "stock"; pId: string; ticker?: string } | null>(null);
@@ -107,16 +107,10 @@ export default function PortfolioTab() {
   const [gizliOverlay, setGizliOverlay] = useState<Set<string>>(new Set());
 
   const pIds = Object.keys(portfolios);
-
-  useEffect(() => {
-    const allTickers = Object.values(portfolios).flatMap(p => p.stocks.map(s => s.ticker));
-    const unique = [...new Set(allTickers)];
-    if (!unique.length) return;
-    const fetchLive = () => { fetchPrices(unique).then(setLivePrices).catch(() => {}); };
-    fetchLive();
-    const interval = setInterval(fetchLive, 15 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [portfolios]);
+  
+  // Collect all portfolio tickers for live pricing
+  const allTickers = [...new Set(Object.values(portfolios).flatMap(p => p.stocks.filter(s => !s.hedefTuttu && !s.stopOldu).map(s => s.ticker)))];
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen, flashTickers } = usePrices(allTickers);
 
   const createPortfolio = () => {
     if (!newName.trim()) return;
@@ -134,7 +128,10 @@ export default function PortfolioTab() {
   };
 
   const getCalc = (s: any, pId: string) => {
-    const currentPrice = livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price;
+    // For closed positions, use entry price or saved close; for open, use live price
+    const isClosedHedef = s.hedefTuttu;
+    const isClosedStop = s.stopOldu;
+    const currentPrice = isClosedHedef ? s.target : isClosedStop ? s.stop : (livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price);
     const pnlPct = s.price > 0 ? ((currentPrice - s.price) / s.price) * 100 : 0;
     const pnlTL = currentPrice - s.price;
     const range = s.target - s.stop;
@@ -148,7 +145,6 @@ export default function PortfolioTab() {
       } catch { return 0; }
     })();
     let durum = "AÇIK";
-    // Kalıcı durum: bir kez set edilince değişmez
     if (s.hedefTuttu) {
       durum = "HEDEF TUTTU";
     } else if (s.stopOldu) {
@@ -157,7 +153,6 @@ export default function PortfolioTab() {
       durum = "HEDEF TUTTU";
       s.hedefTuttu = true;
       s.kapanisTarih = new Date().toISOString();
-      // Kalıcı kaydet
       setTimeout(() => setPortfolios({ ...portfolios }), 0);
     } else if (currentPrice <= s.stop) {
       durum = "STOP LOSS";
@@ -186,6 +181,7 @@ export default function PortfolioTab() {
             <p className="text-[11px] text-t-txt3 mt-[1px]">Portföylerinizi yönetin ve takip edin</p>
           </div>
         </div>
+        <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
       </div>
 
       {/* Create */}
@@ -217,7 +213,11 @@ export default function PortfolioTab() {
             const mode = viewMode[pId] ?? "kart";
 
             const totalCost = stocks.reduce((s, x) => s + x.price, 0);
-            const totalCurrent = stocks.reduce((s, x) => s + (livePrices[x.ticker] ?? data[x.ticker]?.close ?? x.price), 0);
+            const totalCurrent = stocks.reduce((s, x) => {
+              if (x.hedefTuttu) return s + x.target;
+              if (x.stopOldu) return s + x.stop;
+              return s + (livePrices[x.ticker] ?? data[x.ticker]?.close ?? x.price);
+            }, 0);
             const totalPnlPct = totalCost > 0 ? ((totalCurrent - totalCost) / totalCost) * 100 : 0;
             const totalPnlTL = totalCurrent - totalCost;
 
@@ -226,7 +226,6 @@ export default function PortfolioTab() {
                 {/* Collapsed header */}
                 <div className="p-[10px_16px] flex items-center gap-4 cursor-pointer" onClick={() => togglePort(pId)}
                   style={{ borderBottom: isOpen ? "1px solid var(--bdr)" : "none" }}>
-                  {/* SOL: ok + portföy adı + meta */}
                   <div className="flex items-center gap-2.5 min-w-0 shrink-0" style={{ minWidth: "180px" }}>
                     <span className="text-[11px] text-t-txt3">{isOpen ? "▼" : "▶"}</span>
                     <div className="min-w-0">
@@ -234,7 +233,7 @@ export default function PortfolioTab() {
                       <div className="text-[10px] text-t-txt3 mt-0.5 flex items-center gap-1.5 flex-wrap">
                         <span>{(() => {
                           try {
-const d = new Date(p.createdAt ?? '');
+                            const d = new Date(p.createdAt ?? '');
                             if (isNaN(d.getTime())) return '—';
                             const aylar = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
                             return `${d.getDate()} ${aylar[d.getMonth()]} ${d.getFullYear()}`;
@@ -254,13 +253,13 @@ const d = new Date(p.createdAt ?? '');
                     </div>
                   </div>
 
-                  {/* ORTA: hisse chip'leri */}
                   <div className="flex gap-1.5 flex-1 overflow-hidden items-center flex-wrap" onClick={e => e.stopPropagation()}>
                     {stocks.map(s => {
-                      const cp = livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price;
+                      const cp = s.hedefTuttu ? s.target : s.stopOldu ? s.stop : (livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price);
                       const deg = s.price > 0 ? ((cp - s.price) / s.price * 100) : 0;
+                      const flash = flashTickers[s.ticker];
                       return (
-                        <div key={s.ticker} className="flex items-center gap-1.5 bg-t-bg3 rounded px-2 py-[3px] whitespace-nowrap"
+                        <div key={s.ticker} className={`flex items-center gap-1.5 bg-t-bg3 rounded px-2 py-[3px] whitespace-nowrap transition-all duration-500 ${flash === "up" ? "ring-1 ring-[#2CC98A]" : flash === "down" ? "ring-1 ring-[#E05252]" : ""}`}
                           style={{ border: "0.5px solid var(--bdr)" }}>
                           <span className="text-[11px] font-medium text-t-txt">{s.ticker}</span>
                           <span className="text-[10px] font-mono" style={{ color: deg >= 0 ? "#2CC98A" : "#E05252" }}>
@@ -271,7 +270,6 @@ const d = new Date(p.createdAt ?? '');
                     })}
                   </div>
 
-                  {/* SAĞ: toplam değişim */}
                   {stocks.length > 0 && (
                     <div className="flex items-center gap-1.5 shrink-0 ml-auto whitespace-nowrap" onClick={e => e.stopPropagation()}>
                       <span className="text-[10px] text-t-txt3">Değişim</span>
@@ -285,10 +283,8 @@ const d = new Date(p.createdAt ?? '');
                   )}
                 </div>
 
-                {/* Open body */}
                 {isOpen && (
                   <div className="p-4">
-                    {/* View toggle + delete */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex gap-1">
                         <button onClick={() => setViewMode({ ...viewMode, [pId]: "kart" })}
@@ -309,14 +305,13 @@ const d = new Date(p.createdAt ?? '');
                         Portföyde hisse yok
                       </div>
                     ) : mode === "kart" ? (
-                      /* Card view */
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {stocks.map((s, i) => {
                           const c = getCalc(s, pId);
                           const now = new Date();
                           const bugun = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
                           const h = now.getHours();
-                          const borsaSaati = (h >= 10 && h < 18) ? now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '18:00';
+                          const borsaSaati2 = (h >= 10 && h < 18) ? now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '18:00';
                           const overlayKey = `${pId}_${s.ticker}`;
                           const girisTarih = (() => {
                             try {
@@ -325,8 +320,9 @@ const d = new Date(p.createdAt ?? '');
                               return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
                             } catch { return '—'; }
                           })();
+                          const flash = flashTickers[s.ticker];
                           return (
-                            <div key={i} className="rounded-xl p-3" style={{ background: "var(--bg3)", border: "0.5px solid var(--bdr2)", position: 'relative' }}>
+                            <div key={i} className={`rounded-xl p-3 transition-all duration-500 ${flash === "up" ? "ring-2 ring-[#2CC98A]" : flash === "down" ? "ring-2 ring-[#E05252]" : ""}`} style={{ background: "var(--bg3)", border: "0.5px solid var(--bdr2)", position: 'relative' }}>
                               <div className="flex justify-between items-center mb-1.5">
                                 <div className="flex items-center gap-2">
                                   <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
@@ -350,7 +346,6 @@ const d = new Date(p.createdAt ?? '');
                                 <span style={{ color: c.pnlPct >= 0 ? "#2CC98A" : "#E05252" }}>{c.pnlPct >= 0 ? "+" : ""}{c.pnlPct.toFixed(1)}%</span>
                                 <span style={{ color: c.pnlTL >= 0 ? "#2CC98A" : "#E05252" }}>{c.pnlTL >= 0 ? "+" : ""}{c.pnlTL.toFixed(2)} ₺</span>
                               </div>
-                              {/* Progress */}
                               <div className="mb-2">
                                 <div className="h-[4px] rounded-sm overflow-hidden" style={{ background: "var(--bg4)" }}>
                                   <div className="h-full rounded-sm" style={{
@@ -359,7 +354,6 @@ const d = new Date(p.createdAt ?? '');
                                   }} />
                                 </div>
                               </div>
-                              {/* STOP / GİRİŞ / HEDEF boxes */}
                               <div className="grid grid-cols-3 gap-1">
                                 <div className="rounded-md p-1" style={{ background: "var(--bg)" }}>
                                   <div className="text-[9px] text-t-txt3">STOP</div>
@@ -391,7 +385,7 @@ const d = new Date(p.createdAt ?? '');
                                   <span style={{ fontSize: 28 }}>🏆</span>
                                   <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{s.ticker}</span>
                                   <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
-                                  <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {s.target.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                                  <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {s.target.toFixed(2)} ₺ · {bugun} {borsaSaati2}</span>
                                   <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{c.pnlPct.toFixed(1)}% | +{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
                                 </div>
                               )}
@@ -410,14 +404,13 @@ const d = new Date(p.createdAt ?? '');
                                   <span style={{ fontSize: 28 }}>💀</span>
                                   <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>{s.ticker}</span>
                                   <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700 }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
-                                  <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {s.stop.toFixed(2)} ₺ · {bugun} {borsaSaati}</span>
+                                  <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {s.stop.toFixed(2)} ₺ · {bugun} {borsaSaati2}</span>
                                   <span style={{ fontSize: 13, color: '#E05252', fontWeight: 700 }}>{c.pnlPct.toFixed(1)}% | {c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
                                 </div>
                               )}
                             </div>
                           );
                         })}
-                        {/* Add stock button */}
                         <button onClick={() => setAddStockTo(pId)}
                           className="rounded-xl p-5 cursor-pointer transition-all hover:bg-t-bg4 flex items-center justify-center text-[14px] text-t-txt3"
                           style={{ border: "0.5px dashed var(--bdr2)", background: "transparent" }}>
@@ -425,7 +418,6 @@ const d = new Date(p.createdAt ?? '');
                         </button>
                       </div>
                     ) : (
-                      /* Table view */
                       <div className="overflow-x-auto">
                         <table className="w-full text-[11px]">
                           <thead>
@@ -438,8 +430,9 @@ const d = new Date(p.createdAt ?? '');
                           <tbody>
                             {stocks.map((s, i) => {
                               const c = getCalc(s, pId);
+                              const flash = flashTickers[s.ticker];
                               return (
-                                <tr key={i} style={{ borderBottom: "1px solid var(--bdr)" }}>
+                                <tr key={i} className={`transition-all duration-500 ${flash === "up" ? "bg-[rgba(44,201,138,.08)]" : flash === "down" ? "bg-[rgba(224,82,82,.08)]" : ""}`} style={{ borderBottom: "1px solid var(--bdr)" }}>
                                   <td className="p-2 font-bold font-mono text-t-txt" style={{ whiteSpace: "nowrap" }}>{s.ticker}</td>
                                   <td className="p-2" style={{ whiteSpace: "nowrap" }}>
                                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
@@ -484,7 +477,6 @@ const d = new Date(p.createdAt ?? '');
         </div>
       )}
 
-      {/* Confirm delete modal */}
       {confirmDelete && (
         <ConfirmModal
           message={confirmDelete.type === "port"
@@ -499,7 +491,6 @@ const d = new Date(p.createdAt ?? '');
         />
       )}
 
-      {/* Add stock modal */}
       {addStockTo && (
         <AddStockModal
           data={data}

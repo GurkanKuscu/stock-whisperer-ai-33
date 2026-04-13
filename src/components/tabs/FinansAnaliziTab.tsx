@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { fetchFinansAnaliz, deleteFinansAnaliz, fetchSnapshot } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { SnapshotData } from "@/types/stock";
 
@@ -34,6 +36,10 @@ export default function FinansAnaliziTab() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  // Live prices for all tickers in analysis
+  const analizTickers = [...new Set(Object.entries(analizData).map(([key, item]) => item.ticker ?? key.split("_")[0] ?? "").filter(Boolean))];
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(analizTickers);
 
   const handleDelete = async (key: string) => {
     try {
@@ -147,14 +153,26 @@ export default function FinansAnaliziTab() {
             <span className="text-[11px] font-bold px-2 py-[3px] rounded-md" style={{ background: aiKarar.bg, color: aiKarar.color }}>
               {aiKarar.text}
             </span>
-            {item.close > 0 && (
-              <span className="text-[12px] font-bold" style={{ color: "#fff" }}>{Number(item.close).toFixed(2)}₺</span>
-            )}
-            {item.gun_degisim_pct !== undefined && item.gun_degisim_pct !== null && (
-              <span className="text-[11px]" style={{ color: Number(item.gun_degisim_pct) >= 0 ? "#2CC98A" : "#E05252" }}>
-                {Number(item.gun_degisim_pct) >= 0 ? "▲" : "▼"}{Math.abs(Number(item.gun_degisim_pct)).toFixed(1)}%
-              </span>
-            )}
+            {(() => {
+              const liveP = livePrices[ticker] && livePrices[ticker] > 0 ? livePrices[ticker] : (item.close > 0 ? Number(item.close) : 0);
+              const analizP = item.close > 0 ? Number(item.close) : 0;
+              if (liveP > 0) {
+                return (
+                  <>
+                    {analizP > 0 && liveP !== analizP && (
+                      <span className="text-[10px]" style={{ color: "#64748b" }}>Analiz: {analizP.toFixed(2)}₺</span>
+                    )}
+                    <span className="text-[12px] font-bold" style={{ color: "#fff" }}>{liveP.toFixed(2)}₺</span>
+                    {analizP > 0 && (
+                      <span className="text-[11px]" style={{ color: ((liveP - analizP) / analizP) * 100 >= 0 ? "#2CC98A" : "#E05252" }}>
+                        {((liveP - analizP) / analizP) * 100 >= 0 ? "▲" : "▼"}{Math.abs(((liveP - analizP) / analizP) * 100).toFixed(1)}%
+                      </span>
+                    )}
+                  </>
+                );
+              }
+              return null;
+            })()}
           </div>
           <div className="text-[9px] text-right shrink-0" style={{ color: "#64748b" }}>{item.tarih}</div>
         </div>
@@ -258,11 +276,14 @@ export default function FinansAnaliziTab() {
           <h2 className="font-syne text-[16px] font-bold text-t-txt">Finans Analizi</h2>
           <p className="text-[10px] text-t-txt3 mt-[1px]">AI destekli hisse analiz raporları</p>
         </div>
-        <button onClick={loadData}
-          className="ml-auto px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer text-t-txt2 bg-t-bg3 hover:bg-t-bg4"
-          style={{ border: "1px solid var(--bdr2)" }}>
-          ↻ Yenile
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+          <button onClick={loadData}
+            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer text-t-txt2 bg-t-bg3 hover:bg-t-bg4"
+            style={{ border: "1px solid var(--bdr2)" }}>
+            ↻ Yenile
+          </button>
+        </div>
       </div>
 
       {/* Bugünün Analizleri */}

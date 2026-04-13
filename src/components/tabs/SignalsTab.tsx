@@ -3,6 +3,8 @@ import { useAppData } from "@/context/AppContext";
 import SignalCard from "@/components/SignalCard";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 import MarketSummaryPanel from "@/components/MarketSummaryPanel";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 
 export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
@@ -10,11 +12,28 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
   const [filter, setFilter] = useState<"top10" | "confirmed" | "dikkatli" | "pending" | "watchlist">("top10");
 
   const tickers = Object.keys(data);
-  const top10 = [...tickers].sort((a, b) => data[b].score - data[a].score).slice(0, 10);
-  const confirmed = tickers.filter(t => data[t].confirmed && data[t].score >= 70).sort((a, b) => data[b].score - data[a].score);
-  const dikkatli = tickers.filter(t => (data[t] as any).dikkatli === true).sort((a, b) => data[b].score - data[a].score);
-  const pending = tickers.filter(t => data[t].pending && !data[t].confirmed && data[t].score >= 60).sort((a, b) => data[b].score - data[a].score);
-  const watchlist = tickers.filter(t => !data[t].confirmed && !data[t].pending && data[t].score >= 55).sort((a, b) => data[b].score - data[a].score);
+  
+  // Live prices for all signal tickers
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen, flashTickers } = usePrices(tickers);
+  
+  // Merge live prices into data for display
+  const enrichedData = { ...data };
+  tickers.forEach(t => {
+    if (livePrices[t] && livePrices[t] > 0) {
+      enrichedData[t] = { ...data[t], close: livePrices[t] };
+      // Recalculate change_pct based on prev_close
+      if (data[t].prev_close && data[t].prev_close! > 0) {
+        enrichedData[t].change_pct = ((livePrices[t] - data[t].prev_close!) / data[t].prev_close!) * 100;
+        enrichedData[t].change = livePrices[t] - data[t].prev_close!;
+      }
+    }
+  });
+
+  const top10 = [...tickers].sort((a, b) => enrichedData[b].score - enrichedData[a].score).slice(0, 10);
+  const confirmed = tickers.filter(t => enrichedData[t].confirmed && enrichedData[t].score >= 70).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
+  const dikkatli = tickers.filter(t => (enrichedData[t] as any).dikkatli === true).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
+  const pending = tickers.filter(t => enrichedData[t].pending && !enrichedData[t].confirmed && enrichedData[t].score >= 60).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
+  const watchlist = tickers.filter(t => !enrichedData[t].confirmed && !enrichedData[t].pending && enrichedData[t].score >= 55).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
 
   const lists = { top10, confirmed, dikkatli, pending, watchlist };
   const current = lists[filter];
@@ -42,21 +61,24 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
             <p className="text-[11px] text-t-txt3 mt-[1px]">{activeTab.sub}</p>
           </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setFilter(t.id)}
-              className={`px-3 py-[7px] rounded-lg text-[11.5px] font-semibold cursor-pointer transition-all ${
-                filter === t.id
-                  ? "text-t-txt bg-t-bg4"
-                  : "text-t-txt2 bg-t-bg3 hover:bg-t-bg4 hover:text-t-txt"
-              }`}
-              style={{
-                border: `1px solid ${filter === t.id ? (t.id === "dikkatli" ? "rgba(245,158,11,.3)" : "var(--bdr2)") : "var(--bdr)"}`,
-                ...(filter === t.id && t.id === "dikkatli" ? { background: "rgba(245,158,11,.08)" } : {})
-              }}>
-              {t.icon} {t.label} ({t.count})
-            </button>
-          ))}
+        <div className="flex items-center gap-3 flex-wrap">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+          <div className="flex gap-2 flex-wrap">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setFilter(t.id)}
+                className={`px-3 py-[7px] rounded-lg text-[11.5px] font-semibold cursor-pointer transition-all ${
+                  filter === t.id
+                    ? "text-t-txt bg-t-bg4"
+                    : "text-t-txt2 bg-t-bg3 hover:bg-t-bg4 hover:text-t-txt"
+                }`}
+                style={{
+                  border: `1px solid ${filter === t.id ? (t.id === "dikkatli" ? "rgba(245,158,11,.3)" : "var(--bdr2)") : "var(--bdr)"}`,
+                  ...(filter === t.id && t.id === "dikkatli" ? { background: "rgba(245,158,11,.08)" } : {})
+                }}>
+                {t.icon} {t.label} ({t.count})
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -77,7 +99,9 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
                     style={{ background: "linear-gradient(135deg, var(--gold), var(--gold-d))", boxShadow: "0 2px 8px rgba(201,148,58,.4)" }}>
                     {index + 1}
                   </div>
-                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
+                  <div className={flashTickers[ticker] ? `animate-flash-${flashTickers[ticker]}` : ""}>
+                    <SignalCard ticker={ticker} stock={enrichedData[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
+                  </div>
                 </div>
               ))
             : filter === "dikkatli"
@@ -87,11 +111,15 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
                     style={{ background: "rgba(245,158,11,.12)", color: "#F59E0B", border: "1px solid rgba(245,158,11,.25)" }}>
                     🔍 DİKKATLİ
                   </div>
-                  <SignalCard ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
+                  <div className={flashTickers[ticker] ? `animate-flash-${flashTickers[ticker]}` : ""}>
+                    <SignalCard ticker={ticker} stock={enrichedData[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
+                  </div>
                 </div>
               ))
             : current.map(ticker => (
-                <SignalCard key={ticker} ticker={ticker} stock={data[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
+                <div key={ticker} className={flashTickers[ticker] ? `animate-flash-${flashTickers[ticker]}` : ""}>
+                  <SignalCard key={ticker} ticker={ticker} stock={enrichedData[ticker]} onAddPortfolio={setAddTicker} onTickerClick={onTickerClick} />
+                </div>
               ))
           }
         </div>
@@ -100,9 +128,9 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
       {addTicker && (
         <AddToPortfolioModal
           ticker={addTicker}
-          price={data[addTicker]?.close ?? 0}
-          stop={data[addTicker]?.stop_loss ?? 0}
-          target={data[addTicker]?.target ?? 0}
+          price={enrichedData[addTicker]?.close ?? 0}
+          stop={enrichedData[addTicker]?.stop_loss ?? 0}
+          target={enrichedData[addTicker]?.target ?? 0}
           onClose={() => setAddTicker(null)}
         />
       )}

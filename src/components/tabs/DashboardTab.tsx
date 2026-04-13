@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchMarket, fetchBistChart } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MarketItem {
@@ -28,6 +30,18 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
   const [chartSymbol, setChartSymbol] = useState("xu100");
   const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
+
+  const tickers = Object.keys(data);
+  
+  // Live prices for dashboard tickers
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(tickers);
+  
+  // Enrich data with live prices
+  const enriched: Record<string, any> = {};
+  tickers.forEach(t => {
+    const lp = livePrices[t] && livePrices[t] > 0 ? livePrices[t] : data[t].close;
+    enriched[t] = { ...data[t], close: lp };
+  });
   useEffect(() => {
     fetchMarket()
       .then(m => {
@@ -57,28 +71,26 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
       .finally(() => setChartLoading(false));
   }, [chartPeriod, chartSymbol]);
 
-  const tickers = Object.keys(data);
-
   // Sistem durumu
-  const confirmed = tickers.filter(t => data[t].confirmed && data[t].score >= 70).length;
-  const pending = tickers.filter(t => data[t].pending && data[t].score >= 60).length;
-  const izleme = tickers.filter(t => !data[t].confirmed && !data[t].pending && data[t].score >= 55).length;
-  const bullish = tickers.filter(t => data[t].score >= 60).length;
+  const confirmed = tickers.filter(t => enriched[t].confirmed && enriched[t].score >= 70).length;
+  const pending = tickers.filter(t => enriched[t].pending && enriched[t].score >= 60).length;
+  const izleme = tickers.filter(t => !enriched[t].confirmed && !enriched[t].pending && enriched[t].score >= 55).length;
+  const bullish = tickers.filter(t => enriched[t].score >= 60).length;
   const breadth = tickers.length > 0 ? Math.round((bullish / tickers.length) * 100) : 0;
 
   // En iyi sinyaller
   const topSignals = [...tickers]
-    .sort((a, b) => data[b].score - data[a].score)
+    .sort((a, b) => enriched[b].score - enriched[a].score)
     .slice(0, 6)
-    .map(t => ({ ticker: t, ...data[t] }));
+    .map(t => ({ ticker: t, ...enriched[t] }));
 
   // Sektör gücü
   const sektorMap: Record<string, { toplam: number; count: number }> = {};
   tickers.forEach(t => {
-    const s = data[t].sector_name;
+    const s = enriched[t].sector_name;
     if (!s) return;
     if (!sektorMap[s]) sektorMap[s] = { toplam: 0, count: 0 };
-    sektorMap[s].toplam += data[t].score || 0;
+    sektorMap[s].toplam += enriched[t].score || 0;
     sektorMap[s].count += 1;
   });
   const sektorSirali = Object.entries(sektorMap)
@@ -86,12 +98,11 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     .sort((a, b) => b.ort - a.ort)
     .slice(0, 8);
 
-  // Hacim liderleri
   // Günlük değişim hesapla
   const withChange = tickers
-    .filter(t => data[t].prev_close && data[t].prev_close! > 0 && data[t].close > 0)
+    .filter(t => enriched[t].prev_close && enriched[t].prev_close! > 0 && enriched[t].close > 0)
     .map(t => {
-      const d = data[t];
+      const d = enriched[t];
       const chg = ((d.close - d.prev_close!) / d.prev_close!) * 100;
       return { ticker: t, close: d.close, chg, sector_name: d.sector_name };
     });
@@ -101,9 +112,9 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   // Hacim Liderleri — hacimTL = volume * close
   const topVolume = [...tickers]
-    .filter(t => (data[t].volume ?? 0) > 0 && data[t].close > 0)
+    .filter(t => (enriched[t].volume ?? 0) > 0 && enriched[t].close > 0)
     .map(t => {
-      const d = data[t];
+      const d = enriched[t];
       const hacimTL = (d.volume ?? 0) * d.close;
       const chg = d.prev_close && d.prev_close > 0 ? ((d.close - d.prev_close) / d.prev_close) * 100 : 0;
       return { ticker: t, hacimTL, chg };
@@ -115,9 +126,9 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   // KAP haberleri
   const kapHaberler = tickers
-    .flatMap(t => (data[t].kap_haberler ?? []).map(h => ({ ...h, ticker: t })))
-    .filter(h => h?.baslik)
-    .sort((a, b) => (b.tarih ?? "").localeCompare(a.tarih ?? ""))
+    .flatMap(t => (enriched[t].kap_haberler ?? []).map((h: any) => ({ ...h, ticker: t })))
+    .filter((h: any) => h?.baslik)
+    .sort((a: any, b: any) => (b.tarih ?? "").localeCompare(a.tarih ?? ""))
     .slice(0, 8);
 
   const systemStats = [
@@ -129,7 +140,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   // Alarmlar
   const alarms: { icon: string; title: string; sub: string; type: string }[] = [];
-  Object.entries(data).forEach(([ticker, s]) => {
+  Object.entries(enriched).forEach(([ticker, s]: [string, any]) => {
     if (s.confirmed && s.score >= 80) alarms.push({ icon: "🟢", title: `${ticker} — Güçlü Sinyal`, sub: `Skor: ${s.score}`, type: "new" });
     if (s.tavan_kapat) alarms.push({ icon: "🔔", title: `${ticker} — Tavan`, sub: `${s.close.toFixed(2)} ₺`, type: "tavan" });
     if (s.manip_detected) alarms.push({ icon: "⚠️", title: `${ticker} — Manip`, sub: "Anormal hacim", type: "seri" });
@@ -139,6 +150,10 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   return (
     <div className="animate-fade-in">
+      {/* Live badge */}
+      <div className="flex justify-end mb-2">
+        <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+      </div>
       {/* 1. BIST100 Grafik + Piyasa Özeti üstte */}
       <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-2 mb-3">
         {/* Sol: Piyasa ticker bar + Grafik */}

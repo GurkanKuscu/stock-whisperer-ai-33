@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
 import { fetchFinansAnaliz } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 
 export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
@@ -19,7 +21,18 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
 
   const tickers = Object.keys(data);
   const matched = query.trim() ? tickers.filter(t => t.toUpperCase().includes(query.toUpperCase().trim())) : [];
-  const result = matched.length === 1 ? { ticker: matched[0], stock: data[matched[0]] } : null;
+  
+  // Live price for matched ticker
+  const matchedTickers = matched.length === 1 ? [matched[0]] : [];
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(matchedTickers);
+  
+  const result = matched.length === 1 ? {
+    ticker: matched[0],
+    stock: {
+      ...data[matched[0]],
+      close: livePrices[matched[0]] && livePrices[matched[0]] > 0 ? livePrices[matched[0]] : data[matched[0]].close,
+    }
+  } : null;
 
   const quickList = tickers.filter(t => data[t].score >= 70).sort((a, b) => data[b].score - data[a].score).slice(0, 8);
 
@@ -41,6 +54,9 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
         <div>
           <h2 className="font-syne text-[15px] font-bold text-t-txt">Hisse Ara</h2>
           <p className="text-[11px] text-t-txt3 mt-[1px]">Hisse kodu yazarak detaylı analiz görüntüle</p>
+        </div>
+        <div className="ml-auto">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
         </div>
       </div>
 
