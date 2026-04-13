@@ -239,6 +239,9 @@ export default function ArchiveTab() {
           <h2 className="font-syne text-[15px] font-bold text-t-txt">Arşiv</h2>
           <p className="text-[11px] text-t-txt3 mt-[1px]">Sinyal arşivi ve tarama dosyaları</p>
         </div>
+        <div className="ml-auto">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+        </div>
       </div>
 
       {/* Sinyal Arşivi */}
@@ -257,7 +260,9 @@ export default function ArchiveTab() {
         ) : (
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sinyalEntries.map(([key, rec]) => {
-              const currentPrice = data[rec.hisse]?.close ?? rec.giris;
+              // For closed signals use saved data; for open use live prices
+              const isClosed = rec.durum === 'HEDEF TUTTU' || rec.durum === 'STOP LOSS';
+              const currentPrice = isClosed ? (data[rec.hisse]?.close ?? rec.giris) : (livePrices[rec.hisse] ?? data[rec.hisse]?.close ?? rec.giris);
               const pnlPct = ((currentPrice - rec.giris) / rec.giris) * 100;
               const pnlTL = currentPrice - rec.giris;
               const gunFarki = Math.max(0, Math.floor((Date.now() - new Date(rec.tarih.split('.').reverse().join('-')).getTime()) / 86400000));
