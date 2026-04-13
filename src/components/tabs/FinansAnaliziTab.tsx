@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { fetchFinansAnaliz, deleteFinansAnaliz, fetchSnapshot } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { SnapshotData } from "@/types/stock";
 

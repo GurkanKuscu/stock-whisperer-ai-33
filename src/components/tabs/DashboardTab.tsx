@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchMarket, fetchBistChart } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MarketItem {

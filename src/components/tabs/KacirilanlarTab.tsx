@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchKacirilanFirsatlar } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 
 interface Firsat {
   hisse: string;

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchArsiv, getDownloadUrl, fetchSinyalArsiv, deleteSinyalArsiv } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import PriceProgressBar from "@/components/PriceProgressBar";
 import type { ArsivFile } from "@/types/stock";
 import JSZip from "jszip";
