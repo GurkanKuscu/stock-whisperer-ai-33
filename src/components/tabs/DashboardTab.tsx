@@ -30,6 +30,18 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
   const [chartSymbol, setChartSymbol] = useState("xu100");
   const [chartLabel, setChartLabel] = useState("BIST100");
   const [chartLoading, setChartLoading] = useState(true);
+
+  const tickers = Object.keys(data);
+  
+  // Live prices for dashboard tickers
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(tickers);
+  
+  // Enrich data with live prices
+  const enriched: Record<string, any> = {};
+  tickers.forEach(t => {
+    const lp = livePrices[t] && livePrices[t] > 0 ? livePrices[t] : data[t].close;
+    enriched[t] = { ...data[t], close: lp };
+  });
   useEffect(() => {
     fetchMarket()
       .then(m => {

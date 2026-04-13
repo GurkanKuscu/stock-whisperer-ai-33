@@ -276,11 +276,14 @@ export default function FinansAnaliziTab() {
           <h2 className="font-syne text-[16px] font-bold text-t-txt">Finans Analizi</h2>
           <p className="text-[10px] text-t-txt3 mt-[1px]">AI destekli hisse analiz raporları</p>
         </div>
-        <button onClick={loadData}
-          className="ml-auto px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer text-t-txt2 bg-t-bg3 hover:bg-t-bg4"
-          style={{ border: "1px solid var(--bdr2)" }}>
-          ↻ Yenile
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+          <button onClick={loadData}
+            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer text-t-txt2 bg-t-bg3 hover:bg-t-bg4"
+            style={{ border: "1px solid var(--bdr2)" }}>
+            ↻ Yenile
+          </button>
+        </div>
       </div>
 
       {/* Bugünün Analizleri */}
