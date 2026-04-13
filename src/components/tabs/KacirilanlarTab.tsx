@@ -137,7 +137,10 @@ export default function KacirilanlarTab() {
               </tr>
             </thead>
             <tbody>
-              {sortedFirsatlar.map(([key, f]) => (
+              {sortedFirsatlar.map(([key, f]) => {
+                const livePrice = livePrices[f.hisse] && livePrices[f.hisse] > 0 ? livePrices[f.hisse] : f.guncel_fiyat;
+                const livePct = f.fiyat > 0 ? ((livePrice - f.fiyat) / f.fiyat) * 100 : f.guncel_pct;
+                return (
                 <tr
                   key={key}
                   className="transition-colors hover:bg-t-bg3"
@@ -160,14 +163,15 @@ export default function KacirilanlarTab() {
                     {Number(f.fiyat).toFixed(2)}₺
                   </td>
                   <td className="px-3 py-3 text-right font-mono font-bold text-t-txt">
-                    {Number(f.guncel_fiyat).toFixed(2)}₺
+                    {Number(livePrice).toFixed(2)}₺
                   </td>
-                  <td className="px-3 py-3 text-right font-mono font-bold" style={{ color: getPctColor(f.guncel_pct) }}>
-                    {getPctIcon(f.guncel_pct)} {f.guncel_pct >= 0 ? "+" : ""}{Number(f.guncel_pct).toFixed(1)}%
+                  <td className="px-3 py-3 text-right font-mono font-bold" style={{ color: getPctColor(livePct) }}>
+                    {getPctIcon(livePct)} {livePct >= 0 ? "+" : ""}{Number(livePct).toFixed(1)}%
                   </td>
                   <td className="px-3 py-3 text-t-txt3">{f.tarih}</td>
                 </tr>
-              ))}
+                );
+              })}
               {sortedFirsatlar.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-t-txt3 text-[13px]">
