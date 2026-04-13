@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAppData } from "@/context/AppContext";
 import { fetchStockChart } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, ReferenceDot, Cell
