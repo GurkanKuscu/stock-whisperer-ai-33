@@ -37,6 +37,10 @@ export default function FinansAnaliziTab() {
 
   useEffect(() => { loadData(); }, []);
 
+  // Live prices for all tickers in analysis
+  const analizTickers = [...new Set(Object.entries(analizData).map(([key, item]) => item.ticker ?? key.split("_")[0] ?? "").filter(Boolean))];
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(analizTickers);
+
   const handleDelete = async (key: string) => {
     try {
       await deleteFinansAnaliz(key);
