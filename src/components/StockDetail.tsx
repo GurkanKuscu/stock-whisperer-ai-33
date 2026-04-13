@@ -185,6 +185,7 @@ export default function StockDetail({ ticker, onBack }: Props) {
             <div className="text-[20px] font-medium" style={{ color: "#e2e8f0" }}>{ticker}</div>
             <div className="text-[12px]" style={{ color: "#64748b" }}>{snap.sector_name ?? ""}</div>
           </div>
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowAddModal(true)}
