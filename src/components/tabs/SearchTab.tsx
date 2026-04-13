@@ -21,7 +21,18 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
 
   const tickers = Object.keys(data);
   const matched = query.trim() ? tickers.filter(t => t.toUpperCase().includes(query.toUpperCase().trim())) : [];
-  const result = matched.length === 1 ? { ticker: matched[0], stock: data[matched[0]] } : null;
+  
+  // Live price for matched ticker
+  const matchedTickers = matched.length === 1 ? [matched[0]] : [];
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(matchedTickers);
+  
+  const result = matched.length === 1 ? {
+    ticker: matched[0],
+    stock: {
+      ...data[matched[0]],
+      close: livePrices[matched[0]] && livePrices[matched[0]] > 0 ? livePrices[matched[0]] : data[matched[0]].close,
+    }
+  } : null;
 
   const quickList = tickers.filter(t => data[t].score >= 70).sort((a, b) => data[b].score - data[a].score).slice(0, 8);
 
