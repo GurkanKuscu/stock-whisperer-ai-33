@@ -126,9 +126,9 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   // KAP haberleri
   const kapHaberler = tickers
-    .flatMap(t => (data[t].kap_haberler ?? []).map(h => ({ ...h, ticker: t })))
-    .filter(h => h?.baslik)
-    .sort((a, b) => (b.tarih ?? "").localeCompare(a.tarih ?? ""))
+    .flatMap(t => (enriched[t].kap_haberler ?? []).map((h: any) => ({ ...h, ticker: t })))
+    .filter((h: any) => h?.baslik)
+    .sort((a: any, b: any) => (b.tarih ?? "").localeCompare(a.tarih ?? ""))
     .slice(0, 8);
 
   const systemStats = [
@@ -140,7 +140,7 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   // Alarmlar
   const alarms: { icon: string; title: string; sub: string; type: string }[] = [];
-  Object.entries(data).forEach(([ticker, s]) => {
+  Object.entries(enriched).forEach(([ticker, s]: [string, any]) => {
     if (s.confirmed && s.score >= 80) alarms.push({ icon: "🟢", title: `${ticker} — Güçlü Sinyal`, sub: `Skor: ${s.score}`, type: "new" });
     if (s.tavan_kapat) alarms.push({ icon: "🔔", title: `${ticker} — Tavan`, sub: `${s.close.toFixed(2)} ₺`, type: "tavan" });
     if (s.manip_detected) alarms.push({ icon: "⚠️", title: `${ticker} — Manip`, sub: "Anormal hacim", type: "seri" });
@@ -150,6 +150,10 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
 
   return (
     <div className="animate-fade-in">
+      {/* Live badge */}
+      <div className="flex justify-end mb-2">
+        <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+      </div>
       {/* 1. BIST100 Grafik + Piyasa Özeti üstte */}
       <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-2 mb-3">
         {/* Sol: Piyasa ticker bar + Grafik */}
