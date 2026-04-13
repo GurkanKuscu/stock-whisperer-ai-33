@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useAppData } from "@/context/AppContext";
 import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
 import { fetchFinansAnaliz } from "@/services/api";
+import { usePrices } from "@/hooks/usePrices";
+import LiveBadge from "@/components/LiveBadge";
 
 export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
