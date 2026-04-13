@@ -55,6 +55,9 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
           <h2 className="font-syne text-[15px] font-bold text-t-txt">Hisse Ara</h2>
           <p className="text-[11px] text-t-txt3 mt-[1px]">Hisse kodu yazarak detaylı analiz görüntüle</p>
         </div>
+        <div className="ml-auto">
+          <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
+        </div>
       </div>
 
       {/* Search Box */}
