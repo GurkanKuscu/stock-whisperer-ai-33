@@ -153,14 +153,26 @@ export default function FinansAnaliziTab() {
             <span className="text-[11px] font-bold px-2 py-[3px] rounded-md" style={{ background: aiKarar.bg, color: aiKarar.color }}>
               {aiKarar.text}
             </span>
-            {item.close > 0 && (
-              <span className="text-[12px] font-bold" style={{ color: "#fff" }}>{Number(item.close).toFixed(2)}₺</span>
-            )}
-            {item.gun_degisim_pct !== undefined && item.gun_degisim_pct !== null && (
-              <span className="text-[11px]" style={{ color: Number(item.gun_degisim_pct) >= 0 ? "#2CC98A" : "#E05252" }}>
-                {Number(item.gun_degisim_pct) >= 0 ? "▲" : "▼"}{Math.abs(Number(item.gun_degisim_pct)).toFixed(1)}%
-              </span>
-            )}
+            {(() => {
+              const liveP = livePrices[ticker] && livePrices[ticker] > 0 ? livePrices[ticker] : (item.close > 0 ? Number(item.close) : 0);
+              const analizP = item.close > 0 ? Number(item.close) : 0;
+              if (liveP > 0) {
+                return (
+                  <>
+                    {analizP > 0 && liveP !== analizP && (
+                      <span className="text-[10px]" style={{ color: "#64748b" }}>Analiz: {analizP.toFixed(2)}₺</span>
+                    )}
+                    <span className="text-[12px] font-bold" style={{ color: "#fff" }}>{liveP.toFixed(2)}₺</span>
+                    {analizP > 0 && (
+                      <span className="text-[11px]" style={{ color: ((liveP - analizP) / analizP) * 100 >= 0 ? "#2CC98A" : "#E05252" }}>
+                        {((liveP - analizP) / analizP) * 100 >= 0 ? "▲" : "▼"}{Math.abs(((liveP - analizP) / analizP) * 100).toFixed(1)}%
+                      </span>
+                    )}
+                  </>
+                );
+              }
+              return null;
+            })()}
           </div>
           <div className="text-[9px] text-right shrink-0" style={{ color: "#64748b" }}>{item.tarih}</div>
         </div>
