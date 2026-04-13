@@ -107,6 +107,12 @@ export default function ArchiveTab() {
     fetchSinyalArsiv().then(setSinyalArsiv).catch(() => {}).finally(() => setSinyalLoading(false));
   }, []);
 
+  // Live prices for open sinyal archive tickers
+  const openSinyalTickers = Object.values(sinyalArsiv)
+    .filter(r => r.durum !== 'HEDEF TUTTU' && r.durum !== 'STOP LOSS')
+    .map(r => r.hisse);
+  const { prices: livePrices, lastUpdate, isStale, borsaOpen, flashTickers } = usePrices([...new Set(openSinyalTickers)]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
