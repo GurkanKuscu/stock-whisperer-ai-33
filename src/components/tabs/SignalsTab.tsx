@@ -17,10 +17,11 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
   const { prices: livePrices, lastUpdate, isStale, borsaOpen, flashTickers } = usePrices(tickers);
   
   // Merge live prices into data for display
-  const enrichedData = { ...data };
+  const enrichedData: typeof data = { ...data };
   tickers.forEach(t => {
     if (livePrices[t] && livePrices[t] > 0) {
-      enrichedData[t] = { ...data[t], close: livePrices[t] };
+      // Preserve original snapshot price as snapshot_close
+      enrichedData[t] = { ...data[t], close: livePrices[t], snapshot_close: data[t].close } as any;
       // Recalculate change_pct based on prev_close
       if (data[t].prev_close && data[t].prev_close! > 0) {
         enrichedData[t].change_pct = ((livePrices[t] - data[t].prev_close!) / data[t].prev_close!) * 100;
