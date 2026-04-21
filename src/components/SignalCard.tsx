@@ -96,12 +96,53 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
       </div>
 
       {/* Prices */}
-      <div className="grid grid-cols-4" style={{ borderBottom: "1px solid var(--bdr)" }}>
-        <PriceCell label="Fiyat" value={`${stock.close.toFixed(2)} ₺`} />
-        <PriceCell label="Stop" value={`${stock.stop_loss.toFixed(2)} ₺`} cls="text-t-red" />
-        <PriceCell label="Hedef" value={`${stock.target.toFixed(2)} ₺`} cls="text-t-green" />
-        <PriceCell label="R/R" value={`1:${stock.rr_ratio}`} cls="text-t-blue-l" last />
-      </div>
+      {(() => {
+        const snap = (stock as any).snapshot_close as number | undefined;
+        const chg = stock.change_pct;
+        const hasSnap = snap != null && snap > 0 && Math.abs(snap - stock.close) > 0.001;
+        const hasChg = chg != null && !Number.isNaN(chg);
+        const stopDiff = stock.close > 0 ? ((stock.stop_loss - stock.close) / stock.close) * 100 : 0;
+        const targetDiff = stock.close > 0 ? ((stock.target - stock.close) / stock.close) * 100 : 0;
+        return (
+          <div className="grid grid-cols-4 items-stretch" style={{ borderBottom: "1px solid var(--bdr)" }}>
+            <PriceCell
+              label="Fiyat"
+              value={`${stock.close.toFixed(2)} ₺`}
+              sub={
+                hasSnap || hasChg ? (
+                  <span className="flex items-center gap-1">
+                    {hasSnap && <span className="text-t-txt3">Tespit: {snap!.toFixed(2)}₺</span>}
+                    {hasChg && (
+                      <span className={chg! >= 0 ? "text-t-green" : "text-t-red"}>
+                        {chg! >= 0 ? "▲" : "▼"}{Math.abs(chg!).toFixed(1)}%
+                      </span>
+                    )}
+                  </span>
+                ) : null
+              }
+            />
+            <PriceCell
+              label="Stop"
+              value={`${stock.stop_loss.toFixed(2)} ₺`}
+              cls="text-t-red"
+              sub={<span className="text-t-txt3">{stopDiff.toFixed(1)}%</span>}
+            />
+            <PriceCell
+              label="Hedef"
+              value={`${stock.target.toFixed(2)} ₺`}
+              cls="text-t-green"
+              sub={<span className="text-t-txt3">+{targetDiff.toFixed(1)}%</span>}
+            />
+            <PriceCell
+              label="R/R"
+              value={`1:${stock.rr_ratio}`}
+              cls="text-t-blue-l"
+              last
+              sub={<span className="text-t-txt3">Risk/Ödül</span>}
+            />
+          </div>
+        );
+      })()}
 
       {/* RSI */}
       <div className="p-[12px_20px]" style={{ borderBottom: "1px solid var(--bdr)" }}>
@@ -289,11 +330,12 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
   );
 }
 
-function PriceCell({ label, value, cls = "", last }: { label: string; value: string; cls?: string; last?: boolean }) {
+function PriceCell({ label, value, cls = "", last, sub }: { label: string; value: string; cls?: string; last?: boolean; sub?: React.ReactNode }) {
   return (
-    <div className="p-[11px_14px]" style={!last ? { borderRight: "1px solid var(--bdr)" } : {}}>
+    <div className="p-[11px_14px] flex flex-col justify-center" style={!last ? { borderRight: "1px solid var(--bdr)" } : {}}>
       <div className="text-[9px] text-t-txt3 font-semibold uppercase tracking-[.6px] mb-[5px]">{label}</div>
-      <div className={`font-mono text-[13px] font-semibold ${cls || "text-t-txt"}`}>{value}</div>
+      <div className={`font-mono text-[13px] font-semibold leading-tight ${cls || "text-t-txt"}`}>{value}</div>
+      {sub && <div className="text-[10px] mt-1 leading-tight font-mono">{sub}</div>}
     </div>
   );
 }
