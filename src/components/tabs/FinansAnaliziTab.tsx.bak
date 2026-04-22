@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { fetchFinansAnaliz, deleteFinansAnaliz, fetchSnapshot } from "@/services/api";
 import { useAppData } from "@/context/AppContext";
 import { usePrices } from "@/hooks/usePrices";
-import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 import LiveBadge from "@/components/LiveBadge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { SnapshotData } from "@/types/stock";
@@ -41,7 +40,6 @@ export default function FinansAnaliziTab() {
   // Live prices for all tickers in analysis
   const analizTickers = [...new Set(Object.entries(analizData).map(([key, item]) => item.ticker ?? key.split("_")[0] ?? "").filter(Boolean))];
   const { prices: livePrices, lastUpdate, isStale, borsaOpen } = usePrices(analizTickers);
-  const [addTicker, setAddTicker] = useState<string | null>(null);
 
   const handleDelete = async (key: string) => {
     try {
@@ -54,9 +52,66 @@ export default function FinansAnaliziTab() {
     } catch {}
   };
 
-  const handleAddPortfolio = (ticker: string) => {
+  const handleAddPortfolio = async (ticker: string) => {
     if (!ticker) return;
-    setAddTicker(ticker);
+    const stock = snapData[ticker];
+    const liveP = livePrices[ticker] && livePrices[ticker] > 0 ? livePrices[ticker] : (stock?.close ?? 0);
+
+    // Mevcut portföylerin listesini al
+    const portfolioList = Object.entries(portfolios);
+    if (portfolioList.length === 0) {
+      alert("Önce en az bir portföy oluşturmalısınız (Portföy sekmesinden).");
+      return;
+    }
+
+    // Tek portföy varsa direkt o, çoksa kullanıcıya sor
+    let targetPid: string;
+    if (portfolioList.length === 1) {
+      targetPid = portfolioList[0][0];
+    } else {
+      const opts = portfolioList.map(([pid, p], i) => `${i + 1}. ${p.name}`).join("\n");
+      const sec = prompt(`Hangi portföye eklensin?\n\n${opts}\n\nNumara girin:`);
+      if (!sec) return;
+      const idx = parseInt(sec) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= portfolioList.length) {
+        alert("Geçersiz seçim.");
+        return;
+      }
+      targetPid = portfolioList[idx][0];
+    }
+
+    const target = portfolios[targetPid];
+    if (target.stocks.some(s => s.ticker === ticker)) {
+      alert(`${ticker} zaten "${target.name}" portföyünde var.`);
+      return;
+    }
+
+    const yeniHisse = {
+      ticker,
+      price: liveP,
+      date: new Date().toISOString(),
+      note: "Finans analizinden eklendi",
+      stop: stock?.stop_loss ?? 0,
+      target: stock?.target ?? 0,
+    };
+
+    const guncelPortfolios = {
+      ...portfolios,
+      [targetPid]: { ...target, stocks: [...target.stocks, yeniHisse] }
+    };
+
+    // State + backend save
+    setPortfolios(guncelPortfolios);
+    try {
+      await fetch("/api/portfolio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(guncelPortfolios)
+      });
+      alert(`✅ ${ticker} → "${target.name}" portföyüne eklendi (${liveP.toFixed(2)} ₺)`);
+    } catch (e) {
+      alert("Kaydetme başarısız oldu — backend'e ulaşılamadı.");
+    }
   };
 
   const toggleDetail = (key: string) => {
@@ -146,19 +201,17 @@ export default function FinansAnaliziTab() {
             </span>
             {(() => {
               const liveP = livePrices[ticker] && livePrices[ticker] > 0 ? livePrices[ticker] : (item.close > 0 ? Number(item.close) : 0);
-              const girisP = item.close > 0 ? Number(item.close) : 0;
+              const analizP = item.close > 0 ? Number(item.close) : 0;
               if (liveP > 0) {
-                const degisim = girisP > 0 ? ((liveP - girisP) / girisP) * 100 : 0;
-                const degisimTL = liveP - girisP;
                 return (
                   <>
-                    {girisP > 0 && (
-                      <span className="text-[10px]" style={{ color: "#64748b" }}>Giriş: {girisP.toFixed(2)}₺</span>
+                    {analizP > 0 && liveP !== analizP && (
+                      <span className="text-[10px]" style={{ color: "#64748b" }}>Analiz: {analizP.toFixed(2)}₺</span>
                     )}
                     <span className="text-[12px] font-bold" style={{ color: "#fff" }}>{liveP.toFixed(2)}₺</span>
-                    {girisP > 0 && (
-                      <span className="text-[11px] font-bold" style={{ color: degisim >= 0 ? "#2CC98A" : "#E05252" }}>
-                        {degisim >= 0 ? "▲" : "▼"}{Math.abs(degisim).toFixed(1)}% / {degisimTL >= 0 ? "+" : ""}{degisimTL.toFixed(2)}₺
+                    {analizP > 0 && (
+                      <span className="text-[11px]" style={{ color: ((liveP - analizP) / analizP) * 100 >= 0 ? "#2CC98A" : "#E05252" }}>
+                        {((liveP - analizP) / analizP) * 100 >= 0 ? "▲" : "▼"}{Math.abs(((liveP - analizP) / analizP) * 100).toFixed(1)}%
                       </span>
                     )}
                   </>
@@ -326,20 +379,6 @@ export default function FinansAnaliziTab() {
           <div className="text-[11px] text-t-txt3 mt-1">AI analizleri burada görünecek</div>
         </div>
       )}
-
-      {addTicker && (() => {
-        const stock = snapData[addTicker];
-        const liveP = livePrices[addTicker] && livePrices[addTicker] > 0 ? livePrices[addTicker] : (stock?.close ?? 0);
-        return (
-          <AddToPortfolioModal
-            ticker={addTicker}
-            price={liveP}
-            stop={stock?.stop_loss ?? 0}
-            target={stock?.target ?? 0}
-            onClose={() => setAddTicker(null)}
-          />
-        );
-      })()}
     </div>
   );
 }

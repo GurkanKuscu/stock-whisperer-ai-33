@@ -330,8 +330,7 @@ export default function PortfolioTab() {
                               <div className="flex justify-between items-center mb-1.5">
                                 <div className="flex items-center gap-2">
                                   <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
-                                  {s.kar_bolgesi_aktif === true && c.durum === "AÇIK" && <span style={{fontSize:9, color:'#2CC98A', fontWeight:700, background:'rgba(44,201,138,0.15)', padding:'2px 5px', borderRadius:3}}>🛡️ KÂR BÖLGESİ</span>}
-                                  {s.risk_bolgesi_aktif === true && c.durum === "AÇIK" && <span style={{fontSize:9, color:'#F59E0B', fontWeight:700, background:'rgba(245,158,11,0.15)', padding:'2px 5px', borderRadius:3, marginLeft:4}}>⚠️ RİSK BÖLGESİ</span>}
+                                  {s.trailing_aktif === true && c.durum === "AÇIK" && <span style={{fontSize:9, color:'#2CC98A', fontWeight:700, background:'rgba(44,201,138,0.15)', padding:'2px 5px', borderRadius:3}}>🛡️ TRAILING</span>}
                                   {c.gunFarki >= 15 && <span style={{fontSize:10, color:'#E05252', fontWeight:700}}>⏰ 15g+</span>}
                                   {c.gunFarki >= 10 && c.gunFarki < 15 && <span style={{fontSize:10, color:'#F97316', fontWeight:700}}>⏰ 10g</span>}
                                   {c.gunFarki >= 5 && c.gunFarki < 10 && <span style={{fontSize:10, color:'#F59E0B', fontWeight:700}}>⏰ 5g</span>}

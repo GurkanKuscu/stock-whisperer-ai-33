@@ -53,6 +53,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (tickers.length > 0) {
           const prices = await fetchPrices(tickers);
           tickers.forEach(t => {
+            // Önce snapshot close'u koru
+            snap[t].snapshot_close = snap[t].close;
+            // Sonra live price ile güncelle
             if (prices[t] && prices[t] > 0) snap[t].close = prices[t];
           });
         }

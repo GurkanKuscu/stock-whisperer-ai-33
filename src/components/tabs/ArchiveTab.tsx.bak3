@@ -90,14 +90,13 @@ export default function ArchiveTab() {
   const [manualFiles, setManualFiles] = useState<ManualFile[]>(loadManualFiles);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [sinyalArsiv, setSinyalArsiv] = useState<Record<string, SinyalRecord>>({});
-  const [sinyalLoading, setSinyalLoading] = useState(false);
+  const [sinyalLoading, setSinyalLoading] = useState(true);
 
   // Accordion state
   const [acikAylar, setAcikAylar] = useState<Record<string, boolean>>({});
   const [acikGunler, setAcikGunler] = useState<Record<string, boolean>>({});
   const [acikBacktest, setAcikBacktest] = useState<Record<string, boolean>>({});
   const [gizliOverlay, setGizliOverlay] = useState<Set<string>>(new Set());
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const toggleAy = (key: string) => setAcikAylar(p => ({ ...p, [key]: !p[key] }));
   const toggleGun = (key: string) => setAcikGunler(p => ({ ...p, [key]: !p[key] }));
@@ -109,29 +108,6 @@ export default function ArchiveTab() {
   }, []);
 
   // Live prices for open sinyal archive tickers
-  // Özet istatistikler
-  const allRecords = Object.values(sinyalArsiv);
-  const stats = {
-    toplam: allRecords.length,
-    hedef: allRecords.filter(r => r.durum === 'HEDEF TUTTU').length,
-    stop: allRecords.filter(r => r.durum === 'STOP LOSS').length,
-    acik: allRecords.filter(r => r.durum === 'AÇIK').length,
-    kar: allRecords.filter(r => r.durum === 'AÇIK' && (r as any).kar_bolgesi_aktif).length,
-    risk: allRecords.filter(r => r.durum === 'AÇIK' && (r as any).risk_bolgesi_aktif).length,
-  };
-  const basariOrani = stats.toplam > 0 ? ((stats.hedef / stats.toplam) * 100).toFixed(1) : '0.0';
-  const filteredRecords = activeFilter
-    ? allRecords.filter(r => {
-        if (activeFilter === 'toplam') return true;
-        if (activeFilter === 'hedef') return r.durum === 'HEDEF TUTTU';
-        if (activeFilter === 'stop') return r.durum === 'STOP LOSS';
-        if (activeFilter === 'acik') return r.durum === 'AÇIK';
-        if (activeFilter === 'kar') return r.durum === 'AÇIK' && (r as any).kar_bolgesi_aktif;
-        if (activeFilter === 'risk') return r.durum === 'AÇIK' && (r as any).risk_bolgesi_aktif;
-        return true;
-      })
-    : allRecords;
-
   const openSinyalTickers = Object.values(sinyalArsiv)
     .filter(r => r.durum !== 'HEDEF TUTTU' && r.durum !== 'STOP LOSS' && r.durum !== 'TRAILING STOP')
     .map(r => r.hisse);
@@ -249,9 +225,7 @@ export default function ArchiveTab() {
     ...Object.keys(backtestGruplari)
   ])].sort().reverse();
 
-  const sinyalEntries = Object.entries(sinyalArsiv)
-    .filter(([, rec]) => filteredRecords.includes(rec))
-    .sort(([, a], [, b]) => {
+  const sinyalEntries = Object.entries(sinyalArsiv).sort(([, a], [, b]) => {
     const dateA = a.tarih.split('.').reverse().join('-') + 'T' + (a.saat || '00:00');
     const dateB = b.tarih.split('.').reverse().join('-') + 'T' + (b.saat || '00:00');
     return dateB.localeCompare(dateA);
@@ -284,35 +258,6 @@ export default function ArchiveTab() {
             <div className="text-[10px]">Taramalar sonrası otomatik dolacak.</div>
           </div>
         ) : (
-          <div>
-            {/* Özet İstatistik Kartları */}
-            <div className="grid grid-cols-7 gap-3 mb-4 px-4 pt-4">
-          {[
-            { id: 'toplam', icon: '📊', label: 'Toplam', count: stats.toplam, color: 'var(--txt3)' },
-            { id: 'hedef', icon: '✅', label: 'Hedef', count: stats.hedef, color: 'var(--green)' },
-            { id: 'stop', icon: '🔴', label: 'Stop', count: stats.stop, color: '#ef4444' },
-            { id: 'acik', icon: '📂', label: 'Açık', count: stats.acik, color: 'var(--blue)' },
-            { id: 'kar', icon: '🛡️', label: 'Kâr', count: stats.kar, color: '#2CC98A' },
-            { id: 'risk', icon: '⚠️', label: 'Risk', count: stats.risk, color: '#F59E0B' },
-            { id: 'basari', icon: '🎯', label: 'Başarı', count: basariOrani + '%', subcount: stats.hedef + '/' + stats.toplam, color: '#10b981', noFilter: true },
-          ].map(s => (
-            <button
-              key={s.id}
-              onClick={() => !s.noFilter && setActiveFilter(activeFilter === s.id ? null : s.id)}
-              className="p-3 rounded-lg transition-all"
-              style={{
-                background: activeFilter === s.id ? 'var(--bg4)' : 'var(--bg3)',
-                border: `2px solid ${activeFilter === s.id ? s.color : 'var(--bdr)'}`,
-              }}
-            >
-              <div className="text-2xl mb-1">{s.icon}</div>
-              <div className="text-3xl font-bold font-syne mb-1" style={{ color: s.color }}>{s.count}</div>
-              {s.subcount && <div className="text-[10px] text-t-txt3 mb-1">{s.subcount}</div>}
-              <div className="text-xs text-t-txt3">{s.label}</div>
-            </button>
-          ))}
-        </div>
-
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sinyalEntries.map(([key, rec]) => {
               // For closed signals use saved data; for open use live prices
@@ -343,11 +288,8 @@ export default function ArchiveTab() {
                   <div className="p-[12px_16px] flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
                     <div className="flex items-center gap-2">
                       <span className="font-syne text-[15px] font-extrabold text-t-txt">{rec.hisse}</span>
-                      {rec.kar_bolgesi_aktif === true && rec.durum === 'AÇIK' && (
-                        <span style={{fontSize:9, color:'#2CC98A', fontWeight:700, background:'rgba(44,201,138,0.15)', padding:'2px 5px', borderRadius:3, marginLeft:6}}>🛡️ KÂR BÖLGESİ</span>
-                      )}
-                      {rec.risk_bolgesi_aktif === true && rec.durum === 'AÇIK' && (
-                        <span style={{fontSize:9, color:'#F59E0B', fontWeight:700, background:'rgba(245,158,11,0.15)', padding:'2px 5px', borderRadius:3, marginLeft:4}}>⚠️ RİSK BÖLGESİ</span>
+                      {rec.trailing_aktif === true && rec.durum === 'AÇIK' && (
+                        <span style={{fontSize:9, color:'#2CC98A', fontWeight:700, background:'rgba(44,201,138,0.15)', padding:'2px 5px', borderRadius:3, marginLeft:6}}>🛡️ TRAILING</span>
                       )}
                       <span className="text-[10px] text-t-txt3">{rec.sektor}</span>
                       <span className="text-[9px] text-t-txt3 font-mono">{rec.tarih} {rec.saat}</span>
@@ -385,141 +327,65 @@ export default function ArchiveTab() {
                     </button>
                   </div>
 
-                  {overlayVisible && isHedef && (() => {
-                    const kapPnlTL = rec.hedef - rec.giris;
-                    const kapPnlPct = rec.giris > 0 ? (kapPnlTL / rec.giris) * 100 : 0;
-                    let kapSure = 0;
-                    try {
-                      const [d, m, y] = rec.tarih.split('.').map(Number);
-                      const giris = new Date(y, m - 1, d);
-                      const sonucDateStr = (rec.sonuc_tarih || '').split(' ')[0];
-                      const [d2, m2, y2] = sonucDateStr.split('.').map(Number);
-                      const son = new Date(y2, m2 - 1, d2);
-                      kapSure = Math.max(0, Math.floor((son.getTime() - giris.getTime()) / 86400000));
-                    } catch {}
-                    return (
+                  {overlayVisible && isHedef && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(10,25,20,0.94)',
+                      background: 'rgba(10,25,20,0.88)',
                       border: '2px solid rgba(44,201,138,0.5)',
                       backdropFilter: 'blur(6px)',
                       zIndex: 30,
-                      display: 'flex', flexDirection: 'column', padding: 0
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                     }}>
                       <button onClick={() => setGizliOverlay(prev => new Set(prev).add(key))}
                         style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
-                      <div style={{ textAlign: 'center', padding: '6px 0 5px', borderBottom: '1px solid rgba(44,201,138,0.3)', background: 'rgba(44,201,138,0.06)' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#2CC98A', letterSpacing: 2 }}>🏆 {rec.hisse}</span>
-                      </div>
-                      <div style={{ display: 'flex', padding: '8px 14px 12px', gap: 14, flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingRight: 12, borderRight: '1px solid rgba(44,201,138,0.3)' }}>
-                        <div style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>KAPANIŞ</div>
-                        <div style={{ fontSize: 12, color: '#2CC98A' }}>Giriş: <b>{rec.giris.toFixed(2)} ₺</b> · {rec.tarih}</div>
-                        <div style={{ fontSize: 12, color: '#2CC98A' }}>Hedef: <b>{rec.hedef.toFixed(2)} ₺</b> · {sonucTarih}</div>
-                        <div style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700, marginTop: 2 }}>+{kapPnlPct.toFixed(1)}% / +{kapPnlTL.toFixed(2)} ₺ · {kapSure} gün</div>
-                      </div>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 4 }}>
-                        <div style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>📊 GÜNCEL</div>
-                        <div style={{ fontSize: 12, color: '#2CC98A' }}>Fiyat: <b>{currentPrice.toFixed(2)} ₺</b></div>
-                        <div style={{ fontSize: 12, color: 'rgba(44,201,138,0.85)' }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</div>
-                        <div style={{ fontSize: 13, color: pnlPct >= 0 ? '#2CC98A' : '#E05252', fontWeight: 700, marginTop: 2 }}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}% / {pnlTL >= 0 ? '+' : ''}{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</div>
-                      </div>
-                      </div>
+                      <span style={{ fontSize: 28 }}>🏆</span>
+                      <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
+                      <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {rec.hedef.toFixed(2)} ₺ · {sonucTarih}</span>
+                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
-                    );
-                  })()}
+                  )}
 
-                  {overlayVisible && isStop && (() => {
-                    const kapPnlTL = rec.stop - rec.giris;
-                    const kapPnlPct = rec.giris > 0 ? (kapPnlTL / rec.giris) * 100 : 0;
-                    let kapSure = 0;
-                    try {
-                      const [d, m, y] = rec.tarih.split('.').map(Number);
-                      const giris = new Date(y, m - 1, d);
-                      const sonucDateStr = (rec.sonuc_tarih || '').split(' ')[0];
-                      const [d2, m2, y2] = sonucDateStr.split('.').map(Number);
-                      const son = new Date(y2, m2 - 1, d2);
-                      kapSure = Math.max(0, Math.floor((son.getTime() - giris.getTime()) / 86400000));
-                    } catch {}
-                    return (
+                  {overlayVisible && isStop && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(25,10,10,0.94)',
+                      background: 'rgba(25,10,10,0.88)',
                       border: '2px solid rgba(224,82,82,0.5)',
                       backdropFilter: 'blur(6px)',
                       zIndex: 30,
-                      display: 'flex', flexDirection: 'column', padding: 0
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                     }}>
                       <button onClick={() => setGizliOverlay(prev => new Set(prev).add(key))}
                         style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(224,82,82,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
-                      <div style={{ textAlign: 'center', padding: '6px 0 5px', borderBottom: '1px solid rgba(224,82,82,0.3)', background: 'rgba(224,82,82,0.06)' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#E05252', letterSpacing: 2 }}>💀 {rec.hisse}</span>
-                      </div>
-                      <div style={{ display: 'flex', padding: '8px 14px 12px', gap: 14, flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingRight: 12, borderRight: '1px solid rgba(224,82,82,0.3)' }}>
-                        <div style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>KAPANIŞ</div>
-                        <div style={{ fontSize: 12, color: '#E05252' }}>Giriş: <b>{rec.giris.toFixed(2)} ₺</b> · {rec.tarih}</div>
-                        <div style={{ fontSize: 12, color: '#E05252' }}>Stop: <b>{rec.stop.toFixed(2)} ₺</b> · {sonucTarih}</div>
-                        <div style={{ fontSize: 13, color: '#E05252', fontWeight: 700, marginTop: 2 }}>{kapPnlPct.toFixed(1)}% / {kapPnlTL.toFixed(2)} ₺ · {kapSure} gün</div>
-                      </div>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 4 }}>
-                        <div style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>📊 GÜNCEL</div>
-                        <div style={{ fontSize: 12, color: '#E05252' }}>Fiyat: <b>{currentPrice.toFixed(2)} ₺</b></div>
-                        <div style={{ fontSize: 12, color: 'rgba(224,82,82,0.85)' }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</div>
-                        <div style={{ fontSize: 13, color: pnlPct >= 0 ? '#2CC98A' : '#E05252', fontWeight: 700, marginTop: 2 }}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}% / {pnlTL >= 0 ? '+' : ''}{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</div>
-                      </div>
-                      </div>
+                      <span style={{ fontSize: 28 }}>💀</span>
+                      <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
+                      <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {rec.stop.toFixed(2)} ₺ · {sonucTarih}</span>
+                      <span style={{ fontSize: 13, color: '#E05252', fontWeight: 700 }}>{pnlPct.toFixed(1)}% | {pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
-                    );
-                  })()}
-                  {overlayVisible && isTrailing && (() => {
-                    const kapPnlTL = rec.stop - rec.giris;
-                    const kapPnlPct = rec.giris > 0 ? (kapPnlTL / rec.giris) * 100 : 0;
-                    let kapSure = 0;
-                    try {
-                      const [d, m, y] = rec.tarih.split('.').map(Number);
-                      const giris = new Date(y, m - 1, d);
-                      const sonucDateStr = (rec.sonuc_tarih || '').split(' ')[0];
-                      const [d2, m2, y2] = sonucDateStr.split('.').map(Number);
-                      const son = new Date(y2, m2 - 1, d2);
-                      kapSure = Math.max(0, Math.floor((son.getTime() - giris.getTime()) / 86400000));
-                    } catch {}
-                    return (
+                  )}
+                  {overlayVisible && isTrailing && (
                     <div style={{
                       position: 'absolute', inset: 0, borderRadius: 12,
-                      background: 'rgba(10,30,20,0.94)',
+                      background: 'rgba(10,30,20,0.88)',
                       border: '2px solid rgba(44,201,138,0.5)',
                       backdropFilter: 'blur(6px)',
                       zIndex: 30,
-                      display: 'flex', flexDirection: 'column', padding: 0
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                     }}>
                       <button onClick={() => setGizliOverlay(prev => new Set(prev).add(key))}
                         style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
-                      <div style={{ textAlign: 'center', padding: '6px 0 5px', borderBottom: '1px solid rgba(44,201,138,0.3)', background: 'rgba(44,201,138,0.06)' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#2CC98A', letterSpacing: 2 }}>🛡️ {rec.hisse}</span>
-                      </div>
-                      <div style={{ display: 'flex', padding: '8px 14px 12px', gap: 14, flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingRight: 12, borderRight: '1px solid rgba(44,201,138,0.3)' }}>
-                        <div style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>KAPANIŞ</div>
-                        <div style={{ fontSize: 11, color: 'rgba(44,201,138,0.9)', marginTop: -4 }}>Trailing — Kâr Korundu</div>
-                        <div style={{ fontSize: 12, color: '#2CC98A' }}>Giriş: <b>{rec.giris.toFixed(2)} ₺</b> · {rec.tarih}</div>
-                        <div style={{ fontSize: 12, color: '#2CC98A' }}>Stop: <b>{rec.stop.toFixed(2)} ₺</b> · {sonucTarih}</div>
-                        <div style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700, marginTop: 2 }}>{kapPnlPct >= 0 ? '+' : ''}{kapPnlPct.toFixed(1)}% / {kapPnlTL >= 0 ? '+' : ''}{kapPnlTL.toFixed(2)} ₺ · {kapSure} gün</div>
-                      </div>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 4 }}>
-                        <div style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>📊 GÜNCEL</div>
-                        <div style={{ fontSize: 12, color: '#2CC98A' }}>Fiyat: <b>{currentPrice.toFixed(2)} ₺</b></div>
-                        <div style={{ fontSize: 12, color: 'rgba(44,201,138,0.85)' }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</div>
-                        <div style={{ fontSize: 13, color: pnlPct >= 0 ? '#2CC98A' : '#E05252', fontWeight: 700, marginTop: 2 }}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}% / {pnlTL >= 0 ? '+' : ''}{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</div>
-                      </div>
-                      </div>
+                      <span style={{ fontSize: 28 }}>🛡️</span>
+                      <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{rec.hisse}</span>
+                      <span style={{ fontSize: 11, color: '#2CC98A', fontWeight: 600 }}>TRAILING STOP — Kâr Korundu</span>
+                      <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {rec.giris.toFixed(2)} ₺ · {rec.tarih}</span>
+                      <span style={{ fontSize: 11, color: '#2CC98A' }}>Kapanış: {(rec.sonuc_fiyat ?? rec.stop).toFixed(2)} ₺ · {sonucTarih}</span>
+                      <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{pnlPct.toFixed(1)}% | +{pnlTL.toFixed(2)} ₺ · {gunFarki} gün</span>
                     </div>
-                    );
-                  })()}
+                  )}
                 </div>
               );
             })}
-          </div>
           </div>
         )}
       </div>

@@ -19,6 +19,7 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
   // Merge live prices into data for display
   const enrichedData: typeof data = { ...data };
   tickers.forEach(t => {
+    // snapshot_close zaten AppContext'te set edildi, sadece live price güncelle
     if (livePrices[t] && livePrices[t] > 0) {
       // Preserve original snapshot price as snapshot_close
       enrichedData[t] = { ...data[t], close: livePrices[t], snapshot_close: data[t].close } as any;
@@ -33,8 +34,8 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
   const top10 = [...tickers].sort((a, b) => enrichedData[b].score - enrichedData[a].score).slice(0, 10);
   const confirmed = tickers.filter(t => enrichedData[t].confirmed && enrichedData[t].score >= 70).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
   const dikkatli = tickers.filter(t => (enrichedData[t] as any).dikkatli === true).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
-  const pending = tickers.filter(t => enrichedData[t].pending && !enrichedData[t].confirmed && enrichedData[t].score >= 60).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
-  const watchlist = tickers.filter(t => !enrichedData[t].confirmed && !enrichedData[t].pending && enrichedData[t].score >= 55).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
+  const pending = tickers.filter(t => enrichedData[t].pending && !enrichedData[t].confirmed && enrichedData[t].score >= 65).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
+  const watchlist = tickers.filter(t => !enrichedData[t].confirmed && !enrichedData[t].pending && enrichedData[t].score >= 60).sort((a, b) => enrichedData[b].score - enrichedData[a].score);
 
   const lists = { top10, confirmed, dikkatli, pending, watchlist };
   const current = lists[filter];

@@ -131,9 +131,7 @@ export default function PortfolioTab() {
     // For closed positions, use entry price or saved close; for open, use live price
     const isClosedHedef = s.hedefTuttu;
     const isClosedStop = s.stopOldu;
-    const liveFiyat = livePrices[s.ticker];
-    const hasLive = typeof liveFiyat === 'number' && liveFiyat > 0;
-    const currentPrice = isClosedHedef ? s.target : isClosedStop ? s.stop : (hasLive ? liveFiyat : s.price);
+    const currentPrice = isClosedHedef ? s.target : isClosedStop ? s.stop : (livePrices[s.ticker] ?? data[s.ticker]?.close ?? s.price);
     const pnlPct = s.price > 0 ? ((currentPrice - s.price) / s.price) * 100 : 0;
     const pnlTL = currentPrice - s.price;
     const range = s.target - s.stop;
@@ -150,17 +148,15 @@ export default function PortfolioTab() {
     if (s.hedefTuttu) {
       durum = "HEDEF TUTTU";
     } else if (s.stopOldu) {
-      durum = s.trailing_kapanis === true ? "TRAILING STOP" : "STOP LOSS";
-    } else if (hasLive && currentPrice >= s.target) {
+      durum = "STOP LOSS";
+    } else if (currentPrice >= s.target) {
       durum = "HEDEF TUTTU";
       s.hedefTuttu = true;
       s.kapanisTarih = new Date().toISOString();
       setTimeout(() => setPortfolios({ ...portfolios }), 0);
-    } else if (hasLive && currentPrice <= s.stop) {
-      const isTrail = s.trailing_aktif === true || s.trailing_kapanis === true || currentPrice >= s.price;
-      durum = isTrail ? "TRAILING STOP" : "STOP LOSS";
+    } else if (currentPrice <= s.stop) {
+      durum = "STOP LOSS";
       s.stopOldu = true;
-      s.trailing_kapanis = isTrail;
       s.kapanisTarih = new Date().toISOString();
       setTimeout(() => setPortfolios({ ...portfolios }), 0);
     }
@@ -330,8 +326,6 @@ export default function PortfolioTab() {
                               <div className="flex justify-between items-center mb-1.5">
                                 <div className="flex items-center gap-2">
                                   <span className="text-[14px] font-semibold text-t-txt">{s.ticker}</span>
-                                  {s.kar_bolgesi_aktif === true && c.durum === "AÇIK" && <span style={{fontSize:9, color:'#2CC98A', fontWeight:700, background:'rgba(44,201,138,0.15)', padding:'2px 5px', borderRadius:3}}>🛡️ KÂR BÖLGESİ</span>}
-                                  {s.risk_bolgesi_aktif === true && c.durum === "AÇIK" && <span style={{fontSize:9, color:'#F59E0B', fontWeight:700, background:'rgba(245,158,11,0.15)', padding:'2px 5px', borderRadius:3, marginLeft:4}}>⚠️ RİSK BÖLGESİ</span>}
                                   {c.gunFarki >= 15 && <span style={{fontSize:10, color:'#E05252', fontWeight:700}}>⏰ 15g+</span>}
                                   {c.gunFarki >= 10 && c.gunFarki < 15 && <span style={{fontSize:10, color:'#F97316', fontWeight:700}}>⏰ 10g</span>}
                                   {c.gunFarki >= 5 && c.gunFarki < 10 && <span style={{fontSize:10, color:'#F59E0B', fontWeight:700}}>⏰ 5g</span>}
@@ -341,7 +335,6 @@ export default function PortfolioTab() {
                               </div>
                               <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded mb-2 ${
                                 c.durum === "HEDEF TUTTU" ? "bg-[var(--green-bg)] text-t-green" :
-                                c.durum === "TRAILING STOP" ? "bg-[var(--green-bg)] text-t-green" :
                                 c.durum === "STOP LOSS" ? "bg-[var(--red-bg)] text-t-red" :
                                 "bg-[var(--blue-bg)] text-t-blue-l"
                               }`}>{c.durum}</span>
@@ -378,130 +371,43 @@ export default function PortfolioTab() {
                               <div className="text-[10px] text-t-txt3 mt-1.5">{c.gunFarki} gün · {c.durum === "AÇIK" ? "aktif" : c.durum === "HEDEF TUTTU" ? "başarılı" : "stop"}</div>
                               {s.note && <div className="text-[10px] text-t-txt3 mt-1 truncate">💬 {s.note}</div>}
 
-                              {c.durum === "HEDEF TUTTU" && !gizliOverlay.has(overlayKey) && (() => {
-                                const kapPnlTL = s.target - s.price;
-                                const kapPnlPct = s.price > 0 ? (kapPnlTL / s.price) * 100 : 0;
-                                let kapSure = c.gunFarki;
-                                try {
-                                  if (s.kapanisTarih) {
-                                    const sd = new Date(s.kapanisTarih);
-                                    const gd = new Date(s.date);
-                                    kapSure = Math.max(0, Math.floor((sd.getTime() - gd.getTime()) / 86400000));
-                                  }
-                                } catch {}
-                                const kapTarihStr = s.kapanisTarih ? new Date(s.kapanisTarih).toLocaleDateString('tr-TR') : (bugun + ' ' + borsaSaati2);
-                                return (
+                              {c.durum === "HEDEF TUTTU" && !gizliOverlay.has(overlayKey) && (
                                 <div style={{
                                   position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(10,25,20,0.94)',
+                                  background: 'rgba(10,25,20,0.88)',
                                   border: '2px solid rgba(44,201,138,0.5)',
                                   backdropFilter: 'blur(6px)',
                                   zIndex: 30,
-                                  display: 'flex', flexDirection: 'column', padding: 0
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                                 }}>
                                   <button onClick={(e) => { e.stopPropagation(); setGizliOverlay(prev => new Set(prev).add(overlayKey)); }}
-                                    style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 16, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
-                                  <div style={{ textAlign: 'center', padding: '5px 0 4px', borderBottom: '1px solid rgba(44,201,138,0.3)', background: 'rgba(44,201,138,0.06)' }}>
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#2CC98A', letterSpacing: 1.5 }}>🏆 {s.ticker}</span>
-                                  </div>
-                                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px', gap: 5 }}>
-                                    <div style={{ fontSize: 10, color: '#2CC98A', fontWeight: 700, letterSpacing: 0.8 }}>KAPANIŞ</div>
-                                    <div style={{ fontSize: 10.5, color: '#2CC98A' }}>Giriş: <b>{s.price.toFixed(2)} ₺</b> · {girisTarih}</div>
-                                    <div style={{ fontSize: 10.5, color: '#2CC98A' }}>Hedef: <b>{s.target.toFixed(2)} ₺</b> · {kapTarihStr}</div>
-                                    <div style={{ fontSize: 11, color: '#2CC98A', fontWeight: 700 }}>+{kapPnlPct.toFixed(1)}% / +{kapPnlTL.toFixed(2)} ₺ · {kapSure} gün</div>
-                                  </div>
-                                  <div style={{ borderTop: '1px solid rgba(44,201,138,0.3)', flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px', gap: 5 }}>
-                                    <div style={{ fontSize: 10, color: '#2CC98A', fontWeight: 700, letterSpacing: 0.8 }}>GÜNCEL</div>
-                                    <div style={{ fontSize: 10.5, color: '#2CC98A' }}>Fiyat: <b>{c.currentPrice.toFixed(2)} ₺</b></div>
-                                    <div style={{ fontSize: 10.5, color: 'rgba(44,201,138,0.85)' }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</div>
-                                    <div style={{ fontSize: 11, color: c.pnlPct >= 0 ? '#2CC98A' : '#E05252', fontWeight: 700 }}>{c.pnlPct >= 0 ? '+' : ''}{c.pnlPct.toFixed(1)}% / {c.pnlTL >= 0 ? '+' : ''}{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</div>
-                                  </div>
+                                    style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
+                                  <span style={{ fontSize: 28 }}>🏆</span>
+                                  <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700, letterSpacing: 1 }}>{s.ticker}</span>
+                                  <span style={{ fontSize: 12, color: '#2CC98A', fontWeight: 700 }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
+                                  <span style={{ fontSize: 11, color: '#2CC98A' }}>Hedef: {s.target.toFixed(2)} ₺ · {bugun} {borsaSaati2}</span>
+                                  <span style={{ fontSize: 13, color: '#2CC98A', fontWeight: 700 }}>+{c.pnlPct.toFixed(1)}% | +{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
                                 </div>
-                                );
-                              })()}
+                              )}
 
-                              {c.durum === "TRAILING STOP" && !gizliOverlay.has(overlayKey) && (() => {
-                                const kapPnlTL = s.stop - s.price;
-                                const kapPnlPct = s.price > 0 ? (kapPnlTL / s.price) * 100 : 0;
-                                let kapSure = c.gunFarki;
-                                try {
-                                  if (s.kapanisTarih) {
-                                    const sd = new Date(s.kapanisTarih);
-                                    const gd = new Date(s.date);
-                                    kapSure = Math.max(0, Math.floor((sd.getTime() - gd.getTime()) / 86400000));
-                                  }
-                                } catch {}
-                                const kapTarihStr = s.kapanisTarih ? new Date(s.kapanisTarih).toLocaleDateString('tr-TR') : (bugun + ' ' + borsaSaati2);
-                                return (
+                              {c.durum === "STOP LOSS" && !gizliOverlay.has(overlayKey) && (
                                 <div style={{
                                   position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(10,30,20,0.94)',
-                                  border: '2px solid rgba(44,201,138,0.5)',
-                                  backdropFilter: 'blur(6px)',
-                                  zIndex: 30,
-                                  display: 'flex', flexDirection: 'column', padding: 0
-                                }}>
-                                  <button onClick={() => setGizliOverlay(prev => new Set(prev).add(overlayKey))}
-                                    style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: 'rgba(44,201,138,0.6)', fontSize: 16, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
-                                  <div style={{ textAlign: 'center', padding: '5px 0 4px', borderBottom: '1px solid rgba(44,201,138,0.3)', background: 'rgba(44,201,138,0.06)' }}>
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#2CC98A', letterSpacing: 1.5 }}>🛡️ {s.ticker}</span>
-                                  </div>
-                                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px', gap: 5 }}>
-                                    <div style={{ fontSize: 10, color: '#2CC98A', fontWeight: 700, letterSpacing: 0.8 }}>KAPANIŞ — Trailing</div>
-                                    <div style={{ fontSize: 10.5, color: '#2CC98A' }}>Giriş: <b>{s.price.toFixed(2)} ₺</b> · {girisTarih}</div>
-                                    <div style={{ fontSize: 10.5, color: '#2CC98A' }}>Stop: <b>{s.stop.toFixed(2)} ₺</b> · {kapTarihStr}</div>
-                                    <div style={{ fontSize: 11, color: '#2CC98A', fontWeight: 700 }}>{kapPnlPct >= 0 ? '+' : ''}{kapPnlPct.toFixed(1)}% / {kapPnlTL >= 0 ? '+' : ''}{kapPnlTL.toFixed(2)} ₺ · {kapSure} gün</div>
-                                  </div>
-                                  <div style={{ borderTop: '1px solid rgba(44,201,138,0.3)', flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px', gap: 5 }}>
-                                    <div style={{ fontSize: 10, color: '#2CC98A', fontWeight: 700, letterSpacing: 0.8 }}>GÜNCEL</div>
-                                    <div style={{ fontSize: 10.5, color: '#2CC98A' }}>Fiyat: <b>{c.currentPrice.toFixed(2)} ₺</b></div>
-                                    <div style={{ fontSize: 10.5, color: 'rgba(44,201,138,0.85)' }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</div>
-                                    <div style={{ fontSize: 11, color: c.pnlPct >= 0 ? '#2CC98A' : '#E05252', fontWeight: 700 }}>{c.pnlPct >= 0 ? '+' : ''}{c.pnlPct.toFixed(1)}% / {c.pnlTL >= 0 ? '+' : ''}{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</div>
-                                  </div>
-                                </div>
-                                );
-                              })()}
-                              {c.durum === "STOP LOSS" && !gizliOverlay.has(overlayKey) && (() => {
-                                const kapPnlTL = s.stop - s.price;
-                                const kapPnlPct = s.price > 0 ? (kapPnlTL / s.price) * 100 : 0;
-                                let kapSure = c.gunFarki;
-                                try {
-                                  if (s.kapanisTarih) {
-                                    const sd = new Date(s.kapanisTarih);
-                                    const gd = new Date(s.date);
-                                    kapSure = Math.max(0, Math.floor((sd.getTime() - gd.getTime()) / 86400000));
-                                  }
-                                } catch {}
-                                const kapTarihStr = s.kapanisTarih ? new Date(s.kapanisTarih).toLocaleDateString('tr-TR') : (bugun + ' ' + borsaSaati2);
-                                return (
-                                <div style={{
-                                  position: 'absolute', inset: 0, borderRadius: 12,
-                                  background: 'rgba(25,10,10,0.94)',
+                                  background: 'rgba(25,10,10,0.88)',
                                   border: '2px solid rgba(224,82,82,0.5)',
                                   backdropFilter: 'blur(6px)',
                                   zIndex: 30,
-                                  display: 'flex', flexDirection: 'column', padding: 0
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
                                 }}>
                                   <button onClick={(e) => { e.stopPropagation(); setGizliOverlay(prev => new Set(prev).add(overlayKey)); }}
-                                    style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', color: 'rgba(224,82,82,0.6)', fontSize: 16, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
-                                  <div style={{ textAlign: 'center', padding: '5px 0 4px', borderBottom: '1px solid rgba(224,82,82,0.3)', background: 'rgba(224,82,82,0.06)' }}>
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#E05252', letterSpacing: 1.5 }}>💀 {s.ticker}</span>
-                                  </div>
-                                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px', gap: 5 }}>
-                                    <div style={{ fontSize: 10, color: '#E05252', fontWeight: 700, letterSpacing: 0.8 }}>KAPANIŞ</div>
-                                    <div style={{ fontSize: 10.5, color: '#E05252' }}>Giriş: <b>{s.price.toFixed(2)} ₺</b> · {girisTarih}</div>
-                                    <div style={{ fontSize: 10.5, color: '#E05252' }}>Stop: <b>{s.stop.toFixed(2)} ₺</b> · {kapTarihStr}</div>
-                                    <div style={{ fontSize: 11, color: '#E05252', fontWeight: 700 }}>{kapPnlPct.toFixed(1)}% / {kapPnlTL.toFixed(2)} ₺ · {kapSure} gün</div>
-                                  </div>
-                                  <div style={{ borderTop: '1px solid rgba(224,82,82,0.3)', flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px', gap: 5 }}>
-                                    <div style={{ fontSize: 10, color: '#E05252', fontWeight: 700, letterSpacing: 0.8 }}>GÜNCEL</div>
-                                    <div style={{ fontSize: 10.5, color: '#E05252' }}>Fiyat: <b>{c.currentPrice.toFixed(2)} ₺</b></div>
-                                    <div style={{ fontSize: 10.5, color: 'rgba(224,82,82,0.85)' }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</div>
-                                    <div style={{ fontSize: 11, color: c.pnlPct >= 0 ? '#2CC98A' : '#E05252', fontWeight: 700 }}>{c.pnlPct >= 0 ? '+' : ''}{c.pnlPct.toFixed(1)}% / {c.pnlTL >= 0 ? '+' : ''}{c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</div>
-                                  </div>
+                                    style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(224,82,82,0.6)', fontSize: 18, cursor: 'pointer', zIndex: 31, lineHeight: 1 }}>✕</button>
+                                  <span style={{ fontSize: 28 }}>💀</span>
+                                  <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700, letterSpacing: 1 }}>{s.ticker}</span>
+                                  <span style={{ fontSize: 12, color: '#E05252', fontWeight: 700 }}>Giriş: {s.price.toFixed(2)} ₺ · {girisTarih}</span>
+                                  <span style={{ fontSize: 11, color: '#E05252' }}>Stop: {s.stop.toFixed(2)} ₺ · {bugun} {borsaSaati2}</span>
+                                  <span style={{ fontSize: 13, color: '#E05252', fontWeight: 700 }}>{c.pnlPct.toFixed(1)}% | {c.pnlTL.toFixed(2)} ₺ · {c.gunFarki} gün</span>
                                 </div>
-                                );
-                              })()}
+                              )}
                             </div>
                           );
                         })}
