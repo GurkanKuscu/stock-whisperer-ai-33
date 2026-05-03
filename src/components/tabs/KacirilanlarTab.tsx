@@ -24,6 +24,7 @@ export default function KacirilanlarTab() {
   const [raporlar, setRaporlar] = useState<Rapor[]>([]);
   const [acikRapor, setAcikRapor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<"teknik"|"degisim"|"tarih">("teknik");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,9 +60,11 @@ export default function KacirilanlarTab() {
     );
   }
 
-  const sortedFirsatlar = Object.entries(firsatlar).sort(
-    ([, a], [, b]) => (b.teknik_skor || 0) - (a.teknik_skor || 0)
-  );
+  const sortedFirsatlar = Object.entries(firsatlar).sort(([, a], [, b]) => {
+    if (sortBy === "degisim") return (b.guncel_pct || 0) - (a.guncel_pct || 0);
+    if (sortBy === "tarih") return (b.tarih || "").localeCompare(a.tarih || "");
+    return (b.teknik_skor || 0) - (a.teknik_skor || 0);
+  });
 
   const getPctColor = (pct: number) => {
     if (pct >= 5) return "#E05252";
@@ -86,6 +89,17 @@ export default function KacirilanlarTab() {
         <div className="ml-auto">
           <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
         </div>
+      </div>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[10px] text-t-txt3">Sırala:</span>
+        {(["teknik","degisim","tarih"] as const).map(s => (
+          <button key={s} onClick={() => setSortBy(s)}
+            className="text-[10px] px-3 py-1 rounded cursor-pointer"
+            style={{border:`1px solid ${sortBy===s?"#60a5fa":"var(--bdr)"}`,background:sortBy===s?"rgba(59,130,246,.1)":"transparent",color:sortBy===s?"#60a5fa":"var(--t-txt3)"}}>
+            {s==="teknik"?"📊 Teknik":s==="degisim"?"📈 Değişim":"📅 Tarih"}
+          </button>
+        ))}
+
       </div>
 
       {/* Haftalık Raporlar */}
@@ -132,8 +146,8 @@ export default function KacirilanlarTab() {
                 <th className="px-3 py-3 font-semibold">Karar</th>
                 <th className="px-3 py-3 font-semibold text-right">Giriş₺</th>
                 <th className="px-3 py-3 font-semibold text-right">Güncel₺</th>
-                <th className="px-3 py-3 font-semibold text-right">Değişim</th>
-                <th className="px-3 py-3 font-semibold">Tarih</th>
+                <th className="px-3 py-3 font-semibold text-right cursor-pointer" style={{color:sortBy==="degisim"?"#60a5fa":""}} onClick={()=>setSortBy("degisim")}>Değişim {sortBy==="degisim"?"▼":""}</th>
+                <th className="px-3 py-3 font-semibold cursor-pointer" style={{color:sortBy==="tarih"?"#60a5fa":""}} onClick={()=>setSortBy("tarih")}>Tarih {sortBy==="tarih"?"▼":""}</th>
               </tr>
             </thead>
             <tbody>

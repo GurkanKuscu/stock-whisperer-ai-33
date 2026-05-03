@@ -10,7 +10,8 @@ function getMarketStats(data: SnapshotData) {
   const pending = tickers.filter(t => data[t].pending && data[t].score >= 60).length;
   const bullish = tickers.filter(t => data[t].score >= 60).length;
   const breadth = total > 0 ? Math.round((bullish / total) * 100) : 0;
-  const champions = tickers.filter(t => data[t].sector_champion).sort((a, b) => data[b].score - data[a].score).slice(0, 5);
+  const NEG_KAP = ["devre_kesici","iceriden_satis","sermaye_artirimi","kritik_negatif"];
+  const champions = tickers.filter(t => data[t].sector_champion && !data[t].devre_kesici && !NEG_KAP.includes(data[t].kap_kategori ?? "")).sort((a, b) => data[b].score - data[a].score).slice(0, 5);
 
   let sentiment: "bullish" | "neutral" | "bearish" = "neutral";
   let sentimentLabel = "⚠️ Kısmi Pozitif";

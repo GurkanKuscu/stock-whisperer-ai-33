@@ -1,11 +1,23 @@
-import { useState } from "react";
+
 import { useAppData } from "@/context/AppContext";
+import { fetchSinyalArsiv } from "@/services/api";
+import { useState, useEffect } from "react";
 import AddToPortfolioModal from "@/components/AddToPortfolioModal";
 
 const TEMEL_FILTRELER = ['TÜMÜ', 'TEMEL GÜÇLÜ', 'TEMEL ORTA', 'TEMEL ZAYIF', 'TEMEL KÖTÜ'];
 
 export default function FundamentalTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
+  const [arsiv, setArsiv] = useState<Record<string, any>>({});
+  useEffect(() => {
+    fetchSinyalArsiv().then(setArsiv).catch(() => {});
+  }, []);
+  const arsivByHisse: Record<string, any> = {};
+  Object.values(arsiv).forEach((v: any) => {
+    if (v.durum === "AÇIK" && (!arsivByHisse[v.hisse] || v.tarih > arsivByHisse[v.hisse].tarih)) {
+      arsivByHisse[v.hisse] = v;
+    }
+  });
   const [temelFiltre, setTemelFiltre] = useState('TÜMÜ');
   const [addTicker, setAddTicker] = useState<string | null>(null);
 
@@ -57,7 +69,7 @@ export default function FundamentalTab({ onTickerClick }: { onTickerClick?: (tic
           <table className="w-full text-[12px] border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-t-bg3">
-                {["Hisse", "Skor", "T.Puan", "F/K", "PD/DD", "FD/FAVÖK", "ROE", "Sektör", "Karar", ""].map((h, i) => (
+                {["Hisse", "Skor", "T.Puan", "Tespit", "Değişim", "F/K", "PD/DD", "FD/FAVÖK", "ROE", "Sektör", "Karar", ""].map((h, i) => (
                   <th key={i} className="p-[10px_14px] text-left text-[10px] text-t-txt3 font-semibold uppercase tracking-[.6px]"
                     style={{ borderBottom: "1px solid var(--bdr)" }}>
                     {h}
@@ -80,6 +92,25 @@ export default function FundamentalTab({ onTickerClick }: { onTickerClick?: (tic
                       <span className={`font-mono font-bold ${(s.temel_puan ?? 0) >= 60 ? "text-t-green" : (s.temel_puan ?? 0) >= 30 ? "text-t-warn" : "text-t-red"}`}>
                         {s.temel_puan ?? "—"}
                       </span>
+                    </td>
+                    <td className="p-[10px_14px]">
+                      {arsivByHisse[ticker] ? (
+                        <div>
+                          <div className="font-mono text-[11px] text-t-txt">{arsivByHisse[ticker].giris?.toFixed(2)} ₺</div>
+                          <div className="text-[9px] text-t-txt3">{arsivByHisse[ticker].tarih} {arsivByHisse[ticker].saat}</div>
+                        </div>
+                      ) : <span className="text-t-txt3">—</span>}
+                    </td>
+                    <td className="p-[10px_14px]">
+                      {(() => {
+                        const av = arsivByHisse[ticker];
+                        if (!av || !av.giris) return <span className="text-t-txt3">—</span>;
+                        const giris = av.giris;
+                        const guncel = s.close ?? s.price ?? giris;
+                        if (!guncel || guncel === giris) return <span className="text-t-txt3">—</span>;
+                        const pct = ((guncel - giris) / giris * 100);
+                        return <span className={"font-mono font-bold text-[11px] " + (pct >= 0 ? "text-t-green" : "text-t-red")}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}%</span>;
+                      })()}
                     </td>
                     <td className="p-[10px_14px]">
                       <span className={`font-mono ${s.fk != null ? (s.fk < 15 ? "text-t-green" : s.fk > 25 ? "text-t-red" : "text-t-warn") : "text-t-txt3"}`}>

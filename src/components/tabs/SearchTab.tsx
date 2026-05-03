@@ -5,8 +5,23 @@ import { fetchFinansAnaliz } from "@/services/api";
 import { usePrices } from "@/hooks/usePrices";
 import LiveBadge from "@/components/LiveBadge";
 
+
+function AnalizModal({ analiz, ticker, onClose }: any) {
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
+      <div style={{background:"#1a1a2e",border:"1px solid #333",borderRadius:16,maxWidth:680,width:"100%",maxHeight:"85vh",overflow:"hidden",display:"flex",flexDirection:"column"}} onClick={(e:any)=>e.stopPropagation()}>
+        <div style={{padding:"16px 20px",borderBottom:"1px solid #333",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{fontWeight:700,fontSize:15,color:"#fff"}}>AI Finans Analizi - {ticker}</span>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#999",fontSize:20,cursor:"pointer"}}>x</button>
+        </div>
+        <div style={{padding:20,overflow:"auto",whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.7,color:"#ccc"}}>{analiz}</div>
+      </div>
+    </div>
+  );
+}
 export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: string) => void }) {
   const { data } = useAppData();
+  const [analizModal, setAnalizModal] = useState<any>(null);
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const [analizData, setAnalizData] = useState<Record<string, any>>({});
@@ -47,6 +62,7 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
   };
 
   return (
+    <>{analizModal && <AnalizModal analiz={analizModal.analiz} ticker={analizModal.ticker} onClose={()=>setAnalizModal(null)} />}
     <div>
       <div className="flex items-center gap-3 mb-[18px] mt-8">
         <div className="w-[34px] h-[34px] rounded-md flex items-center justify-center text-[15px]"
@@ -186,8 +202,8 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
                 <div className="flex items-center gap-3">
                   <span className="text-[11px] text-t-txt3">Bu hisse için henüz AI analizi yok</span>
                   <button
-                    onClick={() => {
-                      window.open(`http://207.154.212.100:8080/api/finans-analiz?ticker=${result.ticker}`, "_blank");
+                    onClick={(e) => {
+                      const btn=e.currentTarget as HTMLButtonElement;btn.textContent="⏳ Üretiliyor...";btn.disabled=true;const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),30000);fetch("http://207.154.212.100:8080/api/finans-analiz/uret?ticker="+result.ticker,{signal:ctrl.signal}).then(r=>r.json()).then(d=>{clearTimeout(tid);btn.textContent="🤖 Analiz Üret";btn.disabled=false;if(d.analiz){setAnalizModal({analiz:d.analiz,ticker:result.ticker});}else{alert("Hata: "+JSON.stringify(d));}}).catch((err)=>{clearTimeout(tid);btn.textContent="🤖 Analiz Üret";btn.disabled=false;console.error(err);});
                     }}
                     className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:opacity-90"
                     style={{ background: "linear-gradient(135deg, #8B5CF6, #6D28D9)", color: "#fff" }}>
@@ -213,6 +229,7 @@ export default function SearchTab({ onTickerClick }: { onTickerClick?: (ticker: 
         </div>
       )}
     </div>
+    </>
   );
 }
 

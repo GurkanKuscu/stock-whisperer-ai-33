@@ -132,6 +132,13 @@ export default function ArchiveTab() {
       })
     : allRecords;
 
+  const bugun = new Date();
+  const bugunStr = String(bugun.getDate()).padStart(2,'0') + '.' + String(bugun.getMonth()+1).padStart(2,'0') + '.' + bugun.getFullYear();
+  const bugunYildizlari = new Set(
+    Object.values(sinyalArsiv)
+      .filter(r => r.tarih === bugunStr && (r as any).skor >= 65)
+      .map(r => r.hisse)
+  );
   const openSinyalTickers = Object.values(sinyalArsiv)
     .filter(r => r.durum !== 'HEDEF TUTTU' && r.durum !== 'STOP LOSS' && r.durum !== 'TRAILING STOP')
     .map(r => r.hisse);
@@ -343,6 +350,7 @@ export default function ArchiveTab() {
                   <div className="p-[12px_16px] flex items-center justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--bdr)" }}>
                     <div className="flex items-center gap-2">
                       <span className="font-syne text-[15px] font-extrabold text-t-txt">{rec.hisse}</span>
+                      {bugunYildizlari.has(rec.hisse) && <span style={{fontSize:11, color:'#FBBF24', marginLeft:2}} title='Gunun Yildizi'>⭐</span>}
                       {rec.kar_bolgesi_aktif === true && rec.durum === 'AÇIK' && (
                         <span style={{fontSize:9, color:'#2CC98A', fontWeight:700, background:'rgba(44,201,138,0.15)', padding:'2px 5px', borderRadius:3, marginLeft:6}}>🛡️ KÂR BÖLGESİ</span>
                       )}

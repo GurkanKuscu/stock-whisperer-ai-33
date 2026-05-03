@@ -9,6 +9,8 @@ const bolumler = [
   { id: "cikis", ikon: "🚪", baslik: "Çıkış Kuralları" },
   { id: "rejim", ikon: "📈", baslik: "Piyasa Rejimi" },
   { id: "rutin", ikon: "📅", baslik: "Haftalık Rutin" },
+  { id: "yildizlar", ikon: "⭐", baslik: "Günün Yıldızları" },
+  { id: "strateji", ikon: "🎯", baslik: "Strateji Çerçevesi" },
 ];
 
 function Badge({ children, color }: { children: React.ReactNode; color: string }) {
@@ -220,6 +222,109 @@ function HaftalikRutin() {
   );
 }
 
+
+function GunYildizlariRehber() {
+  return (
+    <div style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.7 }}>
+      <h3 style={{ color: "#f1f5f9", fontSize: 15, fontWeight: 700, marginBottom: 12 }}>⭐ Günün Yıldızları Nedir?</h3>
+      <p style={{ marginBottom: 12 }}>
+        Günün Yıldızları, her günkü taramada <strong style={{ color: "#cbd5e1" }}>confirmed (onaylı)</strong> olan hisseleri
+        günlük bazda gruplandırarak takip etmenizi sağlar. Arşiv sekmesindeki verilerle beslenir.
+      </p>
+      <h4 style={{ color: "#f1f5f9", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>Nasıl Hesaplanır?</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 6 }}>🔄 Sistem günde 4 kez tarama yapar (10:30 / 12:00 / 15:00 / 17:30)</li>
+        <li style={{ marginBottom: 6 }}>✅ <strong style={{ color: "#2CC98A" }}>Confirmed</strong> hisse = 2 ardışık taramada 65+ puan alan hisse</li>
+        <li style={{ marginBottom: 6 }}>📊 Sadece <strong style={{ color: "#cbd5e1" }}>65 puan ve üzeri</strong> hisseler gösterilir (65 altı elenir)</li>
+        <li style={{ marginBottom: 6 }}>📅 Her gün kendi grubu altında listelenir, en yeni gün üstte</li>
+      </ul>
+      <h4 style={{ color: "#f1f5f9", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>Kart Üzerinde Ne Görürsünüz?</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 6 }}>💰 <strong style={{ color: "#cbd5e1" }}>Giriş fiyatı</strong> — sinyal üretildiği andaki fiyat</li>
+        <li style={{ marginBottom: 6 }}>▲▼ <strong style={{ color: "#cbd5e1" }}>Güncel fiyat ve değişim oranı</strong> — anlık takip</li>
+        <li style={{ marginBottom: 6 }}>🎯 <strong style={{ color: "#2CC98A" }}>Hedef</strong> ve <strong style={{ color: "#E05252" }}>Stop</strong> seviyeleri</li>
+        <li style={{ marginBottom: 6 }}>✅ Hedef tutunca veya ❌ Stop olunca overlay görünür, takip devam eder</li>
+      </ul>
+      <h4 style={{ color: "#f1f5f9", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>Giriş Kararı Nasıl Verilir?</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 6 }}>🏆 <strong style={{ color: "#F59E0B" }}>80+ puan</strong> — en güçlü sinyal, öncelikli değerlendir</li>
+        <li style={{ marginBottom: 6 }}>✅ <strong style={{ color: "#2CC98A" }}>75-79 puan</strong> — güçlü, temel 30+ ise değerlendir</li>
+        <li style={{ marginBottom: 6 }}>⚠️ <strong style={{ color: "#F59E0B" }}>65-74 puan</strong> — dikkatli değerlendir, temel 50+ şart</li>
+        <li style={{ marginBottom: 6 }}>🚫 Devre kesici varsa — o gün girme (KRONT dersi)</li>
+        <li style={{ marginBottom: 6 }}>🚫 İçeriden satış / iflas / sermaye artırımı haberi varsa — geç (ECILC dersi)</li>
+        <li style={{ marginBottom: 6 }}>✅ Temettü haberi GEÇ sebebi değil (AYGAZ dersi)</li>
+      </ul>
+    </div>
+  );
+}
+
+
+function StratejiCercevesi() {
+  return (
+    <div style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.7 }}>
+      <h3 style={{ color: "#f1f5f9", fontSize: 15, fontWeight: 700, marginBottom: 4 }}>🎯 Giriş Karar Çerçevesi</h3>
+      <p style={{ fontSize: 11, color: "#475569", marginBottom: 16 }}>Son güncelleme: 24 Nisan 2026 · 75 sinyal, 11 gün gerçek veri</p>
+
+      <h4 style={{ color: "#2CC98A", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>✅ GİR — 80+ Puan</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 4 }}>Skor ≥ 80 + Confirmed + Temel RED değil</li>
+        <li style={{ marginBottom: 4 }}>Devre kesici YOK + İçeriden satış / iflas haberi YOK</li>
+        <li>Pozisyon: Normal boyut</li>
+      </ul>
+
+      <h4 style={{ color: "#2CC98A", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>✅ GİR — 75-79 Puan</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 4 }}>Skor 75-79 + Confirmed + Temel ≥ 30p</li>
+        <li>Devre kesici YOK + Kötü haber YOK</li>
+      </ul>
+
+      <h4 style={{ color: "#F59E0B", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>⚠️ DİKKATLİ GİR — 65-74 Puan</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 4 }}>Skor 65-74 + Confirmed + Temel ≥ 50p (şart)</li>
+        <li style={{ marginBottom: 4 }}>Pozisyon: Küçük boyut (yarı)</li>
+        <li>Uyarı: Backtest %34-52 başarı — en riskli segment</li>
+      </ul>
+
+      <h4 style={{ color: "#E05252", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>❌ GEÇ — Kesin Reddetme</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 4 }}>🚫 Devre kesici var → <b style={{color:"#cbd5e1"}}>KRONT dersi: -8.7%</b></li>
+        <li style={{ marginBottom: 4 }}>🚫 İçeriden satış bildirimi → <b style={{color:"#cbd5e1"}}>ECILC dersi: -29.7%</b></li>
+        <li style={{ marginBottom: 4 }}>🚫 Sermaye artırımı → seyreltme riski</li>
+        <li style={{ marginBottom: 4 }}>🚫 İflas / icra / haciz haberi → KAP kritik haber</li>
+        <li style={{ marginBottom: 4 }}>🚫 FAVÖK düşüşü + analist SAT → <b style={{color:"#cbd5e1"}}>CATES dersi</b></li>
+        <li>🚫 Temel tier RED → finansal sorun</li>
+      </ul>
+
+      <h4 style={{ color: "#2CC98A", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>✅ GEÇ Sayılmayan Haberler</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 4 }}>✅ Temettü açıklaması → GİR <b style={{color:"#cbd5e1"}}>(AYGAZ dersi: +%31 kaçırdık)</b></li>
+        <li style={{ marginBottom: 4 }}>✅ Kurumsal alım (Merrill Lynch vb.) → pozitif sinyal</li>
+        <li style={{ marginBottom: 4 }}>✅ Sözleşme / ortaklık haberi → büyüme işareti</li>
+        <li>✅ Genel kurul (rutin) → engel değil</li>
+      </ul>
+
+      <h4 style={{ color: "#f1f5f9", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>📋 Sabah Rutini (10:35 — 5 dakika)</h4>
+      <ol style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 4 }}>Günün Yıldızları sekmesini aç</li>
+        <li style={{ marginBottom: 4 }}>80+ skor var mı? → Önce ona bak</li>
+        <li style={{ marginBottom: 4 }}>RİSK BÖLGESİ badge var mı? → Varsa geç</li>
+        <li style={{ marginBottom: 4 }}>KAP haberi var mı? → GEÇ kriterlerine bak</li>
+        <li style={{ marginBottom: 4 }}>Finans analizi GİRME + kötü haber → kesin geç</li>
+        <li>Karar ver, log'a yaz</li>
+      </ol>
+
+      <h4 style={{ color: "#f1f5f9", fontSize: 13, fontWeight: 700, marginBottom: 8, marginTop: 16 }}>🧠 Altın Kurallar</h4>
+      <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
+        <li style={{ marginBottom: 6 }}>İlk 30 işlem boyunca parametreye dokunma</li>
+        <li style={{ marginBottom: 6 }}>Aylık -%5 → sistemi durdur, 2 hafta paper'a dön</li>
+        <li style={{ marginBottom: 6 }}>3 ardışık stop → pozisyon boyutunu yarıya indir</li>
+        <li style={{ marginBottom: 6 }}>Günlük -%2 → bugünkü pozisyonları kapat</li>
+        <li>"Ben daha iyi bilirim" hissine karşı dikkatli ol — AYGAZ dersi</li>
+      </ul>
+    </div>
+  );
+}
+
 const sections: Record<string, () => JSX.Element> = {
   sistem: SistemNedir,
   sinyal: SinyalKarti,
@@ -229,6 +334,8 @@ const sections: Record<string, () => JSX.Element> = {
   cikis: CikisKurallari,
   rejim: PiyasaRejimi,
   rutin: HaftalikRutin,
+  yildizlar: GunYildizlariRehber,
+  strateji: StratejiCercevesi,
 };
 
 export default function RehberTab() {

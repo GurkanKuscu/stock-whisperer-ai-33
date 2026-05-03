@@ -8,6 +8,7 @@ import ArchiveTab from "@/components/tabs/ArchiveTab";
 import PortfolioTab from "@/components/tabs/PortfolioTab";
 import FinansAnaliziTab from "@/components/tabs/FinansAnaliziTab";
 import SearchTab from "@/components/tabs/SearchTab";
+import BacktestTab from "@/components/tabs/BacktestTab";
 import FundamentalTab from "@/components/tabs/FundamentalTab";
 import KacirilanlarTab from "@/components/tabs/KacirilanlarTab";
 import RehberTab from "@/components/tabs/RehberTab";
@@ -71,6 +72,7 @@ function Dashboard() {
               {activeTab === "temel" && <FundamentalTab onTickerClick={handleTickerClick} />}
               {activeTab === "arsiv" && <ArchiveTab />}
               {activeTab === "portfolio" && <PortfolioTab />}
+              {activeTab === "backtest" && <BacktestTab />}
               
             </div>
           )}

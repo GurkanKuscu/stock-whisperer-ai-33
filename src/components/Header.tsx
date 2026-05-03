@@ -9,6 +9,7 @@ const TABS = [
   { id: "ara", icon: "🔍", label: "Hisse Ara" },
   { id: "portfolio", icon: "📈", label: "Portföy" },
   { id: "arsiv", icon: "📋", label: "Arşiv" },
+  { id: "backtest", icon: "🧪", label: "Backtest" },
   { id: "kacirilanlar", icon: "🎯", label: "Kaçırılanlar" },
   { id: "rehber", icon: "📖", label: "Rehber" },
 ];

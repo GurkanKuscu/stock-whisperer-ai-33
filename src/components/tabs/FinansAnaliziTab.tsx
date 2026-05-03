@@ -113,6 +113,11 @@ export default function FinansAnaliziTab() {
 
     // AI karar önerisini analiz metninden parse et
     const aiKarar = (() => {
+      const karar = (item as any).karar ?? "";
+      if (karar.includes("DİKKATLİ GİR")) return { text: "⚠️ DİKKATLİ GİR", color: "#F59E0B", bg: "#2e2a0d" };
+      if (karar === "GİR") return { text: "🟢 GİR", color: "#2CC98A", bg: "#0d2e1f" };
+      if (karar === "BEKLE") return { text: "⚠️ BEKLE", color: "#F59E0B", bg: "#2e2a0d" };
+      if (karar === "GİRME" || karar === "GEÇ") return { text: "❌ GEÇ", color: "#E05252", bg: "#2e0d0d" };
       const txt = item.analiz ?? "";
       if (!txt) return { text: "❓ BELİRSİZ", color: "#94a3b8", bg: "#1e2535" };
       const lines = txt.split("\n");
@@ -121,12 +126,14 @@ export default function FinansAnaliziTab() {
         // Başlık satırlarında sonraki satırı kontrol et
         if (line.includes("### ") || line.includes("## 5")) {
           const next = (lines[i + 1] || "").toUpperCase();
-          if (next.includes("GİR") && !next.includes("GİRME")) return { text: "🟢 GİR", color: "#2CC98A", bg: "#0d2e1f" };
+          if (next.includes("DİKKATLİ GİR")) return { text: "⚠️ DİKKATLİ GİR", color: "#F59E0B", bg: "#2e2a0d" };
+          if (next.includes("GİR") && !next.includes("GİRME") && !next.includes("DİKKATLİ")) return { text: "🟢 GİR", color: "#2CC98A", bg: "#0d2e1f" };
           if (next.includes("BEKLE")) return { text: "⚠️ BEKLE", color: "#F59E0B", bg: "#2e2a0d" };
           if (next.includes("GEÇ") || next.includes("GİRME")) return { text: "❌ GEÇ", color: "#E05252", bg: "#2e0d0d" };
         }
         // **bold** anahtar kelimeler
-        if (line.includes("**GİR") && !line.includes("GİRME")) return { text: "🟢 GİR", color: "#2CC98A", bg: "#0d2e1f" };
+        if (line.includes("**DİKKATLİ GİR")) return { text: "⚠️ DİKKATLİ GİR", color: "#F59E0B", bg: "#2e2a0d" };
+        if (line.includes("**GİR") && !line.includes("GİRME") && !line.includes("DİKKATLİ")) return { text: "🟢 GİR", color: "#2CC98A", bg: "#0d2e1f" };
         if (line.includes("**BEKLE")) return { text: "⚠️ BEKLE", color: "#F59E0B", bg: "#2e2a0d" };
         if (line.includes("**GEÇ") || line.includes("**GİRME")) return { text: "❌ GEÇ", color: "#E05252", bg: "#2e0d0d" };
       }
