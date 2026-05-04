@@ -532,3 +532,13 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     </div>
   );
 }
+
+function DiamondMetric({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
+  return (
+    <div className="text-center min-w-[68px]">
+      <div className="text-[9px] text-t-txt3 uppercase tracking-[.7px] font-semibold">{label}</div>
+      <div className="font-mono text-[16px] font-bold mt-0.5" style={{ color }}>{value}</div>
+      {sub && <div className="font-mono text-[10px] mt-0.5" style={{ color }}>{sub}</div>}
+    </div>
+  );
+}
