@@ -66,6 +66,13 @@ export interface StockData {
   foreign_ratio?: number;
   div_yield?: number;
   week52_pct?: number;
+  // Optional / runtime-augmented
+  snapshot_close?: number;
+  devre_kesici?: boolean;
+  kap_kategori?: string;
+  price?: number;
+  kar_bolgesi_aktif?: boolean;
+  risk_bolgesi_aktif?: boolean;
 }
 
 export interface KapHaber {
@@ -93,6 +100,8 @@ export interface PortfolioStock {
   hedefTuttu?: boolean;
   stopOldu?: boolean;
   kapanisTarih?: string;
+  kar_bolgesi_aktif?: boolean;
+  risk_bolgesi_aktif?: boolean;
 }
 
 export interface Portfolio {

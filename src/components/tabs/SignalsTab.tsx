@@ -116,7 +116,7 @@ export default function SignalsTab({ onTickerClick }: { onTickerClick?: (ticker:
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-2 animate-fade-in">
-          {filter === "top10"
+          {(filter as string) === "top10"
             ? current.map((ticker, index) => (
                 <div key={ticker} className="relative">
                   <div className="absolute -top-2 -left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold font-mono text-t-txt"

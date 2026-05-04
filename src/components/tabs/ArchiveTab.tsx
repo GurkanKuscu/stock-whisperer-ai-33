@@ -30,6 +30,8 @@ interface SinyalRecord {
   kombine_karar?: string;
   durum: string;
   sonuc_tarih?: string;
+  kar_bolgesi_aktif?: boolean;
+  risk_bolgesi_aktif?: boolean;
 }
 
 const STORAGE_KEY = "bisthinker-manual-files";
