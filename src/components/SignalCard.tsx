@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { StockData, PortfolioMap } from "@/types/stock";
 import { useAppData } from "@/context/AppContext";
 import { SIGNAL_TR, SMART_MONEY_TR, TREND_TR, tr } from "@/lib/translations";
+import { companyName } from "@/data/companyNames";
+import { sectorVisual } from "@/data/sectorIcons";
 
 interface SignalCardProps {
   ticker: string;
@@ -68,21 +70,38 @@ export default function SignalCard({ ticker, stock, onAddPortfolio, onTickerClic
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: topLineColor }} />
 
       {/* Header */}
-      <div className="p-[18px_20px] flex justify-between items-start" style={{ borderBottom: "1px solid var(--bdr)" }}>
-        <div className="flex flex-col gap-[5px]">
-          <div className="font-syne text-[24px] font-extrabold tracking-[-0.5px] leading-none text-t-txt cursor-pointer hover:underline"
-            onClick={() => onTickerClick?.(ticker)}>{ticker}</div>
-          <div className="flex items-center gap-[7px] text-[11px]">
-            <span className="text-t-txt2 font-medium">{stock.sector_name}</span>
-            <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{tr(SIGNAL_TR, stock.signal)}</span>
-          </div>
-          {badges.length > 0 && (
-            <div className="flex gap-[5px] mt-1 flex-wrap">
-              {badges.map((b, i) => (
-                <span key={i} className={`inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded text-[10px] font-semibold border ${b.cls}`}>{b.label}</span>
-              ))}
+      <div className="p-[18px_20px] flex justify-between items-start gap-3" style={{ borderBottom: "1px solid var(--bdr)" }}>
+        <div className="flex items-start gap-3 min-w-0">
+          {(() => {
+            const sv = sectorVisual(stock.sector_name);
+            return (
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[18px] shrink-0"
+                style={{ background: sv.bg, color: sv.fg, border: `1px solid ${sv.fg}33` }}
+                title={stock.sector_name}
+              >
+                {sv.emoji}
+              </div>
+            );
+          })()}
+          <div className="flex flex-col gap-[4px] min-w-0">
+            <div className="flex items-baseline gap-2 min-w-0">
+              <div className="font-syne text-[24px] font-extrabold tracking-[-0.5px] leading-none text-t-txt cursor-pointer hover:underline shrink-0"
+                onClick={() => onTickerClick?.(ticker)}>{ticker}</div>
+              <div className="text-[11px] text-t-txt2 font-medium truncate">{companyName(ticker)}</div>
             </div>
-          )}
+            <div className="flex items-center gap-[7px] text-[11px] flex-wrap">
+              <span className="text-t-txt3 font-medium">{stock.sector_name}</span>
+              <span className="px-[7px] py-[2px] bg-t-bg4 rounded text-t-txt3 font-semibold text-[9.5px] uppercase tracking-[.5px]">{tr(SIGNAL_TR, stock.signal)}</span>
+            </div>
+            {badges.length > 0 && (
+              <div className="flex gap-[5px] mt-1 flex-wrap">
+                {badges.map((b, i) => (
+                  <span key={i} className={`inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded text-[10px] font-semibold border ${b.cls}`}>{b.label}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="text-right flex flex-col items-end gap-1">
           <div className="font-mono text-[28px] font-bold leading-none tracking-[-1px] text-t-txt">{stock.score}</div>
