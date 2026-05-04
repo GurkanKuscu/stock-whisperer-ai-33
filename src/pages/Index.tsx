@@ -29,14 +29,12 @@ function Dashboard() {
         activeTab={activeTab}
         onTabChange={(tab) => { setActiveTab(tab); setSelectedTicker(null); }}
       />
-      <div
-        className="min-h-screen flex flex-col"
-        style={{ marginLeft: SIDEBAR_WIDTHS.expanded }}
-      >
-        <style>{`
-          @media (max-width: 767px) { .bisthinker-shell { margin-left: 0 !important; } }
-        `}</style>
-        <div className="bisthinker-shell flex-1 flex flex-col" style={{ marginLeft: 0 }}>
+      <style>{`
+        .bisthinker-shell { margin-left: ${SIDEBAR_WIDTHS.expanded}px; }
+        @media (max-width: 767px) { .bisthinker-shell { margin-left: 0; } }
+      `}</style>
+      <div className="bisthinker-shell min-h-screen flex flex-col">
+        <div className="flex-1 flex flex-col">
           <TopBar onTickerSelect={handleTickerClick} />
           <main className="flex-1">
             <div className="max-w-[1600px] mx-auto p-6 max-md:p-[12px_10px]">
