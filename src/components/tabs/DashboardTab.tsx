@@ -86,6 +86,20 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
     .slice(0, 6)
     .map(t => ({ ticker: t, ...enriched[t] }));
 
+  // 💎 Diamond — score>=80 + confirmed + kombine_karar 'GİRİLEBİLİR' içeriyor
+  const diamond = (() => {
+    const candidates = tickers
+      .map(t => ({ ticker: t, ...enriched[t] }))
+      .filter(s =>
+        s.confirmed === true &&
+        (s.score ?? 0) >= 80 &&
+        typeof s.kombine_karar === "string" &&
+        s.kombine_karar.includes("GİRİLEBİLİR")
+      )
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    return candidates[0] ?? null;
+  })();
+
   // Sektör gücü
   const sektorMap: Record<string, { toplam: number; count: number }> = {};
   tickers.forEach(t => {
@@ -156,6 +170,79 @@ export default function DashboardTab({ onTickerClick }: { onTickerClick?: (ticke
       <div className="flex justify-end mb-2">
         <LiveBadge lastUpdate={lastUpdate} isStale={isStale} borsaOpen={borsaOpen} />
       </div>
+
+      {/* 💎 Diamond Hero */}
+      {diamond && (() => {
+        const sv = sectorVisual(diamond.sector_name);
+        const close = diamond.close ?? 0;
+        const tgt = diamond.target ?? 0;
+        const stop = diamond.stop_loss ?? 0;
+        const tgtPct = close > 0 ? ((tgt - close) / close) * 100 : 0;
+        const stopPct = close > 0 ? ((stop - close) / close) * 100 : 0;
+        return (
+          <div
+            className="rounded-2xl p-4 mb-3 cursor-pointer transition-all hover:-translate-y-0.5 relative overflow-hidden"
+            onClick={() => onTickerClick?.(diamond.ticker)}
+            style={{
+              background: "linear-gradient(135deg, rgba(44,201,138,.10) 0%, rgba(20,40,30,.65) 60%, rgba(13,46,31,.55) 100%)",
+              border: "1px solid rgba(44,201,138,.45)",
+              boxShadow: "0 0 28px rgba(44,201,138,.18), inset 0 1px 0 rgba(255,255,255,.04)",
+            }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #2CC98A, #5FE3A8)" }} />
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-[11px] font-bold tracking-[1.2px] uppercase" style={{ color: "#5FE3A8" }}>
+                💎 Bugünün Diamond'u
+              </span>
+              <span className="text-[9.5px] px-1.5 py-[2px] rounded-full font-semibold tracking-[.4px]"
+                style={{ background: "rgba(44,201,138,.15)", color: "#2CC98A", border: "1px solid rgba(44,201,138,.3)" }}>
+                ✅ ONAYLI · GİRİLEBİLİR
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 justify-between">
+              {/* Sol: ticker + ad + sektör */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-[26px] shrink-0"
+                  style={{ background: sv.bg, color: sv.fg, border: `1px solid ${sv.fg}55` }}
+                >
+                  {sv.emoji}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-syne text-[34px] font-extrabold leading-none tracking-[-1px] text-t-txt">
+                    {diamond.ticker}
+                  </div>
+                  <div className="text-[12.5px] text-t-txt2 mt-1 truncate">{companyName(diamond.ticker)}</div>
+                  <div className="mt-1.5">
+                    <span
+                      className="inline-block text-[10px] font-semibold px-2 py-[2px] rounded-full"
+                      style={{ background: sv.bg, color: sv.fg, border: `1px solid ${sv.fg}33` }}
+                    >
+                      {diamond.sector_name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sağ: skor + metrikler grid */}
+              <div className="flex items-center gap-5 flex-wrap">
+                <div className="text-center px-3">
+                  <div className="font-mono text-[34px] font-bold leading-none" style={{ color: "#2CC98A" }}>
+                    {diamond.score}
+                  </div>
+                  <div className="text-[9px] text-t-txt3 uppercase tracking-[.8px] mt-1 font-semibold">SKOR</div>
+                </div>
+                <DiamondMetric label="Fiyat" value={`${close.toFixed(2)} ₺`} color="#e2e8f0" />
+                <DiamondMetric label="Hedef" value={`${tgt.toFixed(2)} ₺`} sub={`+${tgtPct.toFixed(1)}%`} color="#2CC98A" />
+                <DiamondMetric label="Stop" value={`${stop.toFixed(2)} ₺`} sub={`${stopPct.toFixed(1)}%`} color="#E05252" />
+                <DiamondMetric label="R/R" value={`1:${diamond.rr_ratio ?? "—"}`} color="#7EC8F7" />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 1. BIST100 Grafik + Piyasa Özeti üstte */}
       <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-2 mb-3">
         {/* Sol: Piyasa ticker bar + Grafik */}
