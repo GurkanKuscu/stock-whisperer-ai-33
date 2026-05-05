@@ -124,8 +124,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             onClick={() => setMobileOpen(false)}
           />
           <aside
-            className="fixed top-0 left-0 bottom-0 z-[80] md:hidden flex flex-col py-4 w-[240px] animate-slide-in-right"
-            style={{ background: "var(--bg)", borderRight: "1px solid var(--bdr)" }}
+            className="fixed inset-0 z-[80] md:hidden flex flex-col py-4 w-screen h-screen animate-slide-in-right"
+            style={{ background: "var(--bg)" }}
           >
             <div className="flex items-center gap-3 px-3 mb-4">
               <div
